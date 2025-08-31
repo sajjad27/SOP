@@ -1313,7 +1313,7 @@
     (() => {
       /*** State ***/
       let sop = JSON.parse(document.getElementById('default-sop').textContent);
-      const state = { currentStarterIndex: null, stepIndex: 0, answers: {} };
+      const state = { viewState.starterIdx: null, stepIndex: 0, answers: {} };
 
       /*** Elements ***/
       const landingEl = document.getElementById('landing');
@@ -1357,7 +1357,7 @@
       }
 
       function startWizard(starterIdx) {
-        state.currentStarterIndex = starterIdx;
+        state.viewState.starterIdx = starterIdx;
         state.stepIndex = 0;
         state.answers = {};
         state.history = []; // NEW
@@ -1372,7 +1372,7 @@
 
 
       function renderStep() {
-        const starter = sop.starters[state.currentStarterIndex];
+        const starter = sop.starters[state.viewState.starterIdx];
         const steps = starter.steps || [];
         const idx = state.stepIndex;
         const linearPath = computeLinearPath(starter);
@@ -1532,7 +1532,7 @@
             stepContainer.textContent = 'Unknown step type.';
             setNextEnabled(false);
         }
-        if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+        if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
       }
 
       /*** Helpers ***/
@@ -1573,7 +1573,7 @@
       }
 
       function isCurrentStepValid() {
-        const starter = sop.starters[state.currentStarterIndex];
+        const starter = sop.starters[state.viewState.starterIdx];
         const step = (starter.steps || [])[state.stepIndex];
         if (!step) return true;
         const val = state.answers[step.id];
@@ -1642,7 +1642,7 @@
           mapPan.x = drag.pan0.x - dx * wppY;      // use Y factor for X too → same feel
           mapPan.y = drag.pan0.y - dy * wppY;
 
-          if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+          if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
         });
         window.addEventListener('mouseup', () => {
           if (!drag.active) return;
@@ -1689,11 +1689,11 @@
         });
         document.addEventListener('fullscreenchange', () => {
           updateMaxBtn();
-          if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+          if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
         });
         document.addEventListener('webkitfullscreenchange', () => {
           updateMaxBtn();
-          if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+          if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
         });
         updateMaxBtn();
 
@@ -1710,13 +1710,13 @@
         mapVisible = v;
         ensureGraphPanel().style.display = v ? '' : 'none';
         document.getElementById('toggleMap').textContent = v ? 'Hide map' : 'Show map';
-        if (v) renderGraph(sop.starters[state.currentStarterIndex]);
+        if (v) renderGraph(sop.starters[state.viewState.starterIdx]);
       }
 
       function setMapZoom(z) {
         mapZoom = Math.min(4, Math.max(0.5, z));
         // re-render to apply new viewBox
-        if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+        if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
       }
 
       function createSVG(tag, attrs, text) {
@@ -2033,7 +2033,7 @@
 
 
       function navigateNext() {
-        const starter = sop.starters[state.currentStarterIndex];
+        const starter = sop.starters[state.viewState.starterIdx];
         const steps = starter.steps || [];
         const current = steps[state.stepIndex];
 
@@ -2313,24 +2313,7 @@
     // let headerEditActive = false;
     let formDirty = false;
 
-    let currentStarterIndex = 0;
-    // let isEditMode = false;          // View = false, Edit = true
-    // let isLandingVw = true;          // View = false, Edit = true
-
-    // let dataMode = document.documentElement.getAttribute('data-mode') || 'view';         // 'view' or 'edit'; controls header + landing
-    // let selectedStepId = null;
-
-    // const state = {
-    //   dataMode: document.documentElement.getAttribute('data-mode') || 'view',
-    //   currentStarterIndex: null,
-    //   selectedStepId: null
-    // };
-
-    // // elements
-    // const els = {
-    //   landing: document.getElementById('vwLanding'),
-    //   stepper: document.getElementById('vwStepper'),
-    // };
+    const viewState = { starterIdx: 0, idx: 0, answers: {} };
 
 
 
@@ -2351,7 +2334,7 @@
       if (!sop || !Array.isArray(sop.starters) || sop.starters.length === 0) {
         sop = makeBlankSOP();
       }
-      currentStarterIndex = 0;
+      viewState.starterIdx = 0;
       selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
       renderAll();          // calls renderStarters/renderSteps/renderGraph/renderStarterMeta
       applyMode();   // this now always shows landing; Edit just toggles the header inputs
@@ -2423,7 +2406,7 @@
 
             // Load into Studio state
             sop = parsed;
-            currentStarterIndex = 0;
+            viewState.starterIdx = 0;
             selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
 
             renderAll(); // refresh UI
@@ -2462,13 +2445,7 @@
       const arrowPath = document.querySelector('#arrow path');
       if (arrowPath) arrowPath.setAttribute('fill', cssVar('--muted'));
     }
-    // call after you create <marker id="arrow"> and whenever theme changes:
     syncArrowColor();
-
-    // let studioMode = localStorage.getItem('opsMode') || 'edit';
-
-    // simple view-mode state
-    const viewState = { starterIdx: null, idx: 0, answers: {} };
 
     function applyMode() {
       const view = document.getElementById('landing');   // viewer section (landing + wizard containers)
@@ -2476,43 +2453,6 @@
       const wizard = document.getElementById('vwWizard');    // viewer wizard panel (inside landing)
       const landing = document.getElementById('vwLanding');  // viewer landing host
 
-      // if (isEditMode) {
-      //   // In Edit: keep the header & landing visible (to edit title/desc),
-      //   // but hide the wizard; show the Studio.
-      //   // edit?.classList.remove('hidden');
-      //   // view?.classList.add('hidden');
-      //   // wizard?.classList.add('hidden');
-      //   view?.classList.add('hidden');
-      //   // starterEdit?.classList.remove('hidden');
-      //   // renderViewAndEditLanding();  // always refresh landing in case header changed
-
-      //   // Render landing with inline header editor
-      //   // renderViewAndEditLanding();
-
-      //   // Hide the starter grid in Edit (we use Studio’s panels to pick/edit)
-      //   // landing?.querySelector('.vw-grid')?.classList.add('hidden');
-
-      //   // Refresh Studio panes
-      //   // if (typeof renderStudioStarters === 'function') renderStudioStarters();
-      //   // if (typeof renderStarterMeta === 'function') renderStarterMeta();
-      //   // if (typeof renderSteps === 'function') renderSteps();
-      //   // if (typeof renderGraph === 'function') renderGraph();
-      // } else {
-      //   // In View: hide Studio, show landing; wizard will open when a card is clicked
-      //   // edit?.classList.add('hidden');
-      //   // view?.classList.remove('hidden');
-      //   // renderViewAndEditLanding();
-      //   // ensure landing grid is visible in View
-      //   view?.classList.remove('hidden');
-      //   starterEdit?.classList.add('hidden');
-      //   renderViewAndEditLanding()
-
-
-      // }
-
-      // segmented control visual state (optional)
-      // document.getElementById('modeView')?.classList.toggle('active', !isEditMode);
-      // document.getElementById('modeEdit')?.classList.toggle('active', isEditMode);
     }
 
 
@@ -2553,6 +2493,19 @@
 
     })();
 
+    // one-time setup (e.g., after DOM ready)
+    (function initBackBtn() {
+      document.addEventListener('click', (e) => {
+        const back = e.target.closest('#vwBackHome'); // or [data-action="back-home"]
+        if (!back) return;
+
+        // same body as your previous inline handler
+        resetStarterValues();
+        changeScreen('landing');
+      })
+    })();
+
+
     (function screenInit() {
       // this is to initialize the data-screen="landing" or "starter" state in the top HTML
 
@@ -2585,34 +2538,8 @@
 
 
 
-    // function wireGlobal() {
-    //   on('themeBtn', 'click', () => {
-    //     const t = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
-    //     document.documentElement.setAttribute('data-theme', t);
-    //     localStorage.setItem('opsTheme', t);
-    //   });
-    //   on('exportViewerBtn', 'click', exportViewerHTML);
-    // }
-function wireGlobal() {
+    function wireGlobal() {
 
-
-      // document.getElementById('addStarterBtn').addEventListener('click', () => {
-      //   const idx = sop.starters.length;
-      //   sop.starters.push({
-      //     id: 'starter_' + (idx + 1),
-      //     label: 'Starter ' + (idx + 1),
-      //     summary: '',
-      //     steps: [makeStep('instruction')]
-      //   });
-      //   currentStarterIndex = idx; selectedStepId = sop.starters[idx].steps[0].id;
-      //   renderAll();
-      // });
-      // document.getElementById('delStarterBtn').addEventListener('click', () => {
-      //   if (sop.starters.length <= 1) { alert('Keep at least one starter'); return; }
-      //   sop.starters.splice(currentStarterIndex, 1);
-      //   currentStarterIndex = 0; selectedStepId = sop.starters[0].steps[0]?.id || null;
-      //   renderAll();
-      // });
 
       document.getElementById('addBeforeBtn').addEventListener('click', () => addStepRelative('before'));
       document.getElementById('addAfterBtn').addEventListener('click', () => addStepRelative('after'));
@@ -2629,20 +2556,6 @@ function wireGlobal() {
         else graphPanel.requestFullscreen?.();
       });
 
-      // starterTitle.addEventListener('input', () => { getStarter().label = starterTitle.value; renderStarters(); });
-      // starterSummary.addEventListener('input', () => { getStarter().summary = starterSummary.value; renderStarters(); });
-      // starterDesc.addEventListener('input', () => { getStarter().description = starterDesc.value; });
-
-      // document.getElementById('validateBtn').addEventListener('click', () => {
-      //   const msg = validateSOP();
-      //   toolMsg.textContent = msg.ok ? 'OK' : ('Errors: ' + msg.errors.join('; '));
-      //   toolMsg.className = 'small ' + (msg.ok ? 'success' : 'warn');
-      // });
-      // document.getElementById('tidyIdsBtn').addEventListener('click', () => {
-      //   tidyIds();
-      //   renderAll();
-      //   toolMsg.textContent = 'IDs tidied.';
-      // });
     }
     /*** Renderers ***/
     function renderAll() {
@@ -2670,13 +2583,13 @@ function wireGlobal() {
         .join('');
 
       // clamp index and set selection
-      currentStarterIndex = Math.min(currentStarterIndex, sop.starters.length - 1);
-      starterSelect.value = String(currentStarterIndex);
+      viewState.starterIdx = Math.min(viewState.starterIdx, sop.starters.length - 1);
+      starterSelect.value = String(viewState.starterIdx);
 
       // change handler
       starterSelect.onchange = () => {
-        currentStarterIndex = parseInt(starterSelect.value, 10);
-        selectedStepId = sop.starters[currentStarterIndex]?.steps?.[0]?.id || null;
+        viewState.starterIdx = parseInt(starterSelect.value, 10);
+        selectedStepId = sop.starters[viewState.starterIdx]?.steps?.[0]?.id || null;
         mapPan = { x: 0, y: 0 };      // recenter
         mapZoom = 1;                 // reset zoom
         renderSteps();
@@ -3531,55 +3444,6 @@ function wireGlobal() {
     </div>
   </div>
 `;
-
-
-      // Wire starters (open wizard). Only confirm if header edit is active AND dirty.
-      // landing.querySelectorAll('.vw-grid [data-idx]').forEach(btn => {
-      //   btn.addEventListener('click', async () => {
-      //     // if (isEditMode) {
-      //     //   // Edit → open Studio on this starter
-      //     //   currentStarterIndex = parseInt(btn.dataset.idx, 10);
-      //     //   selectedStepId = sop.starters[currentStarterIndex]?.steps?.[0]?.id || null;
-      //     //   if (typeof renderStarterMeta === 'function') renderStarterMeta();
-      //     //   if (typeof renderSteps === 'function') renderSteps();
-      //     //   if (typeof renderGraph === 'function') renderGraph();
-      //     //   return;
-      //     // }
-      //     // View → open Viewer wizard
-      //     enterViewStarter(parseInt(btn.dataset.idx, 10));
-      //   });
-      // });
-
-
-      // Inline header editor (only when active)
-      // if (headerEditActive) {
-      //   const t = document.getElementById('vwTitleInput');
-      //   const d = document.getElementById('vwDescInput');
-      //   const save = document.getElementById('vwSaveHeader');
-      //   const cancel = document.getElementById('vwCancelHeader');
-
-      //   const markDirty = () => {
-      //     formDirty = (t?.value !== (sop?.title || '')) || (d?.value !== (sop?.description || ''));
-      //   };
-      //   t?.addEventListener('input', markDirty);
-      //   d?.addEventListener('input', markDirty);
-
-      //   save?.addEventListener('click', () => {
-      //     if (!window.sop) window.sop = {};
-      //     sop.title = (t?.value || '').trim() || 'New SOP Library';
-      //     sop.description = (d?.value || '').trim();
-      //     headerEditActive = false; formDirty = false;
-      //     applyMode();            // re-render preview
-      //   });
-
-      //   cancel?.addEventListener('click', () => {
-      //     headerEditActive = false; formDirty = false;
-      //     applyMode();            // re-render preview
-      //   });
-
-      //   // focus title after paint
-      //   setTimeout(() => t?.focus(), 0);
-      // }
     }
     function isEditMode() { return document.documentElement.getAttribute('data-mode') === 'edit'; }
 
@@ -3590,132 +3454,43 @@ function wireGlobal() {
       else {
         enterViewStarter(idx);
       }
-      // changeScreen('starter');
     }
 
     function enterEditStarter(idx) {
-      // selection
-      window.currentStarterIndex = idx;
+      viewState.starterIdx = idx;
       const st = (sop?.starters?.[idx]) || {};
-      window.selectedStepId = Array.isArray(st.steps) && st.steps.length ? st.steps[0].id : null;
+      selectedStepId = Array.isArray(st.steps) && st.steps.length ? st.steps[0].id : null;
 
-      // ensure we're on the starter screen
-      changeScreen('starter');                // CSS shows #starter
-      // inside starter, edit mode shows #editStarter (CSS you wrote)
+      changeScreen('starter');
 
       // render editor panes
       if (typeof renderStarterMeta === 'function') renderStarterMeta();
       if (typeof renderSteps === 'function') renderSteps();
       if (typeof renderGraph === 'function') renderGraph();
 
+
       // optional crumbs
       const crumbs = document.getElementById('breadcrumbs');
       if (crumbs) crumbs.textContent = `Home · ${st.label || `Starter ${idx + 1}`} (Edit)`;
     }
 
-    // one-time setup (call once after DOM is ready)
-    // (function setupWizardBackDelegation() {
-    //   const wizard = document.getElementById('vwWizard');
-    //   if (!wizard) return;
-    //   wizard.addEventListener('click', (e) => {
-    //     const back = e.target.closest('#vwBackHome');
-    //     if (!back) return;
-    //     goHomeFromWizard();
-    //   });
-    // })();
-
-    function goHomeFromWizard() {
-      // reset viewer state (no JSON changes)
-      viewState.starterIdx = null;
-      viewState.idx = 0;
-      viewState.answers = {};
-
-      const landing = document.getElementById('vwLanding');
-      const wizard = document.getElementById('vwWizard');
-
-      wizard?.classList.add('hidden');
-      landing?.classList.remove('hidden');
-
-      // rebuild landing UI so cards work normally again
-      if (typeof renderViewAndEditLanding === 'function') renderViewAndEditLanding();
-      // optional: reset breadcrumbs if you use them
-      const crumbs = document.getElementById('breadcrumbs');
-      if (crumbs) crumbs.textContent = 'Home';
-    }
-
-    // function enterViewStarter(idx) {
-    //   viewState.starterIdx = idx;
-    //   viewState.idx = 0;
-    //   viewState.answers = {};
-
-    //   const landing = document.getElementById('vwLanding');
-    //   const wizard = document.getElementById('vwWizard');
-
-    //   landing?.classList.add('hidden');
-    //   wizard?.classList.remove('hidden');
-
-    //   const st = sop.starters?.[idx] || {};
-    //   const titleEl = document.getElementById('vwStarterTitle');
-    //   if (titleEl) titleEl.textContent = st.label || 'Starter';
-
-    //   // initial step render (this may re-render #vwWizard internally)
-    //   renderViewStep();
-
-    //   // breadcrumbs (optional)
-    //   const crumbs = document.getElementById('breadcrumbs');
-    //   if (crumbs) crumbs.textContent = `Home · ${st.label || `Starter ${idx + 1}`}`;
-    // }
-
     function resetStarterValues() {
       viewState.starterIdx = 0;
-      viewState.idx = 0;
+      viewState.stepIdx = 0;
       viewState.answers = {};
     }
+
     function enterViewStarter(idx) {
 
       resetStarterValues();
-      // hide landing
-      // const landing = document.getElementById('vwLanding');
-      // landing && landing.classList.add('hidden');
-      // // show starter 
-      // const starter = document.getElementById('starter');
-      // starter && starter.classList.remove('hidden');
-
-
-      // const wizard = document.getElementById('vwWizard');
-
-      // wizard && wizard.classList.remove('hidden');
-      changeScreen('starter'); // show #vwWizard, hide #vwLanding
+      viewState.starterIdx = idx;
+      changeScreen('starter');
 
       const st = sop.starters[idx];
       document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
       renderViewStep();
 
-      // Back button
-      const back = document.getElementById('vwBackHome');
-      if (back) {
-        back.onclick = () => {
-          resetStarterValues();
-          changeScreen('landing');
-        };
-      }
-
     }
-
-    // function openStarter(id){
-    //   // state.currentItemId = id;
-    //   // Demo content mapping
-    //   const title = `Item ${id}`;
-    //   const desc = `Compact summary for Item ${id}.`;
-    //   els.itemTitleText.textContent = title;
-    //   els.itemDescText.textContent = desc;
-    //   els.itemTitleInput.value = title;
-    //   els.itemDescInput.value = desc;
-
-    //   els.landing.hidden = true;
-    //   els.itemDetail.hidden = false;
-    //   els.crumbs.textContent = `Home · Items · ${title}`;
-    // }
 
 
     function setNextEnabled(enabled) {
@@ -3726,7 +3501,7 @@ function wireGlobal() {
     function renderViewStep() {
       const st = sop.starters[viewState.starterIdx];
       const steps = st.steps || [];
-      let i = viewState.idx;
+      let i = viewState.stepIdx;
       const stepCnt = steps.length;
 
       document.getElementById('vwProgress').textContent = `Step ${Math.min(i + 1, stepCnt)} of ${stepCnt}`;
@@ -3821,32 +3596,32 @@ function wireGlobal() {
       // document.getElementById('vwBackHome').onclick = renderViewAndEditLanding;
 
       document.getElementById('vwPrev').onclick = () => {
-        if (viewState.idx > 0) { viewState.idx--; renderViewStep(); }
+        if (viewState.stepIdx > 0) { viewState.stepIdx--; renderViewStep(); }
       };
       nextBtn.onclick = () => {
-        if (viewState.idx < stepCnt - 1) {
+        if (viewState.stepIdx < stepCnt - 1) {
           // branch support
-          const s = steps[viewState.idx];
+          const s = steps[viewState.stepIdx];
           if (s && s.type === 'select' && s.mode !== 'multi') {
             const choice = viewState.answers[s.id];
             if (choice && choice.next) {
               // jump to label
               const to = steps.findIndex(x => x.id === choice.next);
-              if (to >= 0) { viewState.idx = to; renderViewStep(); return; }
+              if (to >= 0) { viewState.stepIdx = to; renderViewStep(); return; }
             }
           }
           // step-level next
           if (s && s.next) {
             const to = steps.findIndex(x => x.id === s.next);
-            if (to >= 0) { viewState.idx = to; renderViewStep(); return; }
+            if (to >= 0) { viewState.stepIdx = to; renderViewStep(); return; }
           }
           // default: linear
-          viewState.idx++; renderViewStep();
+          viewState.stepIdx++; renderViewStep();
         }
       };
     }
 
-    function getStarter() { return sop.starters[currentStarterIndex]; }
+    function getStarter() { return sop.starters[viewState.starterIdx]; }
     function makeBlankSOP() {
       return {
         version: "1.3",
@@ -3963,44 +3738,6 @@ function wireGlobal() {
   </script>
 
   <script>
-
-    // --- Preview/Edit segmented control (library-only edit) ---
-    // const modeSeg = document.getElementById('modeSeg');
-
-    // // confirm helpers assumed present: confirmNice / confirmDirtyThen
-    // // make sure these point to your actual buttons
-    // // let btnPreview = document.getElementById('modeView');
-    // // let btnEdit = document.getElementById('modeEdit');
-
-    // btnPreview.addEventListener('click', async (e) => {
-    //   // e.preventDefault();
-    //   // if header is in inline edit and dirty, confirm before switching
-    //   // const ok = (!isEditMode || !formDirty)
-    //   //   ? true
-    //   //   : (await confirmDirtyThen('Discard header changes and switch to View?'));
-    //   // if (!ok) return;
-
-    //   // isEditMode = false;
-    //   // studioMode = 'view';
-
-    //   // headerEditActive = false;    // read-only header in View
-    //   // formDirty = false;
-    //   // applyMode();
-    //   // isEditMode = false;
-    //   changeDataMode('view')
-    // });
-
-    // btnEdit.addEventListener('click', (e) => {
-    //   // e.preventDefault();
-    //   // isEditMode = true;
-    //   // headerEditActive = true;     // inline header editor ON in Edit
-    //   // formDirty = false;
-    //   changeDataMode('edit');
-    //   wireLandingPageEdit();
-
-    //   // applyMode();
-    // });
-
 
     const libTitle = document.getElementById('libTitle');
     const libDesc = document.getElementById('libDesc');
