@@ -2310,10 +2310,9 @@
 
     /*** State ***/
     let sop = makeBlankSOP();
-    // let headerEditActive = false;
     let formDirty = false;
 
-    const viewState = { starterIdx: 0, idx: 0, answers: {} };
+    const viewState = { starterIdx: 0, answers: {} };
 
 
 
@@ -2559,11 +2558,12 @@
     }
     /*** Renderers ***/
     function renderAll() {
+      renderViewAndEditLanding();
+      renderStarterMeta();
       renderStarters();
+      renderViewStep()
       renderSteps();
       renderGraph();
-      renderStarterMeta();
-      renderViewAndEditLanding();
     }
 
     function renderStarters() {
@@ -3448,6 +3448,7 @@
     function isEditMode() { return document.documentElement.getAttribute('data-mode') === 'edit'; }
 
     function enterViewOrEditStarter(idx) {
+      console.log(`idx`, idx);
       if (isEditMode()) {
         enterEditStarter(idx);
       }
@@ -3457,16 +3458,12 @@
     }
 
     function enterEditStarter(idx) {
+      resetStarterValues();
       viewState.starterIdx = idx;
-      const st = (sop?.starters?.[idx]) || {};
-      selectedStepId = Array.isArray(st.steps) && st.steps.length ? st.steps[0].id : null;
+      // renderViewStep();
+      renderAll();
 
       changeScreen('starter');
-
-      // render editor panes
-      if (typeof renderStarterMeta === 'function') renderStarterMeta();
-      if (typeof renderSteps === 'function') renderSteps();
-      if (typeof renderGraph === 'function') renderGraph();
 
 
       // optional crumbs
@@ -3488,7 +3485,7 @@
 
       const st = sop.starters[idx];
       document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
-      renderViewStep();
+      renderAll();
 
     }
 
