@@ -1,0 +1,326 @@
+{
+  "sop_id": "sop_incident_mgmt_v1",
+  "name": "Incident Intake & Resolution",
+  "version": "1.0.0",
+  "description": "End-to-end incident handling with classification, approvals, parallel actions, and closure.",
+  "start": "start_1",
+  "tags": ["SOP", "Incident", "ITSM"],
+  "roles": ["Requester", "ServiceDesk", "IncidentManager", "ITOps", "SecurityLead", "FinanceController", "QA"],
+  "variables": {
+    "ticket_id": null,
+    "category": null,
+    "severity": null,
+    "requires_approval": false,
+    "approver_type": null,
+    "affected_service": null,
+    "customer_impact": null,
+    "sla_hours": null,
+    "root_cause": null,
+    "resolution": null,
+    "notify_list": [],
+    "clock_started_at": null
+  },
+  "nodes": [
+    {
+      "id": "start_1",
+      "type": "start",
+      "title": "Start",
+      "on_enter": [
+        { "action": "stamp_time", "var": "clock_started_at" }
+      ],
+      "next": "capture_1"
+    },
+    {
+      "id": "capture_1",
+      "type": "task",
+      "title": "Capture Incident",
+      "assignee_role": "ServiceDesk",
+      "sla": { "hours": 1 },
+      "form": {
+        "fields": [
+          { "id": "summary", "label": "Summary", "type": "text", "required": true },
+          { "id": "description", "label": "Description", "type": "longtext", "required": true },
+          { "id": "category", "label": "Category", "type": "select", "options": ["security", "service_request", "bug", "inquiry"], "required": true },
+          { "id": "affected_service", "label": "Affected Service", "type": "text", "required": true },
+          { "id": "customer_impact", "label": "Customer Impact", "type": "select", "options": ["none", "minor", "major", "outage"], "required": true },
+          { "id": "attachments", "label": "Attachments", "type": "file", "multiple": true }
+        ]
+      },
+      "outputs": [
+        { "var": "category", "from": "form.category" },
+        { "var": "affected_service", "from": "form.affected_service" },
+        { "var": "customer_impact", "from": "form.customer_impact" }
+      ],
+      "on_exit": [
+        { "action": "create_ticket_id", "var": "ticket_id", "prefix": "INC" }
+      ],
+      "next": "decide_category"
+    },
+    {
+      "id": "decide_category",
+      "type": "decision",
+      "title": "Classify",
+      "options": [
+        { "label": "Security", "condition": "category == 'security'", "next": "split_sec_1" },
+        { "label": "Service Request", "condition": "category == 'service_request'", "next": "fulfill_sr_1" },
+        { "label": "Bug / Defect", "condition": "category == 'bug'", "next": "triage_bug_1" },
+        { "label": "Inquiry (Informational)", "condition": "category == 'inquiry'", "next": "end_informational" }
+      ],
+      "default_next": "triage_bug_1"
+    },
+
+    
+    {
+      "id": "split_sec_1",
+      "type": "parallel_split",
+      "title": "Security: Notify & Isolate in Parallel",
+      "branches": ["notify_sec_1", "isolate_1"],
+      "next": "join_sec_1"
+    },
+    {
+      "id": "notify_sec_1",
+      "type": "task",
+      "title": "Notify Stakeholders",
+      "assignee_role": "IncidentManager",
+      "actions": [
+        { "action": "notify", "channel": "email", "to_var": "notify_list", "template": "security_alert" }
+      ],
+      "next": "join_sec_1"
+    },
+    {
+      "id": "isolate_1",
+      "type": "task",
+      "title": "Isolate Affected Systems",
+      "assignee_role": "SecurityLead",
+      "sla": { "hours": 2 },
+      "form": {
+        "fields": [
+          { "id": "isolation_steps", "label": "Steps Taken", "type": "longtext", "required": true }
+        ]
+      },
+      "next": "join_sec_1",
+      "on_timeout": { "route": "escalate_1" }
+    },
+    {
+      "id": "join_sec_1",
+      "type": "parallel_join",
+      "title": "Join: Security Prep Done",
+      "join_count": 2,
+      "next": "decide_severity"
+    },
+
+    
+    {
+      "id": "triage_bug_1",
+      "type": "task",
+      "title": "Triage Bug",
+      "assignee_role": "ServiceDesk",
+      "form": {
+        "fields": [
+          { "id": "reproducible", "label": "Reproducible?", "type": "select", "options": ["always", "sometimes", "never"], "required": true }
+        ]
+      },
+      "next": "decide_severity"
+    },
+
+    
+    {
+      "id": "decide_severity",
+      "type": "decision",
+      "title": "Set Severity",
+      "options": [
+        { "label": "Critical (P1)", "condition": "customer_impact == 'outage'", "set": [{ "var": "severity", "value": "P1" }, { "var": "sla_hours", "value": 4 }], "next": "decide_approval" },
+        { "label": "High (P2)", "condition": "customer_impact == 'major'", "set": [{ "var": "severity", "value": "P2" }, { "var": "sla_hours", "value": 8 }], "next": "decide_approval" },
+        { "label": "Medium (P3)", "condition": "customer_impact == 'minor'", "set": [{ "var": "severity", "value": "P3" }, { "var": "sla_hours", "value": 24 }], "next": "decide_approval" },
+        { "label": "Low (P4)", "condition": "customer_impact == 'none'", "set": [{ "var": "severity", "value": "P4" }, { "var": "sla_hours", "value": 72 }], "next": "decide_approval" }
+      ],
+      "default_next": "decide_approval"
+    },
+
+    
+    {
+      "id": "decide_approval",
+      "type": "decision",
+      "title": "Approval Needed?",
+      "options": [
+        { "label": "None", "condition": "true && severity in ['P3','P4']", "set": [{ "var": "requires_approval", "value": false }], "next": "assign_owner_1" },
+        { "label": "Financial Spending", "condition": "severity in ['P1','P2']", "set": [{ "var": "requires_approval", "value": true }, { "var": "approver_type", "value": "finance" }], "next": "approve_finance_1" },
+        { "label": "Production Risk", "condition": "severity == 'P1'", "set": [{ "var": "requires_approval", "value": true }, { "var": "approver_type", "value": "prod" }], "next": "approve_prod_1" },
+        { "label": "Personal Data Handling", "condition": "category == 'security'", "set": [{ "var": "requires_approval", "value": true }, { "var": "approver_type", "value": "security" }], "next": "approve_security_1" }
+      ],
+      "default_next": "assign_owner_1"
+    },
+    {
+      "id": "approve_finance_1",
+      "type": "task",
+      "title": "Finance Approval",
+      "assignee_role": "FinanceController",
+      "form": { "fields": [{ "id": "approved", "label": "Approve?", "type": "select", "options": ["approved", "rejected"] }] },
+      "next_map": { "form.approved=approved": "assign_owner_1", "form.approved=rejected": "end_rejected" }
+    },
+    {
+      "id": "approve_prod_1",
+      "type": "task",
+      "title": "Production Risk Approval",
+      "assignee_role": "IncidentManager",
+      "form": { "fields": [{ "id": "approved", "label": "Approve?", "type": "select", "options": ["approved", "rejected"] }] },
+      "next_map": { "form.approved=approved": "assign_owner_1", "form.approved=rejected": "end_rejected" }
+    },
+    {
+      "id": "approve_security_1",
+      "type": "task",
+      "title": "Security/Data Approval",
+      "assignee_role": "SecurityLead",
+      "form": { "fields": [{ "id": "approved", "label": "Approve?", "type": "select", "options": ["approved", "rejected"] }] },
+      "next_map": { "form.approved=approved": "assign_owner_1", "form.approved=rejected": "end_rejected" }
+    },
+
+    
+    {
+      "id": "assign_owner_1",
+      "type": "task",
+      "title": "Assign Owner",
+      "assignee_role": "IncidentManager",
+      "form": { "fields": [{ "id": "owner", "label": "Owner (Role/User)", "type": "text", "required": true }] },
+      "next": "investigate_1"
+    },
+    {
+      "id": "investigate_1",
+      "type": "task",
+      "title": "Investigate",
+      "assignee_role": "ITOps",
+      "sla": { "hours": { "from_var": "sla_hours" } },
+      "form": {
+        "fields": [
+          { "id": "hypothesis", "label": "Hypothesis", "type": "longtext" },
+          { "id": "root_cause", "label": "Root Cause", "type": "text" }
+        ]
+      },
+      "outputs": [{ "var": "root_cause", "from": "form.root_cause" }],
+      "next": "implement_fix_1"
+    },
+    {
+      "id": "implement_fix_1",
+      "type": "task",
+      "title": "Implement Fix / Workaround",
+      "assignee_role": "ITOps",
+      "form": { "fields": [{ "id": "resolution", "label": "Resolution Notes", "type": "longtext", "required": true }] },
+      "outputs": [{ "var": "resolution", "from": "form.resolution" }],
+      "next": "verify_1"
+    },
+    {
+      "id": "verify_1",
+      "type": "task",
+      "title": "Verify & QA",
+      "assignee_role": "QA",
+      "form": { "fields": [{ "id": "verification", "label": "Verification Result", "type": "select", "options": ["pass", "fail"] }] },
+      "next_map": { "form.verification=pass": "decide_postmortem", "form.verification=fail": "rework_decision_1" }
+    },
+
+    
+    {
+      "id": "rework_decision_1",
+      "type": "decision",
+      "title": "Rework Path",
+      "options": [
+        { "label": "Re-investigate", "condition": "true", "next": "investigate_1" },
+        { "label": "Rollback & Close", "condition": "severity in ['P3','P4']", "next": "end_rolled_back" }
+      ],
+      "default_next": "investigate_1"
+    },
+
+    
+    {
+      "id": "decide_postmortem",
+      "type": "decision",
+      "title": "Postmortem Needed?",
+      "options": [
+        { "label": "Required for P1/P2", "condition": "severity in ['P1','P2']", "next": "postmortem_1" },
+        { "label": "Skip for P3/P4", "condition": "severity in ['P3','P4']", "next": "close_1" }
+      ],
+      "default_next": "close_1"
+    },
+    {
+      "id": "postmortem_1",
+      "type": "task",
+      "title": "Run Postmortem",
+      "assignee_role": "IncidentManager",
+      "form": {
+        "fields": [
+          { "id": "timeline", "label": "Timeline", "type": "longtext", "required": true },
+          { "id": "action_items", "label": "Action Items", "type": "longtext", "required": true }
+        ]
+      },
+      "next": "close_1"
+    },
+
+    
+    {
+      "id": "fulfill_sr_1",
+      "type": "task",
+      "title": "Fulfill Service Request",
+      "assignee_role": "ITOps",
+      "form": { "fields": [{ "id": "done", "label": "Completed?", "type": "select", "options": ["yes", "no"] }] },
+      "next_map": { "form.done=yes": "verify_sr_1", "form.done=no": "end_canceled" }
+    },
+    {
+      "id": "verify_sr_1",
+      "type": "task",
+      "title": "Requestor Acceptance",
+      "assignee_role": "Requester",
+      "form": { "fields": [{ "id": "accepted", "label": "Accepted?", "type": "select", "options": ["yes", "no"] }] },
+      "next_map": { "form.accepted=yes": "end_success", "form.accepted=no": "fulfill_sr_1" }
+    },
+
+    
+    {
+      "id": "close_1",
+      "type": "task",
+      "title": "Close Ticket",
+      "assignee_role": "ServiceDesk",
+      "actions": [
+        { "action": "update_ticket", "status": "closed" },
+        { "action": "notify", "channel": "email", "to": ["Requester"], "template": "closure_note" }
+      ],
+      "next": "end_success"
+    },
+    {
+      "id": "escalate_1",
+      "type": "task",
+      "title": "Auto-Escalation",
+      "assignee_role": "IncidentManager",
+      "actions": [{ "action": "page_on_call" }],
+      "next": "decide_severity"
+    },
+    {
+      "id": "end_success",
+      "type": "end",
+      "title": "Resolved",
+      "status": "success"
+    },
+    {
+      "id": "end_informational",
+      "type": "end",
+      "title": "Informational Only",
+      "status": "no_action"
+    },
+    {
+      "id": "end_rejected",
+      "type": "end",
+      "title": "Rejected by Approver",
+      "status": "rejected"
+    },
+    {
+      "id": "end_rolled_back",
+      "type": "end",
+      "title": "Rolled Back",
+      "status": "rolled_back"
+    },
+    {
+      "id": "end_canceled",
+      "type": "end",
+      "title": "Canceled",
+      "status": "canceled"
+    }
+  ]
+}

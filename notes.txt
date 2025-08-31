@@ -1,0 +1,32 @@
+undo and redo, 
+download picture
+view picture, small and can maximize it, 
+auto complete when do something like "role." or show the variables 
+remove img from select
+on remove focus when changing the ID is not working 100%
+set starter node
+search capability
+add rich text to add new url bold italic ...
+dark mode
+redirect to step using url
+hand tool to move the map, and curser to select, 
+zoom on curser not general zoom
+take full screen, make the right and left panel smaller and make use of the map
+validation all steps can be accessible 
+ability to view only the current step, the step before and the step after while development
+allow the user to view the current progress in a new dialog for example before exporting
+one step with multi pictures and multi input
+upload emails
+interactive steps on the map
+add new starter from outside
+remove description if not necessary
+add save and cancel button in the map edit
+on cancel, import, export or anywhere, add the discard prompt, same thing with the map edit
+fix but when enter "edit" then click on "starter" then click on "Preview" it crash
+add to Github
+
+
+Foot Locker
+New Balance
+Debenhams -> try to buy perfume from bahrain
+jo malone -> perfume

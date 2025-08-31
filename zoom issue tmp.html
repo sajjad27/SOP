@@ -1,0 +1,2969 @@
+<!-- Viewer export template (BODY markup only). Replace this content with your real viewer body later. -->
+<template id="viewerExportTpl">
+  <main class="wrap">
+    <h1>SOP Viewer (placeholder)</h1>
+    <div id="app" class="muted">Replace this template’s content with your full viewer UI.</div>
+  </main>
+</template>
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OpsPath Studio · SOP Builder</title>
+  <style>
+    :root {
+      --fg: #0b1220;
+      --bg: #f7f9fc;
+      --muted: #60708a;
+      --card: #ffffff;
+      --line: #e4e8f0;
+      --accent: #2563eb;
+      --accent-weak: #eef3ff;
+      --ok: #16a34a;
+      --warn: #dc2626;
+      --shadow: 0 2px 10px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .06);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      margin: 0;
+      font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
+      color: var(--fg);
+      background: var(--bg);
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: saturate(1.2) blur(6px);
+      background: rgba(247, 249, 252, .85);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 16px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: .2px;
+    }
+
+    .grow {
+      flex: 1;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button,
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 4px rgba(16, 24, 40, .08);
+    }
+
+    input[type="file"] {
+      font-size: 13px;
+    }
+
+    select,
+    input[type="text"],
+    textarea,
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      font: inherit;
+    }
+
+    label {
+      font-weight: 600;
+      margin: 10px 0 6px;
+      display: block;
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hr {
+      height: 1px;
+      background: var(--line);
+      margin: 12px 0;
+    }
+
+    main {
+      max-width: 1240px;
+      margin: 16px auto 60px;
+      padding: 0 16px 24px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr 360px;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+
+    .panel h2 {
+      font-size: 14px;
+      margin: 0 0 8px;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: calc(100vh - 220px);
+      overflow: auto;
+    }
+
+    .item {
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+      background: #fff;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .item .muted {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .rowflex {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* NEW */
+    .badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      /* follows theme */
+      color: var(--muted);
+    }
+
+    .warn {
+      color: var(--warn);
+    }
+
+    .success {
+      color: var(--ok);
+    }
+
+    .graph-panel {
+      padding: 8px;
+    }
+
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .graph-zoom button {
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      /* follows theme */
+      color: var(--fg);
+      cursor: pointer;
+    }
+
+
+    .graph-svg {
+      width: 100%;
+      height: 520px;
+      display: block;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+
+    .graph-svg.dragging {
+      cursor: grabbing;
+    }
+
+    .node-rect {
+      fill: #fff;
+      stroke: #d4dbe7;
+      rx: 8;
+    }
+
+    .node-rect.current {
+      stroke: var(--accent);
+      stroke-width: 2;
+    }
+
+    .edge {
+      stroke: #98a2b3;
+      stroke-width: 1.2;
+      fill: none;
+      marker-end: url(#arrow);
+    }
+
+    .edge-label {
+      font-size: 11px;
+      fill: #667085;
+      pointer-events: none;
+    }
+
+    .node-label {
+      font-size: 12px;
+      fill: #0b1220;
+      pointer-events: none;
+    }
+
+    .link-like {
+      color: var(--accent);
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .thumb {
+      display: block;
+      width: 66%;
+      margin: 10px auto 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .graph-panel:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    .graph-panel:-webkit-full-screen {
+      width: 100vw;
+      height: 100vh;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    .graph-panel:fullscreen .graph-svg,
+    .graph-panel:-webkit-full-screen .graph-svg {
+      height: calc(100vh - 56px);
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+      border: 1px solid var(--line);
+      padding: 6px;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    .table th {
+      background: #f8fafc;
+      text-align: left;
+    }
+
+    .iconbtn {
+      padding: 6px 8px;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .error {
+      color: var(--warn);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    /* Steps list spacing */
+    #stepsList {
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    /* Step item */
+    #stepsList .item {
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1.5px solid var(--line);
+      background: var(--card);
+      /* follows theme */
+      position: relative;
+      transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
+    }
+
+    button[disabled],
+    .btn[disabled] {
+      background: var(--card);
+      color: var(--muted);
+      opacity: .6;
+    }
+
+    .upload {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #importHtmlBtn {
+      background: var(--card);
+      color: var(--fg);
+      border: 1px solid var(--line);
+    }
+
+    #importHtmlBtn:hover {
+      box-shadow: 0 4px 14px rgba(2, 6, 23, .08);
+    }
+
+    #importHtmlNote {
+      color: var(--muted);
+    }
+
+    #stepsList .item:hover {
+      border-color: #cfd8ea;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, .06);
+    }
+
+    #stepsList .item.active {
+      border: 2px solid #1d4ed8;
+      /* stronger blue */
+      background: linear-gradient(0deg, rgba(29, 78, 216, .08), rgba(29, 78, 216, .08)), #fff;
+    }
+
+    #stepsList .item.active::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 10px;
+      bottom: 10px;
+      width: 4px;
+      border-radius: 3px;
+      background: #1d4ed8;
+    }
+
+    /* make title pop a bit */
+    #stepsList .item strong {
+      font-weight: 700;
+    }
+
+    /* Danger (trash) buttons */
+    .btn-danger {
+      border: 1px solid #fca5a5;
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .btn-danger:hover {
+      background: #fee2e2;
+      border-color: #fb7185;
+    }
+
+    .btn-danger:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+
+    /* dark mode */
+    /* Use vars for common surfaces so dark can override cleanly */
+
+    select {
+      background-image: none;
+    }
+
+    html[data-theme="dark"] header {
+      background: rgba(10, 14, 22, .85);
+      border-bottom-color: var(--line);
+    }
+
+    html[data-theme="dark"] {
+      --fg: #e5e7eb;
+      --bg: #0b1220;
+      --muted: #9aa4b2;
+      --card: #0f172a;
+      --line: #334155;
+      /* was #233044: too low-contrast */
+      --accent: #3b82f6;
+      --accent-weak: rgba(59, 130, 246, .16);
+      --ok: #22c55e;
+      --warn: #ef4444;
+      --shadow: none;
+    }
+
+    /* Ensure all controls actually use the vars */
+    button,
+    .btn,
+    select,
+    input[type="text"],
+    textarea,
+    input[type="number"],
+    .panel,
+    .item,
+    .graph-svg,
+    .table th,
+    .table td {
+      background: var(--card);
+      color: var(--fg);
+      border-color: var(--line);
+    }
+
+    /* Focus + placeholder in both themes */
+    input,
+    select,
+    textarea {
+      color: var(--fg);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--muted);
+      opacity: 1;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+      box-shadow: 0 0 0 2px var(--accent-weak);
+    }
+
+    /* Graph: tie lines/labels to theme vars */
+    .edge {
+      stroke: var(--muted);
+      stroke-width: 1.2;
+      fill: none;
+    }
+
+    .edge-label {
+      fill: var(--muted);
+    }
+
+    .node-label {
+      fill: var(--fg);
+    }
+
+    /* Selected list item stays readable */
+    html[data-theme="dark"] #stepsList .item.active {
+      background: linear-gradient(0deg, rgba(59, 130, 246, .18), rgba(59, 130, 246, .18)), var(--card);
+      border-color: var(--accent);
+    }
+
+    /* === Map polish (dark + light) === */
+    .graph-svg {
+      /* subtle grid so spacing is readable */
+      background:
+        radial-gradient(circle at 1px 1px, rgba(148, 163, 184, .12) 1px, transparent 1px),
+        radial-gradient(circle at 1px 1px, rgba(148, 163, 184, .06) 1px, transparent 1px);
+      background-size: 16px 16px, 80px 80px;
+      background-position: 0 0, -1px -1px;
+      border-color: var(--line);
+    }
+
+    /* nodes */
+    .node-rect {
+      fill: var(--card);
+      stroke: var(--line);
+      stroke-width: 1.4;
+      rx: 10;
+      /* soft depth without blur stink */
+      filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .08));
+    }
+
+    .node-rect.current {
+      stroke: var(--accent);
+      stroke-width: 2;
+    }
+
+    /* labels */
+    .node-label {
+      font-size: 12.5px;
+      /* up from 12 */
+      font-weight: 600;
+      fill: var(--fg);
+    }
+
+    .edge {
+      stroke: var(--muted);
+      /* tie to theme */
+      stroke-width: 1.6;
+      fill: none;
+      marker-end: url(#arrow);
+    }
+
+    .edge-label {
+      font-size: 11.5px;
+      fill: var(--muted);
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <script type="text/plain" id="viewerHtmlEmbedded">
+
+  <!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SOP Runbook · Viewer</title>
+  <style>
+    :root {
+      --fg: #0b1220;
+      --bg: #f7f9fc;
+      --muted: #60708a;
+      --card: #ffffff;
+      --line: #e4e8f0;
+      --accent: #2563eb;
+      --accent-weak: #eef3ff;
+      --ok: #16a34a;
+      --warn: #dc2626;
+      --shadow: 0 2px 10px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .06);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--fg);
+      background: var(--bg);
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: saturate(1.2) blur(6px);
+      background: rgba(247, 249, 252, .85);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 14px 20px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0;
+      letter-spacing: .2px;
+    }
+
+    .grow {
+      flex: 1;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    input[type="file"] {
+      font-size: 14px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: transform .05s ease, box-shadow .2s ease;
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 4px rgba(16, 24, 40, .08);
+    }
+
+    button[disabled] {
+      opacity: .5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-accent {
+      border-color: transparent;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 22px auto;
+      padding: 0 20px 60px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      display: block;
+      text-align: left;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(16, 24, 40, .10);
+      border-color: #d7deea;
+    }
+
+    .card h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    #wizard .crumbs {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    #wizard .crumbs .home {
+      background: var(--accent-weak);
+      border-color: transparent;
+    }
+
+    #wizard .title {
+      font-weight: 600;
+    }
+
+    #progress {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    #stepContainer {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    #stepContainer h3 {
+      margin: 0 0 8px;
+    }
+
+    #stepContainer ul {
+      margin: 8px 0 0 20px;
+    }
+
+    #stepContainer p {
+      margin: 8px 0 0;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 12px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .option {
+      display: block;
+      width: 100%;
+      text-align: left;
+    }
+
+    .option.list-item {
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .option.selected {
+      outline: 2px solid var(--accent);
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      gap: 10px;
+    }
+
+    .end-actions {
+      margin-top: 16px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .tag-ok {
+      background: #ecfdf5;
+      border-color: #ccfbf1;
+      color: #065f46;
+    }
+
+    .tag-end {
+      background: #fef2f2;
+      border-color: #fee2e2;
+      color: #991b1b;
+    }
+
+    /* Map */
+    .graph-panel {
+      margin: 12px 0 16px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    /* append */
+    .graph-panel:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    .graph-panel:-webkit-full-screen {
+      width: 100vw;
+      height: 100vh;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    .graph-panel:fullscreen .graph-svg,
+    .graph-panel:-webkit-full-screen .graph-svg {
+      height: calc(100vh - 56px);
+    }
+
+
+    .graph-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .graph-svg {
+      width: 100%;
+      height: 360px;
+      display: block;
+    }
+
+    .node-rect {
+      fill: #fff;
+      stroke: #d4dbe7;
+      rx: 8;
+    }
+
+    .node-rect.visited {
+      stroke: #94a3b8;
+    }
+
+    .node-rect.current {
+      stroke: var(--accent);
+      stroke-width: 2;
+    }
+
+    .edge {
+      stroke: #98a2b3;
+      stroke-width: 1.2;
+      fill: none;
+      marker-end: url(#arrow);
+    }
+
+    .edge.highlight {
+      stroke: var(--accent);
+    }
+
+    .edge-label {
+      font-size: 11px;
+      fill: #667085;
+      pointer-events: none;
+    }
+
+    .node-label {
+      font-size: 12px;
+      fill: #0b1220;
+      pointer-events: none;
+    }
+
+    .graph-zoom button {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 4px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .link-like {
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .graph-svg {
+      cursor: grab;
+    }
+
+    .graph-svg.dragging {
+      cursor: grabbing;
+    }
+
+    /* avoid text selection while dragging and on labels */
+    .node-label,
+    .edge-label {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .graph-panel.dragging,
+    .graph-panel.dragging * {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* optional image inside cards/options */
+    .card .thumb,
+    .option .thumb {
+      display: block;
+      width: 100%;
+      max-height: 90px;
+      object-fit: contain;
+      margin-top: 8px;
+    }
+
+    /* instruction/option images */
+    /* append this after your existing CSS to override */
+    .thumb {
+      display: block;
+      width: 66% !important;
+      /* 66% of the card width */
+      height: auto;
+      max-height: none;
+      object-fit: contain;
+      margin: 16px auto 0 !important;
+      /* extra spacing above, centered */
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    /* validation */
+    .error {
+      color: var(--warn);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row">
+        <h1 class="grow">SOP Runbook · Viewer</h1>
+        <div class="controls">
+          <input id="fileInput" type="file" accept=".json,application/json" />
+          <button id="downloadBtn" title="Download current JSON">Export JSON</button>
+          <button id="aboutBtn" title="About this file">About</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="landing" class="view"></section>
+
+    <section id="wizard" class="view hidden">
+      <div class="crumbs">
+        <button id="backHome" class="home">◀ Home</button>
+        <span class="title" id="starterTitle"></span>
+        <button id="toggleMap" class="link-like" title="Show or hide the map">Show map</button>
+      </div>
+
+      <div id="progress"></div>
+      <div id="stepContainer"></div>
+      <div class="nav">
+        <button id="prevBtn">Previous</button>
+        <button id="nextBtn" class="btn-accent">Next</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Default, inline JSON so the file works out-of-the-box. Replace by importing another JSON. -->
+  <script id="default-sop" type="application/json">
+
+{
+  "version": "1.0",
+  
+}
+
+
+  <\/script>
+
+  <script>
+    (() => {
+      /*** State ***/
+      let sop = JSON.parse(document.getElementById('default-sop').textContent);
+      const state = { currentStarterIndex: null, stepIndex: 0, answers: {} };
+
+      /*** Elements ***/
+      const landingEl = document.getElementById('landing');
+      const wizardEl = document.getElementById('wizard');
+      const backHomeBtn = document.getElementById('backHome');
+      const starterTitleEl = document.getElementById('starterTitle');
+      const progressEl = document.getElementById('progress');
+      const stepContainer = document.getElementById('stepContainer');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const fileInput = document.getElementById('fileInput');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const aboutBtn = document.getElementById('aboutBtn');
+
+      /*** Renderers ***/
+      function showLanding() {
+        wizardEl.classList.add('hidden');
+        landingEl.classList.remove('hidden');
+        landingEl.innerHTML = `
+        <h2 style="margin:0 0 4px">${escapeHtml(sop.title || 'Choose a Service')}</h2>
+        <p class="muted" style="margin:0 0 12px">${escapeHtml(sop.description || 'Pick one to start the step-by-step guide.')}</p>
+        <div class="grid">
+          ${(sop.starters || []).map((st, idx) => `
+              <button class="card" data-idx="${idx}" aria-label="${escapeHtml(st.label)}">
+                <h3>${escapeHtml(st.label)}</h3>
+                ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ''}
+                ${st.img_b64 ? `<img class="thumb" src="${st.img_b64}" alt="">` : ``}
+                <div style="margin-top:10px" class="pill">
+                  <span>Steps</span>
+                  <strong>${(st.steps || []).length}</strong>
+                </div>
+              </button>
+            `).join('')}
+
+
+        </div>`;
+
+        landingEl.querySelectorAll('.card').forEach(btn => {
+          btn.addEventListener('click', () => startWizard(parseInt(btn.dataset.idx, 10)));
+        });
+      }
+
+      function startWizard(starterIdx) {
+        state.currentStarterIndex = starterIdx;
+        state.stepIndex = 0;
+        state.answers = {};
+        state.history = []; // NEW
+        landingEl.classList.add('hidden');
+        wizardEl.classList.remove('hidden');
+        const starter = sop.starters[starterIdx];
+        starter._index = {}; // NEW
+        (starter.steps || []).forEach((s, i) => { if (s.id) starter._index[s.id] = i; }); // NEW
+        starterTitleEl.textContent = starter.label;
+        renderStep();
+      }
+
+
+      function renderStep() {
+        const starter = sop.starters[state.currentStarterIndex];
+        const steps = starter.steps || [];
+        const idx = state.stepIndex;
+        const linearPath = computeLinearPath(starter);
+        const pos = Math.max(0, linearPath.indexOf(idx));
+        progressEl.textContent = `Step ${pos + 1} of ${linearPath.length}`;
+        prevBtn.disabled = idx === 0;
+        nextBtn.textContent = idx >= steps.length - 1 ? 'Finish' : 'Next';
+
+        const step = steps[idx];
+        stepContainer.innerHTML = '';
+        if (!step) { return; }
+
+        let node;
+        switch (step.type) {
+          // --- replace your 'instruction' case with this ---
+          case 'instruction': {
+            node = document.createElement('div');
+            node.innerHTML = `
+                              ${step.title ? `<h3>${escapeHtml(step.title)}</h3>` : ''}
+                              ${renderTextBody(step.body)}
+                              ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ``}
+                            `;
+            stepContainer.appendChild(node);
+            setNextEnabled(true);
+            break;
+          }
+
+
+
+          // --- replace your 'input' case with this (adds optional image, same spacing/size) ---
+          case 'input': {
+            node = document.createElement('div');
+            node.innerHTML = `
+                            ${step.label ? `<label for="inp">${escapeHtml(step.label)}</label>` : ''}
+                            <input id="inp" type="text" placeholder="${escapeHtml(step.placeholder || '')}" class="text-input" />
+                            ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ``}
+                            <div class="error" id="err" style="display:none"></div>
+                          `;
+            stepContainer.appendChild(node);
+
+            const input = node.querySelector('#inp');
+            const err = node.querySelector('#err');
+
+            input.value = state.answers[step.id] || '';
+
+            function refresh() {
+              state.answers[step.id] = input.value;
+              const res = validateValueForStep(step, input.value);
+              err.textContent = res.ok ? '' : res.msg;
+              err.style.display = res.ok ? 'none' : '';
+              setNextEnabled(res.ok);
+            }
+
+            input.addEventListener('input', refresh);
+            refresh();
+            break;
+          }
+
+
+
+          case 'select': {
+            node = document.createElement('div');
+            node.innerHTML = step.label ? `<h3>${escapeHtml(step.label)}</h3>` : '';
+
+            const display = step.display || 'cards';
+            const mode = step.mode === 'multi' ? 'multi' : 'single';
+
+            const optionsWrap = document.createElement('div');
+            optionsWrap.className = display === 'cards' ? 'grid' : 'list';
+
+            let selected = state.answers[step.id] ?? (mode === 'multi' ? [] : null);
+
+            (step.options || []).forEach(opt => {
+              const btn = document.createElement('button');
+              btn.className = display === 'cards' ? 'card option' : 'option list-item';
+              btn.dataset.value = opt.value;
+              btn.innerHTML = `
+                            <strong>${escapeHtml(opt.label)}</strong>
+                            ${opt.hint ? `<div class="muted">${escapeHtml(opt.hint)}</div>` : ``}
+                            ${opt.img_b64 ? `<img class="thumb" src="${opt.img_b64}" alt="">` : ``}
+                          `;
+
+              const isSelected = mode === 'multi'
+                ? (Array.isArray(selected) && selected.some(o => (o?.value ?? o) === opt.value))
+                : (selected && ((selected?.value ?? selected) === opt.value));
+              if (isSelected) btn.classList.add('selected');
+
+              btn.addEventListener('click', () => {
+                if (mode === 'multi') {
+                  selected = Array.isArray(state.answers[step.id]) ? [...state.answers[step.id]] : [];
+                  const i = selected.findIndex(o => (o?.value ?? o) === opt.value);
+                  if (i >= 0) {
+                    selected.splice(i, 1);
+                    btn.classList.remove('selected');
+                  } else {
+                    selected.push({ value: opt.value, label: opt.label });
+                    btn.classList.add('selected');
+                  }
+                  state.answers[step.id] = selected;
+                } else {
+                  // store next target for branching
+                  state.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
+                  optionsWrap.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+                  btn.classList.add('selected');
+                }
+                refreshSelect(); // NEW: validate and enable/disable Next
+              });
+
+              optionsWrap.appendChild(btn);
+            });
+
+            node.appendChild(optionsWrap);
+
+            // NEW: error message area
+            const err = document.createElement('div');
+            err.className = 'error';
+            err.style.display = 'none';
+            node.appendChild(err);
+
+            // NEW: validator bridge for this step
+            function refreshSelect() {
+              const res = validateValueForStep(step, state.answers[step.id]);
+              err.textContent = res.ok ? '' : res.msg;
+              err.style.display = res.ok ? 'none' : '';
+              setNextEnabled(res.ok);
+            }
+
+            stepContainer.appendChild(node);
+
+            // NEW: initial validation pass (replaces old setNextEnabled at end)
+            refreshSelect();
+            break;
+          }
+
+
+
+          // --- replace your 'end' case with this (adds optional image, same spacing/size) ---
+          case 'end': {
+            node = document.createElement('div');
+            node.innerHTML = `
+                            ${step.title ? `<h3>${escapeHtml(step.title)}</h3>` : '<h3>Completed</h3>'}
+                            <span class="pill tag-end">End</span>
+                            ${renderTextBody(step.body)}
+                            ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ``}
+                            <div class="end-actions">
+                              <button id="restart">Back to Home</button>
+                            </div>
+                          `;
+            stepContainer.appendChild(node);
+            document.getElementById('restart').addEventListener('click', showLanding);
+            setNextEnabled(false);
+            break;
+          }
+
+
+          default:
+            stepContainer.textContent = 'Unknown step type.';
+            setNextEnabled(false);
+        }
+        if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+      }
+
+      /*** Helpers ***/
+
+      // ---- Map helpers (straight lines, toggle, zoom; non-interactive) ----
+
+      // Validate current step value against required, regex, and (for multi-select) min/max
+      function validateValueForStep(step, value) {
+        // required
+        if (step.required) {
+          if (step.type === 'input') {
+            if (!String(value || '').trim()) return { ok: false, msg: step.requiredMessage || 'This field is required' };
+          } else if (step.type === 'select') {
+            if (step.mode === 'multi') {
+              if (!Array.isArray(value) || value.length === 0) return { ok: false, msg: step.requiredMessage || 'Select at least one' };
+            } else {
+              if (!value) return { ok: false, msg: step.requiredMessage || 'Please choose an option' };
+            }
+          }
+        }
+
+        // regex for input
+        if (step.type === 'input' && step.regex) {
+          try {
+            const re = new RegExp(step.regex);
+            if (!re.test(String(value || ''))) return { ok: false, msg: step.error || 'Invalid format' };
+          } catch (e) { /* ignore invalid regex */ }
+        }
+
+        // min/max for multi-select
+        if (step.type === 'select' && step.mode === 'multi') {
+          const count = Array.isArray(value) ? value.length : 0;
+          if (typeof step.min === 'number' && count < step.min) return { ok: false, msg: step.minMessage || `Select at least ${step.min}` };
+          if (typeof step.max === 'number' && count > step.max) return { ok: false, msg: step.maxMessage || `Select at most ${step.max}` };
+        }
+
+        return { ok: true, msg: '' };
+      }
+
+      function isCurrentStepValid() {
+        const starter = sop.starters[state.currentStarterIndex];
+        const step = (starter.steps || [])[state.stepIndex];
+        if (!step) return true;
+        const val = state.answers[step.id];
+        return validateValueForStep(step, val).ok;
+      }
+
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      let mapVisible = false;
+      let mapZoom = 1;
+      let mapPan = { x: 0, y: 0 };           // pan in SVG units
+      let lastGraphSize = { width: 1, height: 1 }; // set by renderGraph
+      const drag = { active: false, start: { x: 0, y: 0 }, pan0: { x: 0, y: 0 }, vw: 0, vh: 0 };
+
+
+      function ensureGraphPanel() {
+        let panel = document.getElementById('graphPanel');
+        if (panel) return panel;
+
+        panel = document.createElement('div');
+        panel.id = 'graphPanel';
+        panel.className = 'graph-panel';
+        panel.style.display = 'none';
+        // In ensureGraphPanel(), REPLACE the panel.innerHTML assignment with:
+        panel.innerHTML = `
+                          <div class="graph-header">
+                            <strong>Map</strong>
+                            <div class="graph-zoom">
+                              <button id="zoomOutBtn" title="Zoom out">−</button>
+                              <button id="zoomInBtn" title="Zoom in">+</button>
+                              <button id="zoomResetBtn" title="Reset zoom">Reset</button>
+                              <button id="mapMaxBtn" title="Full screen">Full screen</button>
+                            </div>
+                          </div>
+                          <svg id="graphSvg" class="graph-svg" role="img" aria-label="SOP Map"></svg>
+                        `;
+
+        wizardEl.insertBefore(panel, stepContainer);
+
+        // ---- wire zoom (buttons + wheel) ----
+        const svg = panel.querySelector('#graphSvg');
+        panel.querySelector('#zoomInBtn').addEventListener('click', () => setMapZoom(mapZoom * 1.2));
+        panel.querySelector('#zoomOutBtn').addEventListener('click', () => setMapZoom(mapZoom / 1.2));
+        panel.querySelector('#zoomResetBtn').addEventListener('click', () => { mapPan = { x: 0, y: 0 }; setMapZoom(1); });
+        svg.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          setMapZoom(mapZoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+        }, { passive: false });
+
+        // ---- wire pan (mouse + touch) ----
+        svg.addEventListener('mousedown', (e) => {
+          e.preventDefault(); // stop text selection while dragging
+          drag.active = true;
+          drag.start = { x: e.clientX, y: e.clientY };
+          drag.pan0 = { ...mapPan };
+          drag.vw = lastGraphSize.width / mapZoom;
+          drag.vh = lastGraphSize.height / mapZoom;
+          svg.classList.add('dragging');
+          panel.classList.add('dragging'); // NEW
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!drag.active) return;
+          const dx = e.clientX - drag.start.x;
+          const dy = e.clientY - drag.start.y;
+          const wppY = drag.vh / svg.clientHeight; // world units per pixel (based on Y)
+          mapPan.x = drag.pan0.x - dx * wppY;      // use Y factor for X too → same feel
+          mapPan.y = drag.pan0.y - dy * wppY;
+
+          if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+        });
+        window.addEventListener('mouseup', () => {
+          if (!drag.active) return;
+          drag.active = false;
+          svg.classList.remove('dragging');
+          panel.classList.remove('dragging'); // NEW
+        });
+
+
+        svg.addEventListener('touchstart', (e) => {
+          if (!e.touches.length) return;
+          const t = e.touches[0];
+          drag.active = true;
+          drag.start = { x: t.clientX, y: t.clientY };
+          drag.pan0 = { ...mapPan };
+          drag.vw = lastGraphSize.width / mapZoom;
+          drag.vh = lastGraphSize.height / mapZoom;
+          svg.classList.add('dragging');
+          panel.classList.add('dragging'); // NEW
+        }, { passive: true });
+
+        svg.addEventListener('touchend', () => {
+          if (!drag.active) return;
+          drag.active = false;
+          svg.classList.remove('dragging');
+          panel.classList.remove('dragging'); // NEW
+        });
+
+        // Still inside ensureGraphPanel(), AFTER wiring zoom & pan handlers, ADD:
+        const maxBtn = panel.querySelector('#mapMaxBtn');
+
+        function isFs() {
+          return document.fullscreenElement === panel || document.webkitFullscreenElement === panel;
+        }
+        function updateMaxBtn() {
+          maxBtn.textContent = isFs() ? 'Exit full screen' : 'Full screen';
+        }
+        maxBtn.addEventListener('click', () => {
+          if (isFs()) {
+            (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+          } else {
+            (panel.requestFullscreen || panel.webkitRequestFullscreen)?.call(panel);
+          }
+        });
+        document.addEventListener('fullscreenchange', () => {
+          updateMaxBtn();
+          if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+        });
+        document.addEventListener('webkitfullscreenchange', () => {
+          updateMaxBtn();
+          if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+        });
+        updateMaxBtn();
+
+
+
+
+
+
+        return panel;
+      }
+
+
+      function setMapVisibility(v) {
+        mapVisible = v;
+        ensureGraphPanel().style.display = v ? '' : 'none';
+        document.getElementById('toggleMap').textContent = v ? 'Hide map' : 'Show map';
+        if (v) renderGraph(sop.starters[state.currentStarterIndex]);
+      }
+
+      function setMapZoom(z) {
+        mapZoom = Math.min(4, Math.max(0.5, z));
+        // re-render to apply new viewBox
+        if (mapVisible) renderGraph(sop.starters[state.currentStarterIndex]);
+      }
+
+      function createSVG(tag, attrs, text) {
+        const el = document.createElementNS(SVG_NS, tag);
+        for (const k in attrs) el.setAttribute(k, attrs[k]);
+        if (text != null) el.textContent = text;
+        return el;
+      }
+
+      function buildGraph(starter) {
+        const steps = starter.steps || [];
+        const nodes = steps.map((s, i) => ({
+          id: s.id || `_i${i}`,
+          label: s.title || s.label || s.type,
+          type: s.type,
+          idx: i
+        }));
+        const idToIdx = Object.fromEntries(nodes.map(n => [n.id, n.idx]));
+        const edges = [];
+
+        for (let i = 0; i < steps.length; i++) {
+          const s = steps[i];
+          if (s.type === 'select' && s.mode !== 'multi' && Array.isArray(s.options) && s.options.length) {
+            let had = false;
+            for (const opt of s.options) {
+              let to = null;
+              if (opt.next && (opt.next in idToIdx)) to = idToIdx[opt.next];
+              else if (s.next && (s.next in idToIdx)) to = idToIdx[s.next];
+              else if (i + 1 < steps.length) to = i + 1;
+              if (to != null) {
+                const targetId = steps[to].id || `_i${to}`;
+                const lbl = String(opt.value ?? opt.label ?? '');
+                edges.push({ from: i, to, label: lbl });
+                had = true;
+              }
+            }
+            if (!had) {
+              const to = (s.next && (s.next in idToIdx)) ? idToIdx[s.next] : (i + 1 < steps.length ? i + 1 : null);
+              if (to != null) edges.push({ from: i, to, label: '' });
+            }
+          } else {
+            let to = null;
+            if (s.next && (s.next in idToIdx)) to = idToIdx[s.next];
+            else if (i + 1 < steps.length) to = i + 1;
+            if (to != null) edges.push({ from: i, to, label: '' });
+          }
+        }
+        return { nodes, edges };
+      }
+
+      function layoutGraph(nodes, edges) {
+        // simple BFS levels (columns); fixed sizes
+        const adj = nodes.map(() => []);
+        edges.forEach(e => adj[e.from].push(e.to));
+        const level = new Array(nodes.length).fill(Infinity);
+        const q = [0]; level[0] = 0;
+        while (q.length) {
+          const u = q.shift();
+          for (const v of adj[u]) if (level[v] > level[u] + 1) { level[v] = level[u] + 1; q.push(v); }
+        }
+        const maxLevel = Math.max(0, ...level.filter(n => isFinite(n)));
+        for (let i = 0; i < nodes.length; i++) { if (!isFinite(level[i])) level[i] = maxLevel + 1; }
+
+        const buckets = {};
+        nodes.forEach((n, i) => { (buckets[level[i]] ||= []).push(i); });
+
+        const colW = 210, rowH = 90, padX = 40, padY = 40;
+        const positions = new Array(nodes.length);
+        let maxCols = 0, maxL = -1;
+        for (const k of Object.keys(buckets)) {
+          const L = Number(k), arr = buckets[L];
+          maxL = Math.max(maxL, L); maxCols = Math.max(maxCols, arr.length);
+          arr.forEach((i, j) => { positions[i] = { x: padX + j * colW, y: padY + L * rowH }; });
+        }
+        return { positions, size: { width: padX * 2 + Math.max(1, maxCols) * colW, height: padY * 2 + (maxL + 1) * rowH } };
+      }
+
+      function currentPathPairs(starter) {
+        // derive visited edge pairs from current answers (for highlight)
+        const steps = starter.steps || [];
+        const idToIdx = {};
+        steps.forEach((s, i) => { if (s.id) idToIdx[s.id] = i; });
+        const pairs = [];
+        let i = 0, guard = 0;
+        while (i != null && i < steps.length && guard++ < steps.length + 10) {
+          const s = steps[i];
+          let nextIdx = null;
+          if (s.type === 'select' && s.mode !== 'multi' && Array.isArray(s.options)) {
+            const sel = state.answers[s.id];
+            const val = sel && (sel.value ?? sel);
+            const opt = s.options.find(o => o.value === val);
+            if (opt && opt.next && (opt.next in idToIdx)) nextIdx = idToIdx[opt.next];
+          }
+          if (nextIdx == null) {
+            if (s.next && (s.next in idToIdx)) nextIdx = idToIdx[s.next];
+            else if (i + 1 < steps.length) nextIdx = i + 1;
+          }
+          if (nextIdx != null) { pairs.push(i + '>' + nextIdx); i = nextIdx; } else break;
+        }
+        return new Set(pairs);
+      }
+
+      function renderGraph(starter) {
+        const panel = ensureGraphPanel();
+        const svg = document.getElementById('graphSvg');
+        const { nodes, edges } = buildGraph(starter);
+        const { positions, size } = layoutGraph(nodes, edges);
+        // set viewBox with zoom + pan (pan in SVG units relative to center)
+        lastGraphSize = size;
+        const baseCx = size.width / 2, baseCy = size.height / 2;
+        const cx = baseCx + mapPan.x;
+        const cy = baseCy + mapPan.y;
+        const vw = size.width / mapZoom, vh = size.height / mapZoom;
+        svg.setAttribute('viewBox', `${cx - vw / 2} ${cy - vh / 2} ${vw} ${vh}`);
+
+        svg.innerHTML = '';
+
+        // defs for straight-line arrows
+        const defs = createSVG('defs', {});
+        const marker = createSVG('marker', { id: 'arrow', markerWidth: 8, markerHeight: 8, refX: 8, refY: 3.5, orient: 'auto', markerUnits: 'strokeWidth' });
+        marker.appendChild(createSVG('path', { d: 'M0,0 L8,3.5 L0,7 z', fill: '#98a2b3' }));
+        defs.appendChild(marker);
+        svg.appendChild(defs);
+
+        const highlight = currentPathPairs(starter);
+
+        // draw edges as straight lines
+        edges.forEach(e => {
+          const a = positions[e.from], b = positions[e.to];
+          if (!a || !b) return;
+          const x1 = a.x + 160, y1 = a.y + 24;   // right mid of source
+          const x2 = b.x, y2 = b.y + 24;   // left mid of target
+          const cls = 'edge' + (highlight.has(e.from + '>' + e.to) ? ' highlight' : '');
+          svg.appendChild(createSVG('line', { x1, y1, x2, y2, 'class': cls }));
+          if (e.label) {
+            const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - 6;
+            svg.appendChild(createSVG('text', { x: mx, y: my, 'text-anchor': 'middle', 'class': 'edge-label' }, e.label));
+          }
+        });
+
+        // draw nodes (no click)
+        nodes.forEach((n, i) => {
+          const pos = positions[i]; if (!pos) return;
+          const g = createSVG('g', { transform: `translate(${pos.x},${pos.y})` });
+          const rectCls = ['node-rect'];
+          if (highlight.size && Array.from(highlight).some(p => p.startsWith(i + '>') || p.endsWith('>' + i))) rectCls.push('visited');
+          if (i === state.stepIndex) rectCls.push('current');
+          g.appendChild(createSVG('rect', { width: 160, height: 48, 'class': rectCls.join(' ') }));
+          g.appendChild(createSVG('text', { x: 80, y: 28, 'text-anchor': 'middle', 'class': 'node-label' }, n.label));
+          svg.appendChild(g);
+        });
+      }
+
+      function computeLinearPath(starter) {
+        const steps = starter.steps || [];
+        const idToIdx = {};
+        steps.forEach((s, i) => { if (s.id) idToIdx[s.id] = i; });
+
+        const path = [];
+        const seen = new Set();
+        let i = 0;
+
+        for (let guard = 0; guard < steps.length + 10; guard++) {
+          if (i == null || i < 0 || i >= steps.length) break;
+          if (seen.has(i)) break;
+          path.push(i);
+          seen.add(i);
+
+          const step = steps[i];
+          if (step && step.type === 'end') break;
+
+          let nextIdx = null;
+
+          if (step && step.type === 'select' && step.mode !== 'multi' && Array.isArray(step.options)) {
+            const ans = state.answers[step.id];
+            if (ans) {
+              const selVal = (ans && (ans.value ?? ans));
+              const opt = step.options.find(o => o.value === selVal);
+              if (opt && opt.next && (opt.next in idToIdx)) nextIdx = idToIdx[opt.next];
+            }
+            if (nextIdx == null) {
+              if (step.next && (step.next in idToIdx)) nextIdx = idToIdx[step.next];
+              else nextIdx = (i + 1 < steps.length) ? i + 1 : null;
+            }
+          } else {
+            if (step && step.next && (step.next in idToIdx)) nextIdx = idToIdx[step.next];
+            else nextIdx = (i + 1 < steps.length) ? i + 1 : null;
+          }
+
+          i = nextIdx;
+        }
+        return path;
+      }
+
+      function pathStats(starter) {
+        const steps = starter.steps || [];
+        const idToIdx = {};
+        steps.forEach((s, i) => { if (s.id) idToIdx[s.id] = i; });
+
+        function nextIndices(step, i) {
+          const out = new Set();
+          if (step && step.type === 'select' && step.mode !== 'multi' && Array.isArray(step.options) && step.options.length) {
+            let hadNext = false;
+            step.options.forEach(opt => {
+              if (opt.next && (opt.next in idToIdx)) {
+                out.add(idToIdx[opt.next]); hadNext = true;
+              }
+            });
+            if (!hadNext) {
+              if (step.next && (step.next in idToIdx)) out.add(idToIdx[step.next]);
+              else if (i + 1 < steps.length) out.add(i + 1);
+            }
+          } else {
+            if (step && step.next && (step.next in idToIdx)) out.add(idToIdx[step.next]);
+            else if (i + 1 < steps.length) out.add(i + 1);
+          }
+          return Array.from(out);
+        }
+
+        function dfs(i, stack) {
+          if (i == null || i < 0 || i >= steps.length) return { min: 0, max: 0 };
+          if (stack.has(i)) return { min: 0, max: 0 }; // break cycles
+          stack.add(i);
+
+          const step = steps[i];
+          const edges = (step && step.type === 'end') ? [] : nextIndices(step, i);
+
+          let res;
+          if (edges.length === 0) {
+            res = { min: 1, max: 1 };
+          } else {
+            let minC = Infinity, maxC = -Infinity;
+            for (const e of edges) {
+              const r = dfs(e, stack);
+              minC = Math.min(minC, r.min);
+              maxC = Math.max(maxC, r.max);
+            }
+            res = { min: 1 + (isFinite(minC) ? minC : 0), max: 1 + (isFinite(maxC) ? maxC : 0) };
+          }
+          stack.delete(i);
+          return res;
+        }
+
+        return dfs(0, new Set());
+      }
+
+      function renderTextBody(body) {
+        if (!body) return '';
+        if (Array.isArray(body)) {
+          return `<ul>${body.map(item => `<li>${safeInterpolate(String(item))}</li>`).join('')}</ul>`;
+        }
+        return `<p>${safeInterpolate(String(body))}</p>`;
+      }
+
+      // --- helpers for {{var}} interpolation ---
+      function safeInterpolate(str) {
+        // supports {{var}}, {{var.label}}, and multi-select join
+        return str.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, path) => escapeHtml(readAnswerPath(path)));
+      }
+
+      function readAnswerPath(path) {
+        const [head, ...rest] = String(path).split('.');
+        const base = state.answers[head];
+        return formatAnswerPath(base, rest);
+      }
+
+      function formatAnswerPath(base, props) {
+        if (base == null) return '';
+        if (Array.isArray(base)) {
+          if (props && props.length) {
+            return base.map(x => pickPath(x, props)).filter(v => v != null && v !== '').join(', ');
+          }
+          return base.map(x => (x && (x.label || x.value)) || String(x)).join(', ');
+        }
+        if (typeof base === 'object') {
+          if (props && props.length) return pickPath(base, props) ?? '';
+          return base.label || base.value || '';
+        }
+        return String(base);
+      }
+
+      function pickPath(obj, props) {
+        let cur = obj;
+        for (const p of props) { if (cur == null) return ''; cur = cur[p]; }
+        return cur ?? '';
+      }
+
+
+      function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[s]));
+      }
+      function setNextEnabled(v) { nextBtn.disabled = !v; }
+
+      /*** Events ***/
+      prevBtn.addEventListener('click', () => {
+        if (state.history && state.history.length) {
+          state.stepIndex = state.history.pop();
+          renderStep();
+        } else if (state.stepIndex > 0) {
+          state.stepIndex--; renderStep();
+        }
+      });
+
+      nextBtn.addEventListener('click', () => {
+        if (!isCurrentStepValid()) return; // block if invalid
+        navigateNext();                    // your existing function
+      });
+
+      // toggle link
+      document.getElementById('toggleMap').addEventListener('click', (e) => {
+        e.preventDefault();
+        setMapVisibility(!mapVisible);
+      });
+
+
+      function navigateNext() {
+        const starter = sop.starters[state.currentStarterIndex];
+        const steps = starter.steps || [];
+        const current = steps[state.stepIndex];
+
+        // record history for proper back behavior on jumps
+        state.history = state.history || [];
+        state.history.push(state.stepIndex);
+
+        let targetId = null;
+
+        // branch on single-select option
+        if (current && current.type === 'select' && current.mode !== 'multi') {
+          const sel = state.answers[current.id];
+          if (sel && sel.next) targetId = sel.next;
+        }
+
+        // unconditional next jump if provided on the step
+        if (!targetId && current && current.next) targetId = current.next;
+
+        if (targetId) {
+          const idx = starter._index && starter._index[targetId];
+          if (typeof idx === 'number') { state.stepIndex = idx; renderStep(); return; }
+        }
+
+        if (state.stepIndex < steps.length - 1) { state.stepIndex++; renderStep(); }
+      }
+
+      backHomeBtn.addEventListener('click', showLanding);
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(reader.result);
+            if (!parsed || !Array.isArray(parsed.starters)) throw new Error('Missing starters[]');
+            sop = parsed;
+            showLanding();
+          } catch (err) {
+            alert('Invalid JSON: ' + (err && err.message ? err.message : 'Parse error'));
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(sop, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (sop.title ? slugify(sop.title) : 'sop') + '.json';
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      aboutBtn.addEventListener('click', () => {
+        alert('SOP Runbook Viewer\n\nOffline, single-file HTML. Import a .json to load your flow. Supported step types: instruction, input (text), select (cards or list), end.');
+      });
+
+      function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'sop'; }
+
+      // Init
+      showLanding();
+    })();
+  <\/script>
+</body>
+
+</html>
+
+</script>
+
+
+  <header>
+    <div class="wrap">
+      <div class="row">
+        <h1 class="grow">OpsPath Studio · SOP Builder</h1>
+        <div class="controls">
+          <div class="upload">
+            <input id="importHtmlInput" type="file" accept=".html,text/html" hidden>
+            <button id="importHtmlBtn" class="btn">Import Viewer HTML…</button>
+            <span id="importHtmlNote" class="small"></span>
+          </div>
+          <button id="themeToggle" class="btn">🌙 Dark</button>
+          <button id="exportViewerBtn" class="btn-accent">Export Viewer HTML</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="layout">
+      <!-- Left: Starters & Steps -->
+      <div class="panel" id="leftPanel">
+        <h2>Starters</h2>
+        <div class="rowflex">
+          <select id="starterSelect"></select>
+        </div>
+        <div class="small">Starter meta</div>
+        <div id="starterMetaBox"></div>
+
+        <div class="rowflex" style="margin-top:8px">
+          <button id="addStarterBtn" class="iconbtn">+ Starter</button>
+          <button id="delStarterBtn" class="iconbtn warn">🗑 Delete starter</button>
+        </div>
+
+        <div class="hr"></div>
+        <h2>Steps</h2>
+        <div class="rowflex">
+          <button id="addBeforeBtn" class="iconbtn">+ Before</button>
+          <button id="addAfterBtn" class="iconbtn">+ After</button>
+          <button id="dupStepBtn" class="iconbtn">⎘ Duplicate</button>
+          <button id="delStepBtn" class="iconbtn warn">🗑 Delete step</button>
+        </div>
+        <div class="list" id="stepsList"></div>
+      </div>
+
+      <!-- Center: Graph -->
+      <div class="panel graph-panel" id="graphPanel">
+        <div class="graph-header">
+          <div class="rowflex">
+            <strong>Map</strong>
+            <span class="badge">Top→Bottom</span>
+          </div>
+          <div class="graph-zoom">
+            <button id="zoomOutBtn">−</button>
+            <button id="zoomInBtn">+</button>
+            <button id="zoomResetBtn">Reset</button>
+            <button id="fullscreenBtn">Full screen</button>
+          </div>
+        </div>
+        <svg id="graphSvg" class="graph-svg" role="img" aria-label="SOP Map">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8"
+              orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#98a2b3"></path>
+            </marker>
+          </defs>
+        </svg>
+        <div class="small">
+          Click a node to edit. Edges come from <b>step.next</b> (instruction/input/multi-select) and from
+          <b>option.next</b> (single-select). Edge labels show <i>option.value</i>.
+        </div>
+      </div>
+
+      <!-- Right: Inspector -->
+      <div class="panel" id="rightPanel">
+        <h2>Properties</h2>
+        <div id="propBox" class="small">Select a step from the list or the map.</div>
+        
+        <div id="toolMsg" class="small"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+
+    // Read the embedded viewer once on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('viewerHtmlEmbedded');
+      window.fullViewerHtml = el ? String(el.textContent || '').trim() : '';
+    });
+
+    function exportViewerHTML() {
+      // 1) Pull embedded full HTML
+      const holder = document.getElementById('viewerHtmlEmbedded');
+      if (!holder) { alert('Missing #viewerHtmlEmbedded'); return; }
+      let src = String(holder.textContent || '').trim();
+      if (!src) { alert('No HTML inside #viewerHtmlEmbedded'); return; }
+
+      // 2) If someone pasted encoded text (&lt;html&gt;), decode once
+      if (/&lt;html\b/i.test(src) && !/<html\b/i.test(src)) {
+        src = src
+          .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+          .replace(/&amp;/g, '&');
+      }
+
+      // 3) Restore escaped closing script tags so the HTML parses correctly
+      //    (Inside the text/plain wrapper you MUST use <\/script>; we fix it here)
+      src = src.replace(/<\\\/script>/gi, '</' + 'script>');
+
+      // 4) Parse as a real HTML document
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(src, 'text/html');
+
+      // 5) Find/insert the JSON slot
+      let slot = doc.querySelector('script#default-sop[type="application/json"]');
+      if (!slot) {
+        slot = doc.createElement('script');
+        slot.id = 'default-sop';
+        slot.type = 'application/json';
+        (doc.body || doc.documentElement).appendChild(slot);
+      }
+
+      // 6) Replace JSON with the current SOP
+      try {
+        slot.textContent = JSON.stringify(sop, null, 2);
+      } catch (e) {
+        alert('Failed to stringify SOP JSON: ' + (e && e.message ? e.message : e));
+        return;
+      }
+
+      // 7) Serialize + download
+      const htmlOut = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+      const blob = new Blob([htmlOut], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (typeof slugify === 'function' ? slugify(sop?.title || 'sop-viewer') : 'sop-viewer') + '.html';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 400);
+    }
+
+
+    // Wire the button (or call exportViewerHTML() from your existing handler)
+    document.getElementById('exportViewerBtn')?.addEventListener('click', exportViewerHTML);
+
+    /*** State ***/
+    let sop = makeBlankSOP();
+    let currentStarterIndex = 0;
+    let selectedStepId = null;
+    let viewerTemplate = null;
+
+    /*** Elements ***/
+    const starterSelect = document.getElementById('starterSelect');
+    const stepsList = document.getElementById('stepsList');
+    const graphSvg = document.getElementById('graphSvg');
+    const graphPanel = document.getElementById('graphPanel');
+
+    const starterTitle = document.getElementById('starterTitle');
+    const starterSummary = document.getElementById('starterSummary');
+    const starterDesc = document.getElementById('starterDesc');
+    const toolMsg = document.getElementById('toolMsg');
+
+    /*** Init ***/
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!sop || !Array.isArray(sop.starters) || sop.starters.length === 0) {
+        sop = makeBlankSOP();
+      }
+      currentStarterIndex = 0;
+      selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+      renderAll();          // calls renderStarters/renderSteps/renderGraph/renderStarterMeta
+      wireGlobal();
+    });
+
+    // ---- Import Viewer HTML → extract <script id="default-sop" type="application/json"> ----
+    (function wireImportViewerHTML() {
+      const btn = document.getElementById('importHtmlBtn');
+      const input = document.getElementById('importHtmlInput');
+      const note = document.getElementById('importHtmlNote');
+
+      if (!btn || !input) return;
+
+      btn.addEventListener('click', () => input.click());
+      input.addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        importFromViewerHtmlFile(f);
+        // allow picking the same file again later
+        input.value = '';
+      });
+
+      function importFromViewerHtmlFile(file) {
+        const r = new FileReader();
+        r.onload = () => {
+          try {
+            let text = String(r.result || '');
+
+            // If someone handed us entity-escaped HTML (&lt;html>…), unescape once.
+            if (/&lt;html\b/i.test(text) && !/<html\b/i.test(text)) {
+              text = text
+                .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+                .replace(/&amp;/g, '&');
+            }
+
+            // Parse the HTML, locate the JSON slot
+            const doc = new DOMParser().parseFromString(text, 'text/html');
+            console.log('doc', doc);
+
+            let slot = doc.querySelector('script#default-sop[type="application/json"]');
+
+            // Fallback: any application/json <script> that looks like a SOP
+            if (!slot) {
+              slot = Array.from(doc.querySelectorAll('script[type="application/json"]'))
+                .find(s => /\bstarters\b/.test(s.textContent || ''));
+            }
+            if (!slot) throw new Error('Incompatible SOP structure — can’t read data from this file.');
+            const raw = (slot.textContent || '').trim();
+            if (!raw) throw new Error(
+              'The SOP data in this file is not readable (invalid JSON). Export a fresh Viewer or fix the JSON, then try again.'
+            );
+
+            let parsed;
+            try { parsed = JSON.parse(raw); }
+            catch (err) {
+              throw new Error(
+                'The SOP data is missing “starters”. Export again from the Viewer after adding at least one starter.'
+
+              );
+            }
+
+            if (!parsed || !Array.isArray(parsed.starters))
+              throw new Error('JSON does not contain starters[]');
+
+            // Load into Studio state
+            sop = parsed;
+            currentStarterIndex = 0;
+            selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+
+            renderAll(); // refresh UI
+            if (note) note.textContent = `Imported: ${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
+          } catch (err) {
+            alert(
+              'We couldn’t import this file.\n\n' +
+              (err && err.message ? err.message : 'Unexpected error while reading the file.')
+            );
+          }
+        };
+        r.readAsText(file);
+      }
+    })();
+
+
+
+
+    // Force-blur active input when interacting with the map (so Enter/blur commits fire)
+    ['pointerdown', 'mousedown', 'touchstart'].forEach(evt => {
+      graphSvg.addEventListener(evt, () => {
+        const a = document.activeElement;
+        if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) a.blur();
+      }, true); // capture=true to catch drags too
+    });
+
+    function cssVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+    function syncArrowColor() {
+      const arrowPath = document.querySelector('#arrow path');
+      if (arrowPath) arrowPath.setAttribute('fill', cssVar('--muted'));
+    }
+    // call after you create <marker id="arrow"> and whenever theme changes:
+    syncArrowColor();
+
+
+    (function themeInit() {
+      const btn = document.getElementById('themeToggle');
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(saved || (prefersDark ? 'dark' : 'light'));
+
+      btn?.addEventListener('click', () => {
+        const next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+        setTheme(next);
+      });
+
+      function setTheme(mode) {
+        document.documentElement.setAttribute('data-theme', mode);
+        localStorage.setItem('theme', mode);
+        if (btn) btn.textContent = (mode === 'dark') ? '🌞 Light' : '🌙 Dark';
+      }
+    })();
+
+
+
+    function wireGlobal() {
+
+
+      document.getElementById('addStarterBtn').addEventListener('click', () => {
+        const idx = sop.starters.length;
+        sop.starters.push({
+          id: 'starter_' + (idx + 1),
+          label: 'Starter ' + (idx + 1),
+          summary: '',
+          steps: [makeStep('instruction')]
+        });
+        currentStarterIndex = idx; selectedStepId = sop.starters[idx].steps[0].id;
+        renderAll();
+      });
+      document.getElementById('delStarterBtn').addEventListener('click', () => {
+        if (sop.starters.length <= 1) { alert('Keep at least one starter'); return; }
+        sop.starters.splice(currentStarterIndex, 1);
+        currentStarterIndex = 0; selectedStepId = sop.starters[0].steps[0]?.id || null;
+        renderAll();
+      });
+
+      document.getElementById('addBeforeBtn').addEventListener('click', () => addStepRelative('before'));
+      document.getElementById('addAfterBtn').addEventListener('click', () => addStepRelative('after'));
+      document.getElementById('dupStepBtn').addEventListener('click', dupStep);
+      document.getElementById('delStepBtn').addEventListener('click', delStep);
+
+      document.getElementById('zoomInBtn').addEventListener('click', () => { mapZoom *= 1.2; renderGraph(); console.log('mapZoom'); });
+      document.getElementById('zoomOutBtn').addEventListener('click', () => { mapZoom /= 1.2; renderGraph(); });
+      document.getElementById('zoomResetBtn').addEventListener('click', () => { mapZoom = 1; mapPan = { x: 0, y: 0 }; renderGraph(); });
+
+      const fsBtn = document.getElementById('fullscreenBtn');
+      fsBtn.addEventListener('click', () => {
+        if (document.fullscreenElement === graphPanel) document.exitFullscreen();
+        else graphPanel.requestFullscreen?.();
+      });
+
+      starterTitle.addEventListener('input', () => { getStarter().label = starterTitle.value; renderStarters(); });
+      starterSummary.addEventListener('input', () => { getStarter().summary = starterSummary.value; renderStarters(); });
+      starterDesc.addEventListener('input', () => { getStarter().description = starterDesc.value; });
+
+      document.getElementById('validateBtn').addEventListener('click', () => {
+        const msg = validateSOP();
+        toolMsg.textContent = msg.ok ? 'OK' : ('Errors: ' + msg.errors.join('; '));
+        toolMsg.className = 'small ' + (msg.ok ? 'success' : 'warn');
+      });
+      document.getElementById('tidyIdsBtn').addEventListener('click', () => {
+        tidyIds();
+        renderAll();
+        toolMsg.textContent = 'IDs tidied.';
+      });
+    }
+
+    /*** Renderers ***/
+    function renderAll() { renderStarters(); renderSteps(); renderGraph(); renderStarterMeta(); }
+
+    function renderStarters() {
+      if (!Array.isArray(sop.starters)) sop.starters = [];
+      // ensure at least one starter exists
+      if (sop.starters.length === 0) {
+        sop.starters.push({
+          id: 'starter_1',
+          label: 'Starter 1',
+          summary: '',
+          steps: [makeStep('instruction'), makeStep('end')]
+        });
+      }
+
+      starterSelect.innerHTML = sop.starters
+        .map((s, i) => `<option value="${i}">${escapeHtml(s.label || ('Starter ' + (i + 1)))}</option>`)
+        .join('');
+
+      // clamp index and set selection
+      currentStarterIndex = Math.min(currentStarterIndex, sop.starters.length - 1);
+      starterSelect.value = String(currentStarterIndex);
+
+      // change handler
+      starterSelect.onchange = () => {
+        currentStarterIndex = parseInt(starterSelect.value, 10);
+        selectedStepId = sop.starters[currentStarterIndex]?.steps?.[0]?.id || null;
+        mapPan = { x: 0, y: 0 };      // recenter
+        mapZoom = 1;                 // reset zoom
+        renderSteps();
+        renderGraph();
+        renderInspector();
+        renderStarterMeta();
+      };
+
+    }
+
+
+    function renderSteps() {
+      const st = getStarter();
+      stepsList.innerHTML = '';
+      st.steps.forEach(step => {
+        const btn = document.createElement('button');
+        btn.className = 'item' + (step.id === selectedStepId ? ' active' : '');
+        btn.innerHTML = `
+      <div>
+        <div><strong>${escapeHtml(step.id)}</strong> <span class="badge">${escapeHtml(step.type)}</span></div>
+        <div class="muted">${escapeHtml(step.title || step.label || '')}</div>
+      </div>
+      <div class="muted">→ ${escapeHtml(nextSummary(step))}</div>
+    `;
+        btn.addEventListener('click', () => { selectedStepId = step.id; renderSteps(); renderGraph(); renderInspector(); });
+        stepsList.appendChild(btn);
+      });
+      renderInspector();
+    }
+
+    ['pointerdown', 'mousedown', 'touchstart'].forEach(evt => {
+      graphSvg.addEventListener(evt, () => {
+        const a = document.activeElement;
+        if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) a.blur();
+      }, true);
+    });
+
+    function renderStarterMeta() {
+      const st = getStarter();
+      const box = document.getElementById('starterMetaBox');
+      if (!box) return;
+
+      if (!st) {
+        box.innerHTML = '<div class="small">No starter selected.</div>';
+        return;
+      }
+
+      box.innerHTML = `
+    <label>Title</label>
+    <input id="st_title" type="text" value="${escapeAttr(st.title || '')}"/>
+
+    <label>Summary</label>
+    <input id="st_summary" type="text" value="${escapeAttr(st.summary || '')}"/>
+
+    <label>Description</label>
+    <input id="st_desc" type="text" value="${escapeAttr(st.description || '')}"/>
+
+   
+  `;
+
+      const t = box.querySelector('#st_title');
+      const s = box.querySelector('#st_summary');
+      const d = box.querySelector('#st_desc');
+
+      t.addEventListener('input', () => { st.title = t.value; renderStarters(); });
+      s.addEventListener('input', () => { st.summary = s.value; renderStarters(); });
+      d.addEventListener('input', () => { st.description = d.value; });
+    }
+
+
+
+    function renderInspector() {
+      const box = document.getElementById('propBox');
+      const st = getStarter();
+      const step = st.steps.find(x => x.id === selectedStepId);
+      if (!step) { box.innerHTML = '<span class="small">Select a step.</span>'; return; }
+
+      // Common fields
+      let html = `
+    <label>ID</label><input id="f_id" type="text" value="${escapeAttr(step.id)}"/>
+    <div id="f_id_err" class="error" style="display:none"></div>
+    <div class="kv">
+      <div>
+        <label>Type</label>
+        <select id="f_type">
+          ${['instruction', 'input', 'select', 'end'].map(t => `<option ${t === step.type ? 'selected' : ''} value="${t}">${t}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label>Required</label>
+        <select id="f_req">
+          <option value="">No</option>
+          <option value="1" ${step.required ? 'selected' : ''}>Yes</option>
+        </select>
+      </div>
+    </div>
+  `;
+
+      // Type-specific
+      if (step.type === 'instruction' || step.type === 'end') {
+        html += `
+      <label>Title</label><input id="f_title" type="text" value="${escapeAttr(step.title || '')}"/>
+      <label>Body</label><textarea id="f_body" rows="4">${escapeHtml(step.body || '')}</textarea>
+      <div class="kv">
+        <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
+        <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
+      </div>
+      ${step.type !== 'end' ? `
+        <label>Next (step.id)</label>
+        ${nextSelectHtml(st.steps, step.next)}
+      ` : ''}
+    `;
+      }
+      else if (step.type === 'input') {
+        html += `
+      <label>Label</label><input id="f_label" type="text" value="${escapeAttr(step.label || '')}"/>
+      <label>Placeholder</label><input id="f_ph" type="text" value="${escapeAttr(step.placeholder || '')}"/>
+      <div class="kv">
+        <div><label>Regex</label><input id="f_regex" type="text" value="${escapeAttr(step.regex || '')}" placeholder="e.g. ^[1-9][0-9]{5}$"/></div>
+        <div><label>Error message</label><input id="f_err" type="text" value="${escapeAttr(step.error || '')}"/></div>
+      </div>
+      <div class="kv">
+        <div><label>Required message</label><input id="f_reqmsg" type="text" value="${escapeAttr(step.requiredMessage || '')}"/></div>
+        <div></div>
+      </div>
+      <div class="kv">
+        <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
+        <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
+      </div>
+      <label>Next (step.id)</label>
+      ${nextSelectHtml(st.steps, step.next)}
+    `;
+      }
+      else if (step.type === 'select') {
+        html += `
+      <label>Label</label><input id="f_label" type="text" value="${escapeAttr(step.label || '')}"/>
+      <div class="kv">
+        <div>
+          <label>Display</label>
+          <select id="f_display">
+            <option ${step.display === 'cards' ? 'selected' : ''} value="cards">cards</option>
+            <option ${step.display === 'list' ? 'selected' : ''} value="list">list</option>
+          </select>
+        </div>
+        <div>
+          <label>Mode</label>
+          <select id="f_mode">
+            <option ${step.mode === 'single' ? 'selected' : ''} value="single">single</option>
+            <option ${step.mode === 'multi' ? 'selected' : ''} value="multi">multi</option>
+          </select>
+        </div>
+      </div>
+      <div class="kv">
+        <div><label>Min (multi)</label><input id="f_min" type="number" value="${escapeAttr(step.min ?? '')}"/></div>
+        <div><label>Max (multi)</label><input id="f_max" type="number" value="${escapeAttr(step.max ?? '')}"/></div>
+      </div>
+      <div class="kv">
+        <div><label>Min message</label><input id="f_minmsg" type="text" value="${escapeAttr(step.minMessage || '')}"/></div>
+        <div><label>Max message</label><input id="f_maxmsg" type="text" value="${escapeAttr(step.maxMessage || '')}"/></div>
+      </div>
+      <label>Options</label>
+      <table class="table" id="optTable">
+        <thead><tr><th style="width:18%">value</th><th style="width:18%">label</th><th>hint</th><th style="width:20%">next</th><th>img</th><th class="center">del</th></tr></thead>
+        <tbody>
+          ${(step.options || []).map((o, i) => optionRowHtml(o, i, st.steps)).join('')}
+        </tbody>
+      </table>
+      <div class="rowflex">
+        <button id="addOptBtn" class="iconbtn">+ Option</button>
+      </div>
+      <label>After (step.next, used esp. for multi)</label>
+      ${nextSelectHtml(st.steps, step.next)}
+    `;
+      }
+
+      box.innerHTML = html;
+
+      // -------- Wire common ----------
+      const f_type = box.querySelector('#f_type');
+      const f_req = box.querySelector('#f_req');
+
+      // --- ID commit on Enter/blur + duplicate guard
+      const f_id = box.querySelector('#f_id');
+      const f_id_err = box.querySelector('#f_id_err');
+
+      function commitId() {
+        const st = getStarter();
+        const oldId = step.id;
+        let v = slugify(f_id.value.trim()) || oldId;
+
+        if (v === oldId) { f_id_err.style.display = 'none'; f_id_err.textContent = ''; return; }
+
+        const dup = (st.steps || []).some(s => s.id === v && s !== step);
+        if (dup) {
+          f_id_err.textContent = `ID "${v}" already exists`;
+          f_id_err.style.display = '';
+          return;
+        }
+
+        rewriteRefs(oldId, v);
+        step.id = v;
+        selectedStepId = v;
+        f_id.value = v;
+        f_id_err.style.display = 'none'; f_id_err.textContent = '';
+        renderAll();
+      }
+      f_id.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitId(); f_id.blur(); } });
+      f_id.addEventListener('blur', commitId);
+
+      f_type.addEventListener('change', () => {
+        const t = f_type.value;
+        if (t !== step.type) {
+          const repl = makeStep(t);
+          // keep same id & required
+          repl.id = step.id; repl.required = step.required;
+          // migrate title/label best-effort
+          repl.title = step.title || repl.title;
+          repl.label = step.label || repl.label;
+          replaceStep(step.id, repl);
+          selectedStepId = repl.id;
+          renderAll();
+        }
+      });
+      f_req.addEventListener('change', () => { step.required = Boolean(f_req.value); });
+
+      // -------- Wire per-type ----------
+      if (step.type === 'instruction' || step.type === 'end') {
+        const f_title = box.querySelector('#f_title');
+        const f_body = box.querySelector('#f_body');
+        const f_img = box.querySelector('#f_img');
+        const f_img_file = box.querySelector('#f_img_file');
+
+        // Title: commit on Enter/blur (no live render while typing)
+        function commitTitle() {
+          const v = f_title.value.trim();
+          if ((step.title || '') === v) return;
+          step.title = v;
+          renderSteps(); renderGraph();
+        }
+        f_title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitTitle(); f_title.blur(); } });
+        f_title.addEventListener('blur', commitTitle);
+
+        // Others can be live-updated
+        f_body.addEventListener('input', () => { step.body = f_body.value; });
+        f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
+        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; renderSteps(); }));
+
+        if (step.type !== 'end') {
+          const f_next = box.querySelector('#f_next');
+          f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderSteps(); renderGraph(); });
+        }
+      }
+      else if (step.type === 'input') {
+        const f_label = box.querySelector('#f_label');
+        const f_ph = box.querySelector('#f_ph');
+        const f_regex = box.querySelector('#f_regex');
+        const f_err = box.querySelector('#f_err');
+        const f_reqmsg = box.querySelector('#f_reqmsg');
+        const f_img = box.querySelector('#f_img');
+        const f_img_file = box.querySelector('#f_img_file');
+        const f_next = box.querySelector('#f_next');
+
+        // Label: commit on Enter/blur
+        function commitLabel() {
+          const v = f_label.value.trim();
+          if ((step.label || '') === v) return;
+          step.label = v;
+          renderSteps(); // map not required
+        }
+        f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
+        f_label.addEventListener('blur', commitLabel);
+
+        // Others live
+        f_ph.addEventListener('input', () => { step.placeholder = f_ph.value; });
+        f_regex.addEventListener('input', () => { step.regex = f_regex.value || undefined; });
+        f_err.addEventListener('input', () => { step.error = f_err.value || undefined; });
+        f_reqmsg.addEventListener('input', () => { step.requiredMessage = f_reqmsg.value || undefined; });
+        f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
+        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; renderSteps(); }));
+        f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
+      }
+      else if (step.type === 'select') {
+        const f_label = box.querySelector('#f_label');
+        const f_display = box.querySelector('#f_display');
+        const f_mode = box.querySelector('#f_mode');
+        const f_min = box.querySelector('#f_min');
+        const f_max = box.querySelector('#f_max');
+        const f_minmsg = box.querySelector('#f_minmsg');
+        const f_maxmsg = box.querySelector('#f_maxmsg');
+        const addOptBtn = box.querySelector('#addOptBtn');
+        const f_next = box.querySelector('#f_next');
+
+        // Label: commit on Enter/blur
+        function commitLabel() {
+          const v = f_label.value.trim();
+          if ((step.label || '') === v) return;
+          step.label = v;
+          renderSteps();
+        }
+        f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
+        f_label.addEventListener('blur', commitLabel);
+
+        // Others live
+        f_display.addEventListener('change', () => { step.display = f_display.value; });
+        f_mode.addEventListener('change', () => { step.mode = f_mode.value; renderSteps(); });
+        f_min.addEventListener('input', () => { step.min = f_min.value === '' ? undefined : Number(f_min.value); });
+        f_max.addEventListener('input', () => { step.max = f_max.value === '' ? undefined : Number(f_max.value); });
+        f_minmsg.addEventListener('input', () => { step.minMessage = f_minmsg.value || undefined; });
+        f_maxmsg.addEventListener('input', () => { step.maxMessage = f_maxmsg.value || undefined; });
+        f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
+
+        addOptBtn.addEventListener('click', () => {
+          step.options = step.options || [];
+          step.options.push({ value: 'opt_' + (step.options.length + 1), label: 'Option ' + (step.options.length + 1) });
+          renderInspector();
+          renderGraph();
+        });
+
+        // Options table row wiring
+        box.querySelectorAll('[data-opt-idx]').forEach(row => {
+          const i = Number(row.dataset.optIdx);
+          const o = step.options[i];
+          const fv = row.querySelector('.f_opt_value');
+          const fl = row.querySelector('.f_opt_label');
+          const fh = row.querySelector('.f_opt_hint');
+          const fn = row.querySelector('.f_opt_next');
+          const fi = row.querySelector('.f_opt_img');
+          const ff = row.querySelector('.f_opt_file');
+          const fd = row.querySelector('.f_opt_del');
+
+          fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph(); renderSteps(); });
+          fl.addEventListener('input', () => { o.label = fl.value; renderSteps(); });
+          fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
+          fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
+          fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
+          ff.addEventListener('change', ev => handleImageToBase64(ev, uri => { o.img_b64 = uri; fi.value = uri; }));
+          fd.addEventListener('click', () => { step.options.splice(i, 1); renderInspector(); renderGraph(); });
+        });
+      }
+    }
+
+    /*** Graph ***/
+    let mapZoom = 1, mapPan = { x: 0, y: 0 };
+    let drag = { active: false, start: { x: 0, y: 0 }, pan0: { x: 0, y: 0 }, vw: 0, vh: 0, wpp: 1 };
+    let lastGraphSize = { width: 900, height: 600 };
+
+    // MOUSE DOWN
+    graphSvg.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      drag.active = true;
+      drag.start = { x: e.clientX, y: e.clientY };
+      drag.pan0 = { ...mapPan };
+
+      const bb = graphSvg.getBoundingClientRect();
+      lastGraphSize.width = bb.width;
+      lastGraphSize.height = bb.height;
+
+      // These MUST match the viewBox setup in renderGraph()
+      const worldW = 1000 / mapZoom;
+      const worldH = 1000 / mapZoom;
+
+      // world-units per pixel on each axis
+      drag.wppX = worldW / bb.width;
+      drag.wppY = worldH / bb.height;
+
+      graphSvg.classList.add('dragging');
+      graphPanel.classList.add('dragging');
+    });
+
+    // MOUSE MOVE
+    window.addEventListener('mousemove', (e) => {
+      if (!drag.active) return;
+      const dx = e.clientX - drag.start.x;
+      const dy = e.clientY - drag.start.y;
+
+      mapPan.x = drag.pan0.x - dx * drag.wppX;
+      mapPan.y = drag.pan0.y - dy * drag.wppY;
+
+      renderGraph();
+    });
+
+    window.addEventListener('mouseup', () => {
+      drag.active = false;
+      graphSvg.classList.remove('dragging');
+      graphPanel.classList.remove('dragging');
+    });
+
+    graphSvg.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = Math.sign(e.deltaY);
+      const factor = (delta > 0) ? 1 / 1.1 : 1.1;
+      mapZoom *= factor;
+      renderGraph();
+    }, { passive: false });
+
+    function renderGraph() {
+      const st = getStarter();
+      const steps = st?.steps || [];
+      if (!steps.length) {
+        graphSvg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#98a2b3" font-size="14">No steps in this starter</text>';
+        return;
+      }
+      const { nodes, edges } = buildGraph(st);
+      const layout = layoutVertical(nodes, edges);
+      const svg = graphSvg;
+      svg.innerHTML = `
+                      <defs>
+                        <marker id="arrow" viewBox="0 0 12 12" refX="12" refY="6"
+                                markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse"
+                                orient="auto">
+                          <path d="M0 0 L12 6 L0 12 Z" fill="#98a2b3"></path>
+                        </marker>
+                      </defs>
+                    `;
+
+
+      const g = svg; // root
+      const vw = 1000, vh = 1000; // world units used by layout
+      const viewBox = `${mapPan.x} ${mapPan.y} ${vw / mapZoom} ${vh / mapZoom}`;
+      svg.setAttribute('viewBox', viewBox);
+
+      // edges (orthogonal: down then across)
+      edges.forEach(e => {
+        const s = layout[e.from], t = layout[e.to];
+        if (!s || !t) return;
+        const midY = (s.y + t.y) / 2;
+        const d = `M ${s.x} ${s.y + 28} L ${s.x} ${midY} L ${t.x} ${midY} L ${t.x} ${t.y - 28}`;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('class', 'edge');
+        path.setAttribute('marker-end', 'url(#arrow)');
+        g.appendChild(path);
+
+        if (e.label) {
+          const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          tx.setAttribute('class', 'edge-label');
+          tx.setAttribute('x', (s.x + t.x) / 2);
+          tx.setAttribute('y', midY - 4);
+          tx.setAttribute('text-anchor', 'middle');
+          tx.textContent = e.label;
+          g.appendChild(tx);
+        }
+      });
+
+      // nodes
+      nodes.forEach(n => {
+        const grp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        grp.setAttribute('transform', `translate(${layout[n.id].x}, ${layout[n.id].y})`);
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('class', 'node-rect' + (n.id === selectedStepId ? ' current' : ''));
+        rect.setAttribute('x', -80); rect.setAttribute('y', -28); rect.setAttribute('width', 160); rect.setAttribute('height', 56);
+        grp.appendChild(rect);
+
+        const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        tx.setAttribute('class', 'node-label');
+        tx.setAttribute('text-anchor', 'middle');
+        tx.setAttribute('y', 4);
+        tx.textContent = n.label;
+        grp.appendChild(tx);
+
+        grp.addEventListener('click', () => {
+          selectedStepId = n.id;
+          renderSteps(); renderInspector(); renderGraph();
+        });
+
+        g.appendChild(grp);
+      });
+    }
+
+    function buildGraph(starter) {
+      const steps = starter.steps || [];
+      const nodes = steps.map(s => ({ id: s.id, label: s.title || s.label || s.id }));
+      const edges = [];
+
+      for (let i = 0; i < steps.length; i++) {
+        const s = steps[i];
+        const defaultNext = steps[i + 1]?.id || null; // ← fall back to sequential order
+
+        if (s.type === 'instruction' || s.type === 'input') {
+          const target = s.next || defaultNext;
+          if (target) edges.push({ from: s.id, to: target });
+        }
+        else if (s.type === 'select') {
+          // option-level branches (single-select)
+          if (Array.isArray(s.options)) {
+            for (const o of s.options) {
+              if (o?.next) {
+                edges.push({ from: s.id, to: o.next, label: (o.label || o.value || '') });
+              }
+            }
+          }
+
+          if (s.mode === 'multi') {
+            // multi-select: go to step.next or next step after selection phase
+            const target = s.next || defaultNext;
+            if (target) edges.push({ from: s.id, to: target, label: 'after' });
+          } else {
+            // single-select: if no option.next and no step.next, fall back to sequential
+            const hasOptNext = (s.options || []).some(o => o?.next);
+            const target = s.next || (!hasOptNext ? defaultNext : null);
+            if (target) edges.push({ from: s.id, to: target });
+          }
+        }
+        // 'end' has no outgoing edges
+      }
+
+      return { nodes, edges };
+    }
+
+
+
+    function layoutVertical(nodes, edges) {
+      if (!nodes.length) return {};
+
+      // adjacency for forward edges
+      const adj = {};
+      nodes.forEach(n => adj[n.id] = []);
+      edges.forEach(e => { (adj[e.from] ||= []).push(e.to); });
+
+      // start from the first node (treat as root)
+      const depth = {};
+      const start = nodes[0].id;
+      depth[start] = 0;
+
+      // initial BFS
+      const q = [start];
+      while (q.length) {
+        const u = q.shift();
+        for (const v of adj[u] || []) {
+          if (depth[v] == null) {
+            depth[v] = depth[u] + 1;
+            q.push(v);
+          }
+        }
+      }
+      // assign depth 0 for any isolated/unreached nodes
+      nodes.forEach(n => { if (depth[n.id] == null) depth[n.id] = 0; });
+
+      // relax depths so every edge goes strictly downward
+      // if depth[to] <= depth[from], push it down
+      let changed = true, guard = 0;
+      while (changed && guard < 50) {
+        changed = false; guard++;
+        for (const e of edges) {
+          const a = depth[e.from], b = depth[e.to];
+          if (a != null && b != null && b <= a) {
+            depth[e.to] = a + 1;
+            changed = true;
+          }
+        }
+      }
+
+      // group nodes by depth (rows)
+      const rows = {};
+      nodes.forEach(n => {
+        const d = depth[n.id] || 0;
+        (rows[d] ||= []).push(n.id);
+      });
+
+      // order within each row (stable by original order)
+      const colIndex = {};
+      Object.keys(rows).sort((a, b) => a - b).forEach(d => {
+        rows[d].forEach((id, i) => colIndex[id] = i);
+      });
+
+      // compute positions (vertical lanes)
+      const colWidth = 200;    // horizontal spacing
+      const rowGap = 140;     // vertical spacing
+      const x0 = 200, y0 = 60; // top-left origin
+
+      const pos = {};
+      nodes.forEach(n => {
+        const d = depth[n.id] || 0;
+        const i = colIndex[n.id] || 0;
+        pos[n.id] = { x: x0 + i * colWidth, y: y0 + d * rowGap };
+      });
+
+      return pos;
+    }
+
+
+    /*** Actions ***/
+    function addStepRelative(where) {
+      const st = getStarter(); if (!st) return;
+      const idx = st.steps.findIndex(s => s.id === selectedStepId);
+      const insertAt = (idx < 0 ? st.steps.length : (where === 'before' ? idx : idx + 1));
+      const step = makeStep('instruction');
+      st.steps.splice(insertAt, 0, step);
+      selectedStepId = step.id;
+      renderAll();
+    }
+    function dupStep() {
+      const st = getStarter(); const s = st.steps.find(x => x.id === selectedStepId); if (!s) return;
+      const c = JSON.parse(JSON.stringify(s));
+      c.id = uniqueId(s.id + '_copy');
+      st.steps.splice(st.steps.findIndex(x => x.id === s.id) + 1, 0, c);
+      selectedStepId = c.id;
+      renderAll();
+    }
+    function delStep() {
+      const st = getStarter(); const i = st.steps.findIndex(x => x.id === selectedStepId); if (i < 0) return;
+      const delId = st.steps[i].id;
+      st.steps.splice(i, 1);
+      // remove refs
+      for (const step of st.steps) {
+        if ((step.type === 'instruction' || step.type === 'input') && step.next === delId) delete step.next;
+        if (step.type === 'select') {
+          (step.options || []).forEach(o => { if (o.next === delId) delete o.next; });
+          if (step.next === delId) delete step.next;
+        }
+      }
+      selectedStepId = st.steps[Math.max(0, i - 1)]?.id || null;
+      renderAll();
+    }
+    function replaceStep(id, repl) {
+      const st = getStarter();
+      const i = st.steps.findIndex(x => x.id === id);
+      if (i >= 0) st.steps[i] = repl;
+    }
+    function rewriteRefs(oldId, newId) {
+      if (oldId === newId) return;
+      const st = getStarter();
+      for (const step of st.steps) {
+        if ((step.type === 'instruction' || step.type === 'input') && step.next === oldId) step.next = newId;
+        if (step.type === 'select') {
+          (step.options || []).forEach(o => { if (o.next === oldId) o.next = newId; });
+          if (step.next === oldId) step.next = newId;
+        }
+      }
+    }
+
+
+    /*** Helpers ***/
+    function getStarter() { return sop.starters[currentStarterIndex]; }
+    function makeBlankSOP() {
+      return {
+        version: "1.3",
+        title: "New SOP Library",
+        description: "Describe your library",
+        starters: [{
+          id: "starter_1",
+          label: "Starter 1",
+          summary: "",
+          description: "",
+          steps: [
+            { type: "instruction", id: "welcome", title: "Welcome", body: "Start here." },
+            { type: "end", id: "done", title: "Done", body: "All set." }
+          ]
+        }]
+      };
+    }
+    function makeStep(type) {
+      const id = uniqueId(type);
+      if (type === 'instruction') return { type, id, title: "Instruction", body: "" };
+      if (type === 'input') return { type, id, label: "Input", placeholder: "", required: false };
+      if (type === 'select') return { type, id, label: "Choose", display: "cards", mode: "single", required: false, options: [{ value: "opt1", label: "Option 1" }] };
+      if (type === 'end') return { type, id, title: "End", body: "" };
+      return { type: 'instruction', id, title: "Instruction", body: "" };
+    }
+    function uniqueId(base) {
+      const st = getStarter(); const ids = new Set((st.steps || []).map(s => s.id));
+      let i = 1, v = slugify(base || 'step');
+      let out = v; while (ids.has(out)) { out = v + '_' + (++i); }
+      return out;
+    }
+    function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+    function escapeHtml(str) { return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
+    function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
+    function nextSummary(step) {
+      if (step.type === 'select') {
+        const optEdges = (step.options || []).filter(o => o.next).length;
+        return (optEdges > 0 ? (optEdges + ' paths') : '') + (step.next ? (optEdges > 0 ? ' + ' : '') + 'after→' + step.next : (optEdges > 0 ? '' : '—'));
+      }
+      return step.next || '—';
+    }
+    function nextSelectHtml(steps, cur) {
+      return `<select id="f_next"><option value="">—</option>${steps.map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`).join('')}</select>`;
+    }
+    function optionRowHtml(o, i, steps) {
+      return `
+    <tr data-opt-idx="${i}">
+      <td><input class="f_opt_value" type="text" value="${escapeAttr(o.value || '')}"/></td>
+      <td><input class="f_opt_label" type="text" value="${escapeAttr(o.label || '')}"/></td>
+      <td><input class="f_opt_hint" type="text" value="${escapeAttr(o.hint || '')}"/></td>
+      <td>
+        <select class="f_opt_next">
+          <option value="">—</option>
+          ${steps.map(s => `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(s.id)}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <input class="f_opt_img" type="text" value="${escapeAttr(o.img_b64 || '')}" placeholder="data:image/*;base64,..."/>
+        <input class="f_opt_file" type="file" accept="image/*"/>
+      </td>
+      <td class="center"><button class="f_opt_del">🗑</button></td>
+    </tr>
+  `;
+    }
+    function handleImageToBase64(ev, cb) {
+      const f = ev.target.files?.[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = () => { cb(String(r.result)); };
+      r.readAsDataURL(f);
+    }
+
+    function validateSOP() {
+      const errors = [];
+      if (!Array.isArray(sop.starters) || sop.starters.length === 0) errors.push('No starters');
+      sop.starters.forEach((st, si) => {
+        if (!Array.isArray(st.steps) || st.steps.length === 0) errors.push(`Starter[${si}] has no steps`);
+        const ids = new Set();
+        (st.steps || []).forEach((step, idx) => {
+          if (!step.id) errors.push(`Starter[${si}] step[${idx}] missing id`);
+          if (ids.has(step.id)) errors.push(`Starter[${si}] duplicate id ${step.id}`); ids.add(step.id);
+
+          if (step.type === 'input' && step.regex) {
+            try { new RegExp(step.regex); } catch { errors.push(`Invalid regex at ${step.id}`); }
+          }
+          if (step.type === 'select' && step.mode === 'multi') {
+            const c = (Array.isArray(step.options) ? step.options.length : 0);
+            if (step.min != null && step.min > c) errors.push(`min > options at ${step.id}`);
+            if (step.max != null && step.max > c) errors.push(`max > options at ${step.id}`);
+          }
+          if (step.type === 'select' && step.mode === 'single') {
+            // warn if no option.next and no step.next (unreachable continuation)
+            const hasOptNext = (step.options || []).some(o => o.next);
+            if (!hasOptNext && !step.next) errors.push(`No path from single-select ${step.id}`);
+          }
+        });
+      });
+      return { ok: errors.length === 0, errors };
+    }
+
+    function tidyIds() {
+      sop.starters.forEach(st => {
+        st.id = slugify(st.id || 'starter');
+        (st.steps || []).forEach(s => {
+          s.id = slugify(s.id || s.type || 'step');
+          if (s.type === 'select' && Array.isArray(s.options)) {
+            s.options.forEach(o => { o.value = slugify(o.value || o.label || 'opt'); });
+          }
+        });
+      });
+    }
+
+
+
+  </script>
+</body>
+
+</html>
