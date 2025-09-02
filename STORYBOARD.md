@@ -11,7 +11,6 @@
 
 ## ⏳ Not Done
 
-- Fix crash when: enter **Edit** → click on **Starter** → click on **Preview**  
 - Undo and redo  
 - Download picture  
 - View picture (small, then maximize)  
@@ -35,3 +34,4 @@
 - Remove description if not necessary  
 - Add Save and Cancel buttons in the map editor  
 - On Cancel/Import/Export, add discard prompt (same for map edit)  
+- Fix crash when: enter **Edit** → click on **Starter** → click on **Preview**  

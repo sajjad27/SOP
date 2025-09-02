@@ -839,6 +839,50 @@
       gap: 8px;
       justify-content: flex-end
     }
+
+    /* re-use base card size/spacing; only override visuals */
+    .vw-card--add {
+      background: transparent;
+      /* almost invisible background */
+      border: 2px dotted var(--line, #cfd6dd);
+      /* dotted like you asked */
+      box-shadow: none;
+      /* no drop shadow */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: inherit;
+      /* match other cards */
+      cursor: pointer;
+      min-height: var(--card-min-h, 120px);
+      /* keep height consistent */
+    }
+
+    .vw-card--add-icon {
+      font-size: clamp(24px, 3vw, 32px);
+      line-height: 1;
+      opacity: .65;
+    }
+
+    .vw-card--add:hover,
+    .vw-card--add:focus-visible {
+      background: rgba(0, 0, 0, .03);
+      /* *slight* tint on hover/focus */
+      border-style: solid;
+      /* solid when interactive */
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
   </style>
 </head>
 
@@ -3432,7 +3476,8 @@
 
     <div class="vw-grid">
       ${starters.map((st, idx) => `
-        <button class="vw-card" data-idx="${idx}"  onclick="enterViewOrEditStarter(${idx})" aria-label="${escapeAttr(st.label || ('Starter ' + (idx + 1)))}">
+        <button class="vw-card" data-idx="${idx}" onclick="enterViewOrEditStarter(${idx})"
+                aria-label="${escapeAttr(st.label || ('Starter ' + (idx + 1)))}">
           <h3>${escapeHtml(st.label || ('Starter ' + (idx + 1)))}</h3>
           ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ``}
           <div class="vw-pill">
@@ -3441,7 +3486,16 @@
           </div>
         </button>
       `).join('')}
+
+      <!-- “+ New” card -->
+      <button type="button" class="vw-card vw-card--add" data-action="create-starter" aria-label="Create new starter">
+        <span class="vw-card--add-icon" aria-hidden="true">+</span>
+        <span class="sr-only">Create new starter</span>
+      </button>
     </div>
+
+
+
   </div>
 `;
     }
@@ -3488,6 +3542,46 @@
       renderAll();
 
     }
+
+    // Creates a new starter, re-renders grid (optional), and returns its index.
+    function createNewStarter() {
+      const idx = sop.starters.length;
+      const newStarter = {
+        id: 'starter_' + (idx + 1),
+        label: 'Starter ' + (idx + 1),
+        summary: 'This is a new starter.',
+        steps: [makeStep('instruction')]
+      };
+
+      sop.starters.push(newStarter);
+      if (typeof renderStarters === 'function') {
+        renderStarters(); // if you have a renderer
+      }
+      return sop.starters.length - 1;
+    }
+
+    // Delegated handler for the + card
+    document.addEventListener('click', (e) => {
+      const add = e.target.closest('[data-action="create-starter"]');
+      if (!add) return;
+      const idx = createNewStarter();
+      // keep selection in sync if you track it
+      if (viewState) {
+        viewState.starterIdx = idx;
+      }
+      enterViewOrEditStarter(idx);            // simplest
+
+
+      // sop.starters.push({
+      //   id: 'starter_' + (idx + 1),
+      //   label: 'Starter ' + (idx + 1),
+      //   summary: 'This is a new starter.',
+      //   steps: [makeStep('instruction')]
+      // });
+      // currentStarterIndex = idx; selectedStepId = sop.starters[idx].steps[0].id;
+      // renderAll();
+    });
+
 
 
     function setNextEnabled(enabled) {
