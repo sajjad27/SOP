@@ -632,6 +632,15 @@
     }
 
     /* --- Landing screen --- */
+
+    [screen="landing"] .vw-card--add {
+      display: none;
+    }
+
+    [screen="landing"][data-mode="edit"] .vw-card--add {
+      display: grid;
+    }
+
     [screen="landing"] #vwLanding {
       display: block;
     }
@@ -840,36 +849,21 @@
       justify-content: flex-end
     }
 
-    /* re-use base card size/spacing; only override visuals */
     .vw-card--add {
+      display: grid;
+      place-items: center;
+      border: 2px dashed var(--line, #3a4353);
       background: transparent;
-      /* almost invisible background */
-      border: 2px dotted var(--line, #cfd6dd);
-      /* dotted like you asked */
-      box-shadow: none;
-      /* no drop shadow */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: inherit;
-      /* match other cards */
-      cursor: pointer;
-      min-height: var(--card-min-h, 120px);
-      /* keep height consistent */
+      color: var(--muted, #9aa4b2);
+    }
+
+    .vw-card--add:hover {
+      border-style: solid;
     }
 
     .vw-card--add-icon {
-      font-size: clamp(24px, 3vw, 32px);
+      font-size: 2.2rem;
       line-height: 1;
-      opacity: .65;
-    }
-
-    .vw-card--add:hover,
-    .vw-card--add:focus-visible {
-      background: rgba(0, 0, 0, .03);
-      /* *slight* tint on hover/focus */
-      border-style: solid;
-      /* solid when interactive */
     }
 
     .sr-only {
@@ -877,7 +871,6 @@
       width: 1px;
       height: 1px;
       padding: 0;
-      margin: -1px;
       overflow: hidden;
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
