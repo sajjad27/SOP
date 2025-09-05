@@ -18,6 +18,10 @@
       --warn: #dc2626;
       --shadow: 0 2px 10px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .06);
       --radius: 16px;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --line: #cfd6dd;
+      --input-bg: #f6f8fa;
     }
 
     * {
@@ -295,6 +299,7 @@
       border-radius: 12px;
       background: #fff;
     }
+    
 
     .graph-panel:fullscreen {
       width: 100vw;
@@ -460,6 +465,10 @@
       --ok: #22c55e;
       --warn: #ef4444;
       --shadow: none;
+      --surface: #0f172a;
+      --text: #e5ecf4;
+      --line: #2a3442;
+      --input-bg: rgba(255, 255, 255, .06);
     }
 
     /* Ensure all controls actually use the vars */
@@ -683,7 +692,7 @@
     }
 
     [screen="starter"][data-mode="edit"] #editStarter {
-      display: flex;
+      display: grid;
     }
 
 
@@ -709,7 +718,7 @@
       display: block;
       text-align: left;
       background: var(--card);
-      border: 1px solid var(--line);
+      border: 2px solid var(--line);
       border-radius: 16px;
       padding: 16px;
       box-shadow: var(--shadow);
@@ -724,6 +733,30 @@
       margin: 0;
       color: var(--muted);
     }
+
+    /* HOVER ONLY — all cards */
+    .vw-card:hover,
+    .vw-card:focus-visible {
+      background: rgba(0, 0, 0, .04);
+      border: 3px solid var(--line);
+      /* border-color: var(--line-hover, #dbe3ea); */
+      transition: background-color .2s ease, border-color .2s ease;
+    }
+
+    /* HOVER ONLY — “+ New” card, and only when in Edit mode */
+    .vw-card--add:hover,
+    .vw-card--add:focus-visible {
+      border-style: dashed;
+      /* fewer cuts than dotted */
+      border-width: 3px;
+      /* bolder */
+      /* border-color: var(--line-hover, #dbe3ea); */
+      /* background: rgba(0, 0, 0, .03); */
+      transition: background-color .2s ease, border-color .2s ease, border-width .2s ease;
+      background: var(--card);
+
+    }
+
 
     .vw-pill {
       display: inline-flex;
@@ -866,15 +899,88 @@
       line-height: 1;
     }
 
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
+
+
+    /* overlay (uses same pattern as confirm modal) */
+    #dlgNewStarter.hidden {
+      display: none;
+    }
+
+    #dlgNewStarter {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      padding: 4vh 16px;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, .45);
+      /* fades correctly in light/dark */
+    }
+
+    #dlgNewStarter .vw-dialog__panel {
+      width: min(560px, 92vw);
+      background: var(--card);
+      color: var(--fg);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .35);
+    }
+
+
+
+    /* REPLACE your inputs/textarea rules */
+    #dlgNewStarter .vw-field {
+      display: grid;
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    #dlgNewStarter input,
+    #dlgNewStarter textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: transparent;
+      /* respects dark & light */
+      color: var(--fg);
+    }
+
+    #dlgNewStarter input::placeholder,
+    #dlgNewStarter textarea::placeholder {
+      color: var(--muted);
+    }
+
+    /* ADD: invalid state + focus */
+    #dlgNewStarter input.is-invalid {
+      border-color: var(--warn);
+    }
+
+    #dlgNewStarter input.is-invalid+.vw-error {
+      display: block;
+    }
+
+    .vw-error {
+      display: none;
+      color: var(--warn);
+      font-size: .875rem;
+      margin-top: 4px;
+      margin-bottom: 0px;
+    }
+
+    #dlgNewStarter input:focus,
+    #dlgNewStarter textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-weak);
+    }
+
+    #dlgNewStarter .vw-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 16px;
     }
   </style>
 </head>
@@ -883,1262 +989,6 @@
 
   <script type="text/plain" id="viewerHtmlEmbedded">
 
-  <!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SOP Runbook · Viewer</title>
-  <style>
-    :root {
-      --fg: #0b1220;
-      --bg: #f7f9fc;
-      --muted: #60708a;
-      --card: #ffffff;
-      --line: #e4e8f0;
-      --accent: #2563eb;
-      --accent-weak: #eef3ff;
-      --ok: #16a34a;
-      --warn: #dc2626;
-      --shadow: 0 2px 10px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .06);
-      --radius: 16px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      height: 100%;
-    }
-
-    body {
-      margin: 0;
-      font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      color: var(--fg);
-      background: var(--bg);
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      backdrop-filter: saturate(1.2) blur(6px);
-      background: rgba(247, 249, 252, .85);
-      border-bottom: 1px solid var(--line);
-    }
-
-    .wrap {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 14px 20px;
-    }
-
-    .row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    h1 {
-      font-size: 20px;
-      margin: 0;
-      letter-spacing: .2px;
-    }
-
-    .grow {
-      flex: 1;
-    }
-
-    .controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    input[type="file"] {
-      font-size: 14px;
-    }
-
-    button {
-      border: 1px solid var(--line);
-      background: #fff;
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-      transition: transform .05s ease, box-shadow .2s ease;
-    }
-
-    button:active {
-      transform: translateY(1px);
-      box-shadow: 0 1px 4px rgba(16, 24, 40, .08);
-    }
-
-    button[disabled] {
-      opacity: .5;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .btn-accent {
-      border-color: transparent;
-      background: var(--accent);
-      color: #fff;
-    }
-
-    main {
-      max-width: 980px;
-      margin: 22px auto;
-      padding: 0 20px 60px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 14px;
-    }
-
-    .card {
-      display: block;
-      text-align: left;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow);
-      transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(16, 24, 40, .10);
-      border-color: #d7deea;
-    }
-
-    .card h3 {
-      margin: 0 0 6px;
-      font-size: 18px;
-    }
-
-    .card p {
-      margin: 0;
-      color: var(--muted);
-    }
-
-    #wizard .crumbs {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    #wizard .crumbs .home {
-      background: var(--accent-weak);
-      border-color: transparent;
-    }
-
-    #wizard .title {
-      font-weight: 600;
-    }
-
-    #progress {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
-
-    #stepContainer {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow);
-    }
-
-    #stepContainer h3 {
-      margin: 0 0 8px;
-    }
-
-    #stepContainer ul {
-      margin: 8px 0 0 20px;
-    }
-
-    #stepContainer p {
-      margin: 8px 0 0;
-    }
-
-    .text-input {
-      width: 100%;
-      padding: 12px 12px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      font-size: 16px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-
-    .option {
-      display: block;
-      width: 100%;
-      text-align: left;
-    }
-
-    .option.list-item {
-      border-radius: 12px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-
-    .option.selected {
-      outline: 2px solid var(--accent);
-    }
-
-    .nav {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 12px;
-      gap: 10px;
-    }
-
-    .end-actions {
-      margin-top: 16px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #fff;
-      border: 1px solid var(--line);
-    }
-
-    .tag-ok {
-      background: #ecfdf5;
-      border-color: #ccfbf1;
-      color: #065f46;
-    }
-
-    .tag-end {
-      background: #fef2f2;
-      border-color: #fee2e2;
-      color: #991b1b;
-    }
-
-    /* Map */
-    .graph-panel {
-      margin: 12px 0 16px;
-      padding: 8px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: #fff;
-      box-shadow: var(--shadow);
-    }
-
-    /* append */
-    .graph-panel:fullscreen {
-      width: 100vw;
-      height: 100vh;
-      padding: 8px;
-      box-sizing: border-box;
-    }
-
-    .graph-panel:-webkit-full-screen {
-      width: 100vw;
-      height: 100vh;
-      padding: 8px;
-      box-sizing: border-box;
-    }
-
-    .graph-panel:fullscreen .graph-svg,
-    .graph-panel:-webkit-full-screen .graph-svg {
-      height: calc(100vh - 56px);
-    }
-
-
-    .graph-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-
-    .graph-svg {
-      width: 100%;
-      height: 360px;
-      display: block;
-    }
-
-    .node-rect {
-      fill: #fff;
-      stroke: #d4dbe7;
-      rx: 8;
-    }
-
-    .node-rect.visited {
-      stroke: #94a3b8;
-    }
-
-    .node-rect.current {
-      stroke: var(--accent);
-      stroke-width: 2;
-    }
-
-    .edge {
-      stroke: #98a2b3;
-      stroke-width: 1.2;
-      fill: none;
-      marker-end: url(#arrow);
-    }
-
-    .edge.highlight {
-      stroke: var(--accent);
-    }
-
-    .edge-label {
-      font-size: 11px;
-      fill: #667085;
-      pointer-events: none;
-    }
-
-    .node-label {
-      font-size: 12px;
-      fill: #0b1220;
-      pointer-events: none;
-    }
-
-    .graph-zoom button {
-      border: 1px solid var(--line);
-      background: #fff;
-      padding: 4px 8px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .link-like {
-      font-size: 13px;
-      color: var(--accent);
-      text-decoration: underline;
-      background: none;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-    }
-
-    .graph-svg {
-      cursor: grab;
-    }
-
-    .graph-svg.dragging {
-      cursor: grabbing;
-    }
-
-    /* avoid text selection while dragging and on labels */
-    .node-label,
-    .edge-label {
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    .graph-panel.dragging,
-    .graph-panel.dragging * {
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    /* optional image inside cards/options */
-    .card .thumb,
-    .option .thumb {
-      display: block;
-      width: 100%;
-      max-height: 90px;
-      object-fit: contain;
-      margin-top: 8px;
-    }
-
-    /* instruction/option images */
-    /* append this after your existing CSS to override */
-    .thumb {
-      display: block;
-      width: 66% !important;
-      /* 66% of the card width */
-      height: auto;
-      max-height: none;
-      object-fit: contain;
-      margin: 16px auto 0 !important;
-      /* extra spacing above, centered */
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #fff;
-    }
-
-    /* validation */
-    .error {
-      color: var(--warn);
-      font-size: 13px;
-      margin-top: 8px;
-    }
-  </style>
-</head>
-
-<body>
-  <header>
-    <div class="wrap">
-      <div class="row">
-        <h1 class="grow">SOP Runbook · Viewer</h1>
-        <div class="controls">
-          <input id="fileInput" type="file" accept=".json,application/json" />
-          <button id="downloadBtn" title="Download current JSON">Export JSON</button>
-          <button id="aboutBtn" title="About this file">About</button>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main>
-    <section id="landing" class="view"></section>
-
-    <section id="wizard" class="view hidden">
-      <div class="crumbs">
-        <button id="backHome" class="home">◀ Home</button>
-        <span class="title" id="starterTitle"></span>
-        <button id="toggleMap" class="link-like" title="Show or hide the map">Show map</button>
-      </div>
-
-      <div id="progress"></div>
-      <div id="stepContainer"></div>
-      <div class="nav">
-        <button id="prevBtn">Previous</button>
-        <button id="nextBtn" class="btn-accent">Next</button>
-      </div>
-    </section>
-  </main>
-
-  <!-- Default, inline JSON so the file works out-of-the-box. Replace by importing another JSON. -->
-  <script id="default-sop" type="application/json">
-
-{
-  "version": "1.0",
-  
-}
-
-
-  <\/script>
-
-  <script>
-    (() => {
-      /*** State ***/
-      let sop = JSON.parse(document.getElementById('default-sop').textContent);
-      const state = { viewState.starterIdx: null, stepIndex: 0, answers: {} };
-
-      /*** Elements ***/
-      const landingEl = document.getElementById('landing');
-      const wizardEl = document.getElementById('wizard');
-      const backHomeBtn = document.getElementById('backHome');
-      const starterTitleEl = document.getElementById('starterTitle');
-      const progressEl = document.getElementById('progress');
-      const stepContainer = document.getElementById('stepContainer');
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      const fileInput = document.getElementById('fileInput');
-      const downloadBtn = document.getElementById('downloadBtn');
-      const aboutBtn = document.getElementById('aboutBtn');
-
-      /*** Renderers ***/
-      function showLanding() {
-        wizardEl.classList.add('hidden');
-        landingEl.classList.remove('hidden');
-        landingEl.innerHTML = `
-        <h2 style="margin:0 0 4px">${escapeHtml(sop.title || 'Choose a Service')}</h2>
-        <p class="muted" style="margin:0 0 12px">${escapeHtml(sop.description || 'Pick one to start the step-by-step guide.')}</p>
-        <div class="grid">
-          ${(sop.starters || []).map((st, idx) => `
-              <button class="card" data-idx="${idx}" aria-label="${escapeHtml(st.label)}">
-                <h3>${escapeHtml(st.label)}</h3>
-                ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ''}
-                ${st.img_b64 ? `<img class="thumb" src="${st.img_b64}" alt="">` : ``}
-                <div style="margin-top:10px" class="pill">
-                  <span>Steps</span>
-                  <strong>${(st.steps || []).length}</strong>
-                </div>
-              </button>
-            `).join('')}
-
-
-        </div>`;
-
-        landingEl.querySelectorAll('.card').forEach(btn => {
-          btn.addEventListener('click', () => startWizard(parseInt(btn.dataset.idx, 10)));
-        });
-      }
-
-      function startWizard(starterIdx) {
-        state.viewState.starterIdx = starterIdx;
-        state.stepIndex = 0;
-        state.answers = {};
-        state.history = []; // NEW
-        landingEl.classList.add('hidden');
-        wizardEl.classList.remove('hidden');
-        const starter = sop.starters[starterIdx];
-        starter._index = {}; // NEW
-        (starter.steps || []).forEach((s, i) => { if (s.id) starter._index[s.id] = i; }); // NEW
-        starterTitleEl.textContent = starter.label;
-        renderStep();
-      }
-
-
-      function renderStep() {
-        const starter = sop.starters[state.viewState.starterIdx];
-        const steps = starter.steps || [];
-        const idx = state.stepIndex;
-        const linearPath = computeLinearPath(starter);
-        const pos = Math.max(0, linearPath.indexOf(idx));
-        progressEl.textContent = `Step ${pos + 1} of ${linearPath.length}`;
-        prevBtn.disabled = idx === 0;
-        nextBtn.textContent = idx >= steps.length - 1 ? 'Finish' : 'Next';
-
-        const step = steps[idx];
-        stepContainer.innerHTML = '';
-        if (!step) { return; }
-
-        let node;
-        switch (step.type) {
-          // --- replace your 'instruction' case with this ---
-          case 'instruction': {
-            node = document.createElement('div');
-            node.innerHTML = `
-                              ${step.title ? `<h3>${escapeHtml(step.title)}</h3>` : ''}
-                              ${renderTextBody(step.body)}
-                              ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ``}
-                            `;
-            stepContainer.appendChild(node);
-            setNextEnabled(true);
-            break;
-          }
-
-
-
-          // --- replace your 'input' case with this (adds optional image, same spacing/size) ---
-          case 'input': {
-            node = document.createElement('div');
-            node.innerHTML = `
-                            ${step.label ? `<label for="inp">${escapeHtml(step.label)}</label>` : ''}
-                            <input id="inp" type="text" placeholder="${escapeHtml(step.placeholder || '')}" class="text-input" />
-                            ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ``}
-                            <div class="error" id="err" style="display:none"></div>
-                          `;
-            stepContainer.appendChild(node);
-
-            const input = node.querySelector('#inp');
-            const err = node.querySelector('#err');
-
-            input.value = state.answers[step.id] || '';
-
-            function refresh() {
-              state.answers[step.id] = input.value;
-              const res = validateValueForStep(step, input.value);
-              err.textContent = res.ok ? '' : res.msg;
-              err.style.display = res.ok ? 'none' : '';
-              setNextEnabled(res.ok);
-            }
-
-            input.addEventListener('input', refresh);
-            refresh();
-            break;
-          }
-
-
-
-          case 'select': {
-            node = document.createElement('div');
-            node.innerHTML = step.label ? `<h3>${escapeHtml(step.label)}</h3>` : '';
-
-            const display = step.display || 'cards';
-            const mode = step.mode === 'multi' ? 'multi' : 'single';
-
-            const optionsWrap = document.createElement('div');
-            optionsWrap.className = display === 'cards' ? 'grid' : 'list';
-
-            let selected = state.answers[step.id] ?? (mode === 'multi' ? [] : null);
-
-            (step.options || []).forEach(opt => {
-              const btn = document.createElement('button');
-              btn.className = display === 'cards' ? 'card option' : 'option list-item';
-              btn.dataset.value = opt.value;
-              btn.innerHTML = `
-                            <strong>${escapeHtml(opt.label)}</strong>
-                            ${opt.hint ? `<div class="muted">${escapeHtml(opt.hint)}</div>` : ``}
-                            ${opt.img_b64 ? `<img class="thumb" src="${opt.img_b64}" alt="">` : ``}
-                          `;
-
-              const isSelected = mode === 'multi'
-                ? (Array.isArray(selected) && selected.some(o => (o?.value ?? o) === opt.value))
-                : (selected && ((selected?.value ?? selected) === opt.value));
-              if (isSelected) btn.classList.add('selected');
-
-              btn.addEventListener('click', () => {
-                if (mode === 'multi') {
-                  selected = Array.isArray(state.answers[step.id]) ? [...state.answers[step.id]] : [];
-                  const i = selected.findIndex(o => (o?.value ?? o) === opt.value);
-                  if (i >= 0) {
-                    selected.splice(i, 1);
-                    btn.classList.remove('selected');
-                  } else {
-                    selected.push({ value: opt.value, label: opt.label });
-                    btn.classList.add('selected');
-                  }
-                  state.answers[step.id] = selected;
-                } else {
-                  // store next target for branching
-                  state.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
-                  optionsWrap.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
-                  btn.classList.add('selected');
-                }
-                refreshSelect(); // NEW: validate and enable/disable Next
-              });
-
-              optionsWrap.appendChild(btn);
-            });
-
-            node.appendChild(optionsWrap);
-
-            // NEW: error message area
-            const err = document.createElement('div');
-            err.className = 'error';
-            err.style.display = 'none';
-            node.appendChild(err);
-
-            // NEW: validator bridge for this step
-            function refreshSelect() {
-              const res = validateValueForStep(step, state.answers[step.id]);
-              err.textContent = res.ok ? '' : res.msg;
-              err.style.display = res.ok ? 'none' : '';
-              setNextEnabled(res.ok);
-            }
-
-            stepContainer.appendChild(node);
-
-            // NEW: initial validation pass (replaces old setNextEnabled at end)
-            refreshSelect();
-            break;
-          }
-
-
-
-          // --- replace your 'end' case with this (adds optional image, same spacing/size) ---
-          case 'end': {
-            node = document.createElement('div');
-            node.innerHTML = `
-                            ${step.title ? `<h3>${escapeHtml(step.title)}</h3>` : '<h3>Completed</h3>'}
-                            <span class="pill tag-end">End</span>
-                            ${renderTextBody(step.body)}
-                            ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ``}
-                            <div class="end-actions">
-                              <button id="restart">Back to Home</button>
-                            </div>
-                          `;
-            stepContainer.appendChild(node);
-            document.getElementById('restart').addEventListener('click', showLanding);
-            setNextEnabled(false);
-            break;
-          }
-
-
-          default:
-            stepContainer.textContent = 'Unknown step type.';
-            setNextEnabled(false);
-        }
-        if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
-      }
-
-      /*** Helpers ***/
-
-      // ---- Map helpers (straight lines, toggle, zoom; non-interactive) ----
-
-      // Validate current step value against required, regex, and (for multi-select) min/max
-      function validateValueForStep(step, value) {
-        // required
-        if (step.required) {
-          if (step.type === 'input') {
-            if (!String(value || '').trim()) return { ok: false, msg: step.requiredMessage || 'This field is required' };
-          } else if (step.type === 'select') {
-            if (step.mode === 'multi') {
-              if (!Array.isArray(value) || value.length === 0) return { ok: false, msg: step.requiredMessage || 'Select at least one' };
-            } else {
-              if (!value) return { ok: false, msg: step.requiredMessage || 'Please choose an option' };
-            }
-          }
-        }
-
-        // regex for input
-        if (step.type === 'input' && step.regex) {
-          try {
-            const re = new RegExp(step.regex);
-            if (!re.test(String(value || ''))) return { ok: false, msg: step.error || 'Invalid format' };
-          } catch (e) { /* ignore invalid regex */ }
-        }
-
-        // min/max for multi-select
-        if (step.type === 'select' && step.mode === 'multi') {
-          const count = Array.isArray(value) ? value.length : 0;
-          if (typeof step.min === 'number' && count < step.min) return { ok: false, msg: step.minMessage || `Select at least ${step.min}` };
-          if (typeof step.max === 'number' && count > step.max) return { ok: false, msg: step.maxMessage || `Select at most ${step.max}` };
-        }
-
-        return { ok: true, msg: '' };
-      }
-
-      function isCurrentStepValid() {
-        const starter = sop.starters[state.viewState.starterIdx];
-        const step = (starter.steps || [])[state.stepIndex];
-        if (!step) return true;
-        const val = state.answers[step.id];
-        return validateValueForStep(step, val).ok;
-      }
-
-      const SVG_NS = 'http://www.w3.org/2000/svg';
-      let mapVisible = false;
-      let mapZoom = 1;
-      let mapPan = { x: 0, y: 0 };           // pan in SVG units
-      let lastGraphSize = { width: 1, height: 1 }; // set by renderGraph
-      const drag = { active: false, start: { x: 0, y: 0 }, pan0: { x: 0, y: 0 }, vw: 0, vh: 0 };
-
-
-      function ensureGraphPanel() {
-        let panel = document.getElementById('graphPanel');
-        if (panel) return panel;
-
-        panel = document.createElement('div');
-        panel.id = 'graphPanel';
-        panel.className = 'graph-panel';
-        panel.style.display = 'none';
-        // In ensureGraphPanel(), REPLACE the panel.innerHTML assignment with:
-        panel.innerHTML = `
-                          <div class="graph-header">
-                            <strong>Map</strong>
-                            <div class="graph-zoom">
-                              <button id="zoomOutBtn" title="Zoom out">−</button>
-                              <button id="zoomInBtn" title="Zoom in">+</button>
-                              <button id="zoomResetBtn" title="Reset zoom">Reset</button>
-                              <button id="mapMaxBtn" title="Full screen">Full screen</button>
-                            </div>
-                          </div>
-                          <svg id="graphSvg" class="graph-svg" role="img" aria-label="SOP Map"></svg>
-                        `;
-
-        wizardEl.insertBefore(panel, stepContainer);
-
-        // ---- wire zoom (buttons + wheel) ----
-        const svg = panel.querySelector('#graphSvg');
-        panel.querySelector('#zoomInBtn').addEventListener('click', () => setMapZoom(mapZoom * 1.2));
-        panel.querySelector('#zoomOutBtn').addEventListener('click', () => setMapZoom(mapZoom / 1.2));
-        panel.querySelector('#zoomResetBtn').addEventListener('click', () => { mapPan = { x: 0, y: 0 }; setMapZoom(1); });
-        svg.addEventListener('wheel', (e) => {
-          e.preventDefault();
-          setMapZoom(mapZoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
-        }, { passive: false });
-
-        // ---- wire pan (mouse + touch) ----
-        svg.addEventListener('mousedown', (e) => {
-          e.preventDefault(); // stop text selection while dragging
-          drag.active = true;
-          drag.start = { x: e.clientX, y: e.clientY };
-          drag.pan0 = { ...mapPan };
-          drag.vw = lastGraphSize.width / mapZoom;
-          drag.vh = lastGraphSize.height / mapZoom;
-          svg.classList.add('dragging');
-          panel.classList.add('dragging'); // NEW
-        });
-
-        window.addEventListener('mousemove', (e) => {
-          if (!drag.active) return;
-          const dx = e.clientX - drag.start.x;
-          const dy = e.clientY - drag.start.y;
-          const wppY = drag.vh / svg.clientHeight; // world units per pixel (based on Y)
-          mapPan.x = drag.pan0.x - dx * wppY;      // use Y factor for X too → same feel
-          mapPan.y = drag.pan0.y - dy * wppY;
-
-          if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
-        });
-        window.addEventListener('mouseup', () => {
-          if (!drag.active) return;
-          drag.active = false;
-          svg.classList.remove('dragging');
-          panel.classList.remove('dragging'); // NEW
-        });
-
-
-        svg.addEventListener('touchstart', (e) => {
-          if (!e.touches.length) return;
-          const t = e.touches[0];
-          drag.active = true;
-          drag.start = { x: t.clientX, y: t.clientY };
-          drag.pan0 = { ...mapPan };
-          drag.vw = lastGraphSize.width / mapZoom;
-          drag.vh = lastGraphSize.height / mapZoom;
-          svg.classList.add('dragging');
-          panel.classList.add('dragging'); // NEW
-        }, { passive: true });
-
-        svg.addEventListener('touchend', () => {
-          if (!drag.active) return;
-          drag.active = false;
-          svg.classList.remove('dragging');
-          panel.classList.remove('dragging'); // NEW
-        });
-
-        // Still inside ensureGraphPanel(), AFTER wiring zoom & pan handlers, ADD:
-        const maxBtn = panel.querySelector('#mapMaxBtn');
-
-        function isFs() {
-          return document.fullscreenElement === panel || document.webkitFullscreenElement === panel;
-        }
-        function updateMaxBtn() {
-          maxBtn.textContent = isFs() ? 'Exit full screen' : 'Full screen';
-        }
-        maxBtn.addEventListener('click', () => {
-          if (isFs()) {
-            (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
-          } else {
-            (panel.requestFullscreen || panel.webkitRequestFullscreen)?.call(panel);
-          }
-        });
-        document.addEventListener('fullscreenchange', () => {
-          updateMaxBtn();
-          if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
-        });
-        document.addEventListener('webkitfullscreenchange', () => {
-          updateMaxBtn();
-          if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
-        });
-        updateMaxBtn();
-
-
-
-
-
-
-        return panel;
-      }
-
-
-      function setMapVisibility(v) {
-        mapVisible = v;
-        ensureGraphPanel().style.display = v ? '' : 'none';
-        document.getElementById('toggleMap').textContent = v ? 'Hide map' : 'Show map';
-        if (v) renderGraph(sop.starters[state.viewState.starterIdx]);
-      }
-
-      function setMapZoom(z) {
-        mapZoom = Math.min(4, Math.max(0.5, z));
-        // re-render to apply new viewBox
-        if (mapVisible) renderGraph(sop.starters[state.viewState.starterIdx]);
-      }
-
-      function createSVG(tag, attrs, text) {
-        const el = document.createElementNS(SVG_NS, tag);
-        for (const k in attrs) el.setAttribute(k, attrs[k]);
-        if (text != null) el.textContent = text;
-        return el;
-      }
-
-      function buildGraph(starter) {
-        const steps = starter.steps || [];
-        const nodes = steps.map((s, i) => ({
-          id: s.id || `_i${i}`,
-          label: s.title || s.label || s.type,
-          type: s.type,
-          idx: i
-        }));
-        const idToIdx = Object.fromEntries(nodes.map(n => [n.id, n.idx]));
-        const edges = [];
-
-        for (let i = 0; i < steps.length; i++) {
-          const s = steps[i];
-          if (s.type === 'select' && s.mode !== 'multi' && Array.isArray(s.options) && s.options.length) {
-            let had = false;
-            for (const opt of s.options) {
-              let to = null;
-              if (opt.next && (opt.next in idToIdx)) to = idToIdx[opt.next];
-              else if (s.next && (s.next in idToIdx)) to = idToIdx[s.next];
-              else if (i + 1 < steps.length) to = i + 1;
-              if (to != null) {
-                const targetId = steps[to].id || `_i${to}`;
-                const lbl = String(opt.value ?? opt.label ?? '');
-                edges.push({ from: i, to, label: lbl });
-                had = true;
-              }
-            }
-            if (!had) {
-              const to = (s.next && (s.next in idToIdx)) ? idToIdx[s.next] : (i + 1 < steps.length ? i + 1 : null);
-              if (to != null) edges.push({ from: i, to, label: '' });
-            }
-          } else {
-            let to = null;
-            if (s.next && (s.next in idToIdx)) to = idToIdx[s.next];
-            else if (i + 1 < steps.length) to = i + 1;
-            if (to != null) edges.push({ from: i, to, label: '' });
-          }
-        }
-        return { nodes, edges };
-      }
-
-      function layoutGraph(nodes, edges) {
-        // simple BFS levels (columns); fixed sizes
-        const adj = nodes.map(() => []);
-        edges.forEach(e => adj[e.from].push(e.to));
-        const level = new Array(nodes.length).fill(Infinity);
-        const q = [0]; level[0] = 0;
-        while (q.length) {
-          const u = q.shift();
-          for (const v of adj[u]) if (level[v] > level[u] + 1) { level[v] = level[u] + 1; q.push(v); }
-        }
-        const maxLevel = Math.max(0, ...level.filter(n => isFinite(n)));
-        for (let i = 0; i < nodes.length; i++) { if (!isFinite(level[i])) level[i] = maxLevel + 1; }
-
-        const buckets = {};
-        nodes.forEach((n, i) => { (buckets[level[i]] ||= []).push(i); });
-
-        const colW = 210, rowH = 90, padX = 40, padY = 40;
-        const positions = new Array(nodes.length);
-        let maxCols = 0, maxL = -1;
-        for (const k of Object.keys(buckets)) {
-          const L = Number(k), arr = buckets[L];
-          maxL = Math.max(maxL, L); maxCols = Math.max(maxCols, arr.length);
-          arr.forEach((i, j) => { positions[i] = { x: padX + j * colW, y: padY + L * rowH }; });
-        }
-        return { positions, size: { width: padX * 2 + Math.max(1, maxCols) * colW, height: padY * 2 + (maxL + 1) * rowH } };
-      }
-
-      function currentPathPairs(starter) {
-        // derive visited edge pairs from current answers (for highlight)
-        const steps = starter.steps || [];
-        const idToIdx = {};
-        steps.forEach((s, i) => { if (s.id) idToIdx[s.id] = i; });
-        const pairs = [];
-        let i = 0, guard = 0;
-        while (i != null && i < steps.length && guard++ < steps.length + 10) {
-          const s = steps[i];
-          let nextIdx = null;
-          if (s.type === 'select' && s.mode !== 'multi' && Array.isArray(s.options)) {
-            const sel = state.answers[s.id];
-            const val = sel && (sel.value ?? sel);
-            const opt = s.options.find(o => o.value === val);
-            if (opt && opt.next && (opt.next in idToIdx)) nextIdx = idToIdx[opt.next];
-          }
-          if (nextIdx == null) {
-            if (s.next && (s.next in idToIdx)) nextIdx = idToIdx[s.next];
-            else if (i + 1 < steps.length) nextIdx = i + 1;
-          }
-          if (nextIdx != null) { pairs.push(i + '>' + nextIdx); i = nextIdx; } else break;
-        }
-        return new Set(pairs);
-      }
-
-      function renderGraph(starter) {
-        const panel = ensureGraphPanel();
-        const svg = document.getElementById('graphSvg');
-        const { nodes, edges } = buildGraph(starter);
-        const { positions, size } = layoutGraph(nodes, edges);
-        // set viewBox with zoom + pan (pan in SVG units relative to center)
-        lastGraphSize = size;
-        const baseCx = size.width / 2, baseCy = size.height / 2;
-        const cx = baseCx + mapPan.x;
-        const cy = baseCy + mapPan.y;
-        const vw = size.width / mapZoom, vh = size.height / mapZoom;
-        svg.setAttribute('viewBox', `${cx - vw / 2} ${cy - vh / 2} ${vw} ${vh}`);
-
-        svg.innerHTML = '';
-
-        // defs for straight-line arrows
-        const defs = createSVG('defs', {});
-        const marker = createSVG('marker', { id: 'arrow', markerWidth: 8, markerHeight: 8, refX: 8, refY: 3.5, orient: 'auto', markerUnits: 'strokeWidth' });
-        marker.appendChild(createSVG('path', { d: 'M0,0 L8,3.5 L0,7 z', fill: '#98a2b3' }));
-        defs.appendChild(marker);
-        svg.appendChild(defs);
-
-        const highlight = currentPathPairs(starter);
-
-        // draw edges as straight lines
-        edges.forEach(e => {
-          const a = positions[e.from], b = positions[e.to];
-          if (!a || !b) return;
-          const x1 = a.x + 160, y1 = a.y + 24;   // right mid of source
-          const x2 = b.x, y2 = b.y + 24;   // left mid of target
-          const cls = 'edge' + (highlight.has(e.from + '>' + e.to) ? ' highlight' : '');
-          svg.appendChild(createSVG('line', { x1, y1, x2, y2, 'class': cls }));
-          if (e.label) {
-            const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - 6;
-            svg.appendChild(createSVG('text', { x: mx, y: my, 'text-anchor': 'middle', 'class': 'edge-label' }, e.label));
-          }
-        });
-
-        // draw nodes (no click)
-        nodes.forEach((n, i) => {
-          const pos = positions[i]; if (!pos) return;
-          const g = createSVG('g', { transform: `translate(${pos.x},${pos.y})` });
-          const rectCls = ['node-rect'];
-          if (highlight.size && Array.from(highlight).some(p => p.startsWith(i + '>') || p.endsWith('>' + i))) rectCls.push('visited');
-          if (i === state.stepIndex) rectCls.push('current');
-          g.appendChild(createSVG('rect', { width: 160, height: 48, 'class': rectCls.join(' ') }));
-          g.appendChild(createSVG('text', { x: 80, y: 28, 'text-anchor': 'middle', 'class': 'node-label' }, n.label));
-          svg.appendChild(g);
-        });
-      }
-
-      function computeLinearPath(starter) {
-        const steps = starter.steps || [];
-        const idToIdx = {};
-        steps.forEach((s, i) => { if (s.id) idToIdx[s.id] = i; });
-
-        const path = [];
-        const seen = new Set();
-        let i = 0;
-
-        for (let guard = 0; guard < steps.length + 10; guard++) {
-          if (i == null || i < 0 || i >= steps.length) break;
-          if (seen.has(i)) break;
-          path.push(i);
-          seen.add(i);
-
-          const step = steps[i];
-          if (step && step.type === 'end') break;
-
-          let nextIdx = null;
-
-          if (step && step.type === 'select' && step.mode !== 'multi' && Array.isArray(step.options)) {
-            const ans = state.answers[step.id];
-            if (ans) {
-              const selVal = (ans && (ans.value ?? ans));
-              const opt = step.options.find(o => o.value === selVal);
-              if (opt && opt.next && (opt.next in idToIdx)) nextIdx = idToIdx[opt.next];
-            }
-            if (nextIdx == null) {
-              if (step.next && (step.next in idToIdx)) nextIdx = idToIdx[step.next];
-              else nextIdx = (i + 1 < steps.length) ? i + 1 : null;
-            }
-          } else {
-            if (step && step.next && (step.next in idToIdx)) nextIdx = idToIdx[step.next];
-            else nextIdx = (i + 1 < steps.length) ? i + 1 : null;
-          }
-
-          i = nextIdx;
-        }
-        return path;
-      }
-
-      function pathStats(starter) {
-        const steps = starter.steps || [];
-        const idToIdx = {};
-        steps.forEach((s, i) => { if (s.id) idToIdx[s.id] = i; });
-
-        function nextIndices(step, i) {
-          const out = new Set();
-          if (step && step.type === 'select' && step.mode !== 'multi' && Array.isArray(step.options) && step.options.length) {
-            let hadNext = false;
-            step.options.forEach(opt => {
-              if (opt.next && (opt.next in idToIdx)) {
-                out.add(idToIdx[opt.next]); hadNext = true;
-              }
-            });
-            if (!hadNext) {
-              if (step.next && (step.next in idToIdx)) out.add(idToIdx[step.next]);
-              else if (i + 1 < steps.length) out.add(i + 1);
-            }
-          } else {
-            if (step && step.next && (step.next in idToIdx)) out.add(idToIdx[step.next]);
-            else if (i + 1 < steps.length) out.add(i + 1);
-          }
-          return Array.from(out);
-        }
-
-        function dfs(i, stack) {
-          if (i == null || i < 0 || i >= steps.length) return { min: 0, max: 0 };
-          if (stack.has(i)) return { min: 0, max: 0 }; // break cycles
-          stack.add(i);
-
-          const step = steps[i];
-          const edges = (step && step.type === 'end') ? [] : nextIndices(step, i);
-
-          let res;
-          if (edges.length === 0) {
-            res = { min: 1, max: 1 };
-          } else {
-            let minC = Infinity, maxC = -Infinity;
-            for (const e of edges) {
-              const r = dfs(e, stack);
-              minC = Math.min(minC, r.min);
-              maxC = Math.max(maxC, r.max);
-            }
-            res = { min: 1 + (isFinite(minC) ? minC : 0), max: 1 + (isFinite(maxC) ? maxC : 0) };
-          }
-          stack.delete(i);
-          return res;
-        }
-
-        return dfs(0, new Set());
-      }
-
-      function renderTextBody(body) {
-        if (!body) return '';
-        if (Array.isArray(body)) {
-          return `<ul>${body.map(item => `<li>${safeInterpolate(String(item))}</li>`).join('')}</ul>`;
-        }
-        return `<p>${safeInterpolate(String(body))}</p>`;
-      }
-
-      // --- helpers for {{var}} interpolation ---
-      function safeInterpolate(str) {
-        // supports {{var}}, {{var.label}}, and multi-select join
-        return str.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, path) => escapeHtml(readAnswerPath(path)));
-      }
-
-      function readAnswerPath(path) {
-        const [head, ...rest] = String(path).split('.');
-        const base = state.answers[head];
-        return formatAnswerPath(base, rest);
-      }
-
-      function formatAnswerPath(base, props) {
-        if (base == null) return '';
-        if (Array.isArray(base)) {
-          if (props && props.length) {
-            return base.map(x => pickPath(x, props)).filter(v => v != null && v !== '').join(', ');
-          }
-          return base.map(x => (x && (x.label || x.value)) || String(x)).join(', ');
-        }
-        if (typeof base === 'object') {
-          if (props && props.length) return pickPath(base, props) ?? '';
-          return base.label || base.value || '';
-        }
-        return String(base);
-      }
-
-      function pickPath(obj, props) {
-        let cur = obj;
-        for (const p of props) { if (cur == null) return ''; cur = cur[p]; }
-        return cur ?? '';
-      }
-
-
-      function escapeHtml(str) {
-        return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[s]));
-      }
-      function setNextEnabled(v) { nextBtn.disabled = !v; }
-
-      /*** Events ***/
-      prevBtn.addEventListener('click', () => {
-        if (state.history && state.history.length) {
-          state.stepIndex = state.history.pop();
-          renderStep();
-        } else if (state.stepIndex > 0) {
-          state.stepIndex--; renderStep();
-        }
-      });
-
-      nextBtn.addEventListener('click', () => {
-        if (!isCurrentStepValid()) return; // block if invalid
-        navigateNext();                    // your existing function
-      });
-
-      // toggle link
-      document.getElementById('toggleMap').addEventListener('click', (e) => {
-        e.preventDefault();
-        setMapVisibility(!mapVisible);
-      });
-
-
-      function navigateNext() {
-        const starter = sop.starters[state.viewState.starterIdx];
-        const steps = starter.steps || [];
-        const current = steps[state.stepIndex];
-
-        // record history for proper back behavior on jumps
-        state.history = state.history || [];
-        state.history.push(state.stepIndex);
-
-        let targetId = null;
-
-        // branch on single-select option
-        if (current && current.type === 'select' && current.mode !== 'multi') {
-          const sel = state.answers[current.id];
-          if (sel && sel.next) targetId = sel.next;
-        }
-
-        // unconditional next jump if provided on the step
-        if (!targetId && current && current.next) targetId = current.next;
-
-        if (targetId) {
-          const idx = starter._index && starter._index[targetId];
-          if (typeof idx === 'number') { state.stepIndex = idx; renderStep(); return; }
-        }
-
-        if (state.stepIndex < steps.length - 1) { state.stepIndex++; renderStep(); }
-      }
-
-      backHomeBtn.addEventListener('click', showLanding);
-
-      fileInput.addEventListener('change', (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            const parsed = JSON.parse(reader.result);
-            if (!parsed || !Array.isArray(parsed.starters)) throw new Error('Missing starters[]');
-            sop = parsed;
-            showLanding();
-          } catch (err) {
-            alert('Invalid JSON: ' + (err && err.message ? err.message : 'Parse error'));
-          }
-        };
-        reader.readAsText(file);
-      });
-
-      downloadBtn.addEventListener('click', () => {
-        const blob = new Blob([JSON.stringify(sop, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = (sop.title ? slugify(sop.title) : 'sop') + '.json';
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(url);
-      });
-
-      aboutBtn.addEventListener('click', () => {
-        alert('SOP Runbook Viewer\n\nOffline, single-file HTML. Import a .json to load your flow. Supported step types: instruction, input (text), select (cards or list), end.');
-      });
-
-      function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'sop'; }
-
-      // Init
-      showLanding();
-    })();
-  <\/script>
-</body>
-
-</html>
 
 </script>
 
@@ -2148,6 +998,10 @@
       <div class="row">
         <h1 class="grow">OpsPath Studio · SOP Builder</h1>
         <div class="controls">
+          <button id="btnHome" class="vw-home" title="Home" onclick="goHome()">
+            🏠 Home
+          </button>
+
           <div class="upload">
             <input id="importHtmlInput" type="file" accept=".html,text/html" hidden>
             <button id="importHtmlBtn" class="btn">Import Viewer HTML…</button>
@@ -2169,7 +1023,7 @@
     <section id="starter">
       <div id="vwWizard">
         <div class="vw-crumbs">
-          <button id="vwBackHome" class="btn">◀ Back</button>
+          <button id="vwBackHome" onclick="goHome()" class="btn">◀ Back</button>
           <span class="title" id="vwStarterTitle"></span>
         </div>
         <div id="vwProgress" class="small"></div>
@@ -2182,7 +1036,7 @@
       <div id="editStarter" class="layout">
         <!-- Left: Starters & Steps -->
         <div class="panel" id="leftPanel">
-          <h2>Starters</h2>
+          <!-- <h2>Starters</h2>
           <div class="rowflex">
             <select id="starterSelect"></select>
           </div>
@@ -2192,9 +1046,9 @@
           <div class="rowflex" style="margin-top:8px">
             <button id="addStarterBtn" class="iconbtn">+ Starter</button>
             <button id="delStarterBtn" class="iconbtn warn">🗑 Delete starter</button>
-          </div>
+          </div> -->
 
-          <div class="hr"></div>
+          <!-- <div class="hr"></div> -->
           <h2>Steps</h2>
           <div class="rowflex">
             <button id="addBeforeBtn" class="iconbtn">+ Before</button>
@@ -2219,7 +1073,7 @@
               <button id="fullscreenBtn">Full screen</button>
             </div>
           </div>
-          <svg id="graphSvg" class="graph-svg" role="img" aria-label="SOP Map">
+          <svg id="graphSvg" class="graph-svg" role="img">
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8"
                 orient="auto-start-reverse">
@@ -2278,17 +1132,43 @@
       </div>
     </div>
 
+    <div id="dlgNewStarter" class="vw-dialog hidden">
+      <div class="vw-dialog__panel" role="dialog">
+        <!-- REPLACE the inner content of #dlgNewStarter .vw-dialog__panel with: -->
+        <h3 id="nsHeading">Create starter</h3>
+
+        <div class="vw-field">
+          <label for="nsLabel">Label</label>
+          <input maxlength="50" id="nsLabel" type="text" placeholder="Starter X" required>
+          <p id="nsLabelErr" class="vw-error"></p>
+
+        </div>
+
+        <div class="vw-field">
+          <label for="nsSummary">Summary</label>
+          <textarea  maxlength="200"  id="nsSummary" rows="3" placeholder="Optional"></textarea>
+        </div>
+
+        <div class="vw-actions">
+          <button type="button" class="btn" id="nsCancel">Cancel</button>
+          <button type="button" class="btn-accent" id="nsCreate">Create</button>
+        </div>
+
+      </div>
+    </div>
+
+
 
 
   </main>
 
   <script>
 
-    // Read the embedded viewer once on load
-    document.addEventListener('DOMContentLoaded', () => {
-      const el = document.getElementById('viewerHtmlEmbedded');
-      window.fullViewerHtml = el ? String(el.textContent || '').trim() : '';
-    });
+    // // Read the embedded viewer once on load
+    // document.addEventListener('DOMContentLoaded', () => {
+    //   const el = document.getElementById('viewerHtmlEmbedded');
+    //   window.fullViewerHtml = el ? String(el.textContent || '').trim() : '';
+    // });
 
     function exportViewerHTML() {
       // 1) Pull embedded full HTML
@@ -2530,16 +1410,22 @@
     })();
 
     // one-time setup (e.g., after DOM ready)
-    (function initBackBtn() {
-      document.addEventListener('click', (e) => {
-        const back = e.target.closest('#vwBackHome'); // or [data-action="back-home"]
-        if (!back) return;
+    // (function initBackBtn() {
+    //   document.addEventListener('click', (e) => {
+    //     const back = e.target.closest('#vwBackHome'); // or [data-action="back-home"]
+    //     if (!back) return;
 
-        // same body as your previous inline handler
-        resetStarterValues();
-        changeScreen('landing');
-      })
-    })();
+    //     // same body as your previous inline handler
+    //     resetStarterValues();
+    //     changeScreen('landing');
+    //   })
+    // })();
+
+    function goHome() {
+      resetStarterValues();
+      changeScreen('landing');
+      console.log(`#065f46`, `#d1fae5`);
+    }
 
 
     (function screenInit() {
@@ -2584,7 +1470,7 @@
 
       document.getElementById('zoomInBtn').addEventListener('click', () => { mapZoom *= 1.2; renderGraph(); console.log('mapZoom'); });
       document.getElementById('zoomOutBtn').addEventListener('click', () => { mapZoom /= 1.2; renderGraph(); });
-      document.getElementById('zoomResetBtn').addEventListener('click', () => { mapZoom = 1; mapPan = { x: 0, y: 0 }; renderGraph(); });
+      document.getElementById('zoomResetBtn').addEventListener('click', () => { mapZoom = 2.4; mapPan = { x: 0, y: 0 }; renderGraph(); });
 
       const fsBtn = document.getElementById('fullscreenBtn');
       fsBtn.addEventListener('click', () => {
@@ -2615,25 +1501,25 @@
         });
       }
 
-      starterSelect.innerHTML = sop.starters
-        .map((s, i) => `<option value="${i}">${escapeHtml(s.label || ('Starter ' + (i + 1)))}</option>`)
-        .join('');
+      // starterSelect.innerHTML = sop.starters
+      //   .map((s, i) => `<option value="${i}">${escapeHtml(s.label || ('Starter ' + (i + 1)))}</option>`)
+      //   .join('');
 
       // clamp index and set selection
       viewState.starterIdx = Math.min(viewState.starterIdx, sop.starters.length - 1);
-      starterSelect.value = String(viewState.starterIdx);
+      // starterSelect.value = String(viewState.starterIdx);
 
       // change handler
-      starterSelect.onchange = () => {
-        viewState.starterIdx = parseInt(starterSelect.value, 10);
-        selectedStepId = sop.starters[viewState.starterIdx]?.steps?.[0]?.id || null;
-        mapPan = { x: 0, y: 0 };      // recenter
-        mapZoom = 1;                 // reset zoom
-        renderSteps();
-        renderGraph();
-        renderInspector();
-        renderStarterMeta();
-      };
+      // starterSelect.onchange = () => {
+      //   viewState.starterIdx = parseInt(starterSelect.value, 10);
+      //   selectedStepId = sop.starters[viewState.starterIdx]?.steps?.[0]?.id || null;
+      //   mapPan = { x: 0, y: 0 };      // recenter
+      //   mapZoom = 1;                 // reset zoom
+      //   renderSteps();
+      //   renderGraph();
+      //   renderInspector();
+      //   renderStarterMeta();
+      // };
 
     }
 
@@ -2730,14 +1616,14 @@
         html += `
       <label>Title</label><input id="f_title" type="text" value="${escapeAttr(step.title || '')}"/>
       <label>Body</label><textarea id="f_body" rows="4">${escapeHtml(step.body || '')}</textarea>
-      <div class="kv">
-        <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
-        <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
-      </div>
       ${step.type !== 'end' ? `
         <label>Next (step.id)</label>
         ${nextSelectHtml(st.steps, step.next)}
       ` : ''}
+      <div class="kv">
+        <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
+        <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
+      </div>
     `;
       }
       else if (step.type === 'input') {
@@ -2751,13 +1637,13 @@
       <div class="kv">
         <div><label>Required message</label><input id="f_reqmsg" type="text" value="${escapeAttr(step.requiredMessage || '')}"/></div>
         <div></div>
-      </div>
+        </div>
+        <label>Next (step.id)</label>
+        ${nextSelectHtml(st.steps, step.next)}
       <div class="kv">
         <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
         <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
       </div>
-      <label>Next (step.id)</label>
-      ${nextSelectHtml(st.steps, step.next)}
     `;
       }
       else if (step.type === 'select') {
@@ -2973,7 +1859,7 @@
     }
 
     /*** Graph ***/
-    let mapZoom = 1, mapPan = { x: 0, y: 0 };
+    let mapZoom = 2.4, mapPan = { x: 0, y: 0 };
     let drag = { active: false, start: { x: 0, y: 0 }, pan0: { x: 0, y: 0 }, vw: 0, vh: 0, wpp: 1 };
     let lastGraphSize = { width: 900, height: 600 };
 
@@ -3321,7 +2207,7 @@
 
       const initialTitle = sop?.title || '';
       const initialDesc = sop?.description || '';
-      const checkDirty = () => { formDirty = (titleInputField.value !== initialTitle) || (descriptionInputField.value !== initialDesc); };
+      const checkDirty = () => { formDirty = (titleInputField.value.trim() !== initialTitle.trim()) || (descriptionInputField.value.trim() !== initialDesc.trim()); };
 
       titleInputField.addEventListener('input', checkDirty);
       descriptionInputField.addEventListener('input', checkDirty);
@@ -3469,8 +2355,7 @@
 
     <div class="vw-grid">
       ${starters.map((st, idx) => `
-        <button class="vw-card" data-idx="${idx}" onclick="enterViewOrEditStarter(${idx})"
-                aria-label="${escapeAttr(st.label || ('Starter ' + (idx + 1)))}">
+        <button class="vw-card" data-idx="${idx}" onclick="enterViewOrEditStarter(${idx})">
           <h3>${escapeHtml(st.label || ('Starter ' + (idx + 1)))}</h3>
           ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ``}
           <div class="vw-pill">
@@ -3481,9 +2366,9 @@
       `).join('')}
 
       <!-- “+ New” card -->
-      <button type="button" class="vw-card vw-card--add" data-action="create-starter" aria-label="Create new starter">
-        <span class="vw-card--add-icon" aria-hidden="true">+</span>
-        <span class="sr-only">Create new starter</span>
+      <button type="button" class="vw-card vw-card--add" data-action="create-starter" >
+        <span class="vw-card--add-icon" >+</span>
+        <h4>Create new starter</h4>
       </button>
     </div>
 
@@ -3507,7 +2392,7 @@
     function enterEditStarter(idx) {
       resetStarterValues();
       viewState.starterIdx = idx;
-      // renderViewStep();
+      selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;;
       renderAll();
 
       changeScreen('starter');
@@ -3553,27 +2438,154 @@
       return sop.starters.length - 1;
     }
 
-    // Delegated handler for the + card
+
+    // REPLACE your current [data-action="create-starter"] handler with this:
+    // document.addEventListener('click', (e) => {
+    //   const add = e.target.closest('[data-action="create-starter"], .vw-card--add');
+    //   if (!add) return;
+
+    //   const modal = document.getElementById('dlgNewStarter');
+    //   const labelI = document.getElementById('nsLabel');
+    //   const summaryI = document.getElementById('nsSummary');
+    //   const btnCreate = document.getElementById('nsCreate');
+    //   const btnCancel = document.getElementById('nsCancel');
+    //   const labelErr = document.getElementById('nsLabelErr');
+
+    //   // seed defaults
+    //   labelI.value = `Starter ${sop.starters.length + 1}`;
+    //   summaryI.value = '';
+
+    //   labelI.classList.remove('is-invalid');
+    //   labelErr.textContent = '';
+
+
+    //   // open
+    //   modal.classList.remove('hidden');
+    //   setTimeout(() => labelI.focus(), 0);
+
+    //   // one-time listeners per open
+    //   function cleanup() {
+    //     modal.classList.add('hidden');
+    //     btnCreate.removeEventListener('click', onCreate);
+    //     btnCancel.removeEventListener('click', onCancel);
+    //     modal.removeEventListener('click', onOverlay);
+    //     document.removeEventListener('keydown', onEsc);
+    //   }
+    //   function onOverlay(ev) { if (ev.target === modal) cleanup(); }
+    //   function onCancel() { cleanup(); }
+    //   function onEsc(ev) { if (ev.key === 'Escape') cleanup(); }
+
+    //   function onCreate() {
+    //     const label = (labelI.value || '').trim();
+    //     if (!label) {
+    //       labelI.classList.add('is-invalid');
+    //       labelErr.textContent = 'Label is required';
+    //       labelI.focus();
+    //       return;
+    //     }
+    //     labelI.classList.remove('is-invalid');
+
+    //     const idx = createNewStarter();           // your existing function: pushes + returns index
+    //     const st = sop.starters[idx];
+    //     st.label = label;
+    //     st.summary = (summaryI.value || '').trim();
+
+    //     cleanup();
+
+    //     if (typeof renderStarters === 'function') renderStarters();
+    //     if (window.viewState) viewState.starterIdx = idx;
+    //     enterViewOrEditStarter(idx);
+    //   }
+
+    //   btnCreate.addEventListener('click', onCreate);
+    //   btnCancel.addEventListener('click', onCancel);
+    //   modal.addEventListener('click', onOverlay);
+    //   document.addEventListener('keydown', onEsc);
+    // });
+
     document.addEventListener('click', (e) => {
-      const add = e.target.closest('[data-action="create-starter"]');
+      const add = e.target.closest('[data-action="create-starter"], .vw-card--add');
       if (!add) return;
-      const idx = createNewStarter();
-      // keep selection in sync if you track it
-      if (viewState) {
-        viewState.starterIdx = idx;
+
+      const modal = document.getElementById('dlgNewStarter');
+      const labelI = document.getElementById('nsLabel');
+      const summaryI = document.getElementById('nsSummary');
+      const btnCreate = document.getElementById('nsCreate');
+      const btnCancel = document.getElementById('nsCancel');
+      const labelErr = document.getElementById('nsLabelErr');
+
+      // seed defaults + reset errors
+      labelI.value = `Starter ${sop.starters.length + 1}`;
+      summaryI.value = '';
+      labelI.classList.remove('is-invalid');
+      if (labelErr) labelErr.textContent = '';
+
+      // inline clear-on-type
+      function clearInvalid() {
+        if (labelI.value.trim()) {
+          labelI.classList.remove('is-invalid');
+          if (labelErr) labelErr.textContent = '';
+        }
       }
-      enterViewOrEditStarter(idx);            // simplest
+      labelI.addEventListener('input', clearInvalid);
 
+      // open
+      modal.classList.remove('hidden');
+      setTimeout(() => labelI.focus(), 0);
 
-      // sop.starters.push({
-      //   id: 'starter_' + (idx + 1),
-      //   label: 'Starter ' + (idx + 1),
-      //   summary: 'This is a new starter.',
-      //   steps: [makeStep('instruction')]
-      // });
-      // currentStarterIndex = idx; selectedStepId = sop.starters[idx].steps[0].id;
-      // renderAll();
+      // one-time listeners per open
+      function cleanup() {
+        modal.classList.add('hidden');
+        btnCreate.removeEventListener('click', onCreate);
+        btnCancel.removeEventListener('click', onCancel);
+        modal.removeEventListener('click', onOverlay);
+        document.removeEventListener('keydown', onEsc);
+        labelI.removeEventListener('input', clearInvalid);
+      }
+      function onOverlay(ev) { if (ev.target === modal) cleanup(); }
+      function onCancel() { cleanup(); }
+      function onEsc(ev) { if (ev.key === 'Escape') cleanup(); }
+
+      function onCreate() {
+        const label = (labelI.value || '').trim();
+        if (!label) {
+          labelI.classList.add('is-invalid');
+          if (labelErr) labelErr.textContent = 'Label is required';
+          labelI.focus();
+          return;
+        }
+
+        const exists = sop.starters.some(s =>
+          (s && typeof s.label === 'string' ? s.label.trim().toLowerCase() : '') === label.toLowerCase()
+        );
+        if (exists) {
+          labelI.classList.add('is-invalid');
+          if (labelErr) labelErr.textContent = 'Label must be unique';
+          labelI.focus();
+          return;
+        }
+
+        const idx = createNewStarter();          // pushes new object, returns index
+        const st = sop.starters[idx];
+        st.label = label;
+        st.summary = (summaryI.value || '').trim();
+
+        cleanup();
+
+        if (typeof renderStarters === 'function') renderStarters();
+        if (window.viewState) viewState.starterIdx = idx;
+        enterViewOrEditStarter(idx);
+      }
+
+      btnCreate.addEventListener('click', onCreate);
+      btnCancel.addEventListener('click', onCancel);
+      modal.addEventListener('click', onOverlay);
+      document.addEventListener('keydown', onEsc);
     });
+
+
+
+
 
 
 

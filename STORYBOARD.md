@@ -20,6 +20,7 @@
 - Set starter node  
 - Search capability  
 - Add rich text (new URL, bold, italic, …)  
+- Download HTML exactly as what we have without the need to upload it everytime 
 - Redirect to step using URL  
 - Hand tool to move the map, cursor to select  
 - Zoom on cursor (not general zoom)  
