@@ -41,6 +41,7 @@
 - Download HTML exactly as what we have without the need to upload it everytime 
 - Redirect to step using URL  
 - View picture (small, then maximize)  
+- Stop warning discard changes option for the user
 - Take full screen, shrink side panels, make more space for the map  
 - Validation: all steps can be accessible  
 - Allow user to view current progress in a dialog (before exporting)  

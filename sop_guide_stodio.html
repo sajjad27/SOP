@@ -1132,6 +1132,46 @@
     .cfm-btn--subtleDanger:hover {
       border-color: var(--warn);
     }
+
+    /* Settings menu */
+    .settings-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      background: transparent;
+      /* click-outside catcher */
+    }
+
+    .settings-panel {
+      position: absolute;
+      z-index: 9999;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      width: 150px;
+      /* smaller fixed width */
+      max-width: 92vw;
+      /* keep mobile-safe */
+      min-width: 0;
+      padding: 6px;
+    }
+
+    .settings-item {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .settings-item:hover {
+      background: var(--input-bg);
+    }
   </style>
 </head>
 
@@ -1170,6 +1210,8 @@
 
           <button id="themeToggle" class="btn">🌙 Dark</button>
           <button id="exportViewerBtn" class="btn-accent">Export Viewer HTML</button>
+          <button id="settingsBtn" class="btn">⚙️</button>
+
         </div>
       </div>
     </div>
@@ -2711,6 +2753,78 @@
     }
 
     // Drop this once in your helpers (before renderViewAndEditLanding uses it)
+
+    function openSettingsMenu(anchorBtn) {
+      // prevent duplicates
+      if (document.getElementById('settingsOverlay')) return;
+
+      // overlay (click outside to close)
+      const overlay = document.createElement('div');
+      overlay.id = 'settingsOverlay';
+      overlay.className = 'settings-overlay';
+
+      // panel
+      const panel = document.createElement('div');
+      panel.className = 'settings-panel';
+
+      // dummy options
+      const options = [
+        { label: 'Theme & Appearance', action: 'theme' },
+        { label: 'Keyboard Shortcuts', action: 'shortcuts' },
+        { label: 'Data & Storage', action: 'storage' },
+        { label: 'About This App', action: 'about' },
+        { label: 'Check for Updates', action: 'updates' },
+      ];
+
+      // build items
+      panel.innerHTML = options.map(o =>
+        `<button class="settings-item" data-action="${o.action}">${o.label}</button>`
+      ).join('');
+
+      // place panel near the anchor button
+      document.body.appendChild(overlay);
+      document.body.appendChild(panel);
+      const rect = anchorBtn.getBoundingClientRect();
+      const top = rect.bottom + 6 + window.scrollY;
+      const left = Math.min(
+        rect.left + window.scrollX,
+        window.scrollX + document.documentElement.clientWidth - panel.offsetWidth - 12
+      );
+      panel.style.top = `${top}px`;
+      panel.style.left = `${left}px`;
+
+      // handlers
+      const onItemClick = (e) => {
+        const btn = e.target.closest('.settings-item');
+        if (!btn) return;
+        const action = btn.getAttribute('data-action');
+        console.log('[settings]', action);
+        cleanup();
+      };
+      const onOutside = (e) => { if (e.target === overlay) cleanup(); };
+      const onEsc = (e) => { if (e.key === 'Escape') cleanup(); };
+
+      panel.addEventListener('click', onItemClick);
+      overlay.addEventListener('click', onOutside);
+      document.addEventListener('keydown', onEsc);
+
+      function cleanup() {
+        panel.removeEventListener('click', onItemClick);
+        overlay.removeEventListener('click', onOutside);
+        document.removeEventListener('keydown', onEsc);
+        panel.remove();
+        overlay.remove();
+      }
+    }
+
+    // Wire it
+    // In wireGlobal(), add:
+    document.getElementById('settingsBtn')?.addEventListener('click', (e) => {
+      openSettingsMenu(e.currentTarget);
+    });
+
+
+
     function countReachable(starter) {
       const steps = starter?.steps || [];
       if (!steps.length) return 0;
