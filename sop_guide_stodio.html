@@ -215,9 +215,29 @@
       color: var(--ok);
     }
 
-    .graph-panel {
-      padding: 8px;
+    [screen="mapping"][data-mode="edit"] .graph-panel {
+      height: calc(100vh - var(--topbar-h, 56px));
+      min-height: 640px;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      grid-column: 1 / -1;
+      /* safe if parent isn't grid */
     }
+
+    /* make cy container fill the panel */
+    .graph-panel>* {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* tighten page wrappers on mapping editor (use what you have) */
+    .vw-shell,
+    .vw-main {
+      max-width: none;
+      padding-inline: 8px;
+    }
+
 
     .graph-header {
       display: flex;
@@ -299,21 +319,16 @@
       border-radius: 12px;
       background: #fff;
     }
-    
 
-    .graph-panel:fullscreen {
-      width: 100vw;
-      height: 100vh;
-      padding: 8px;
-      box-sizing: border-box;
-    }
 
+    .graph-panel:fullscreen,
     .graph-panel:-webkit-full-screen {
       width: 100vw;
       height: 100vh;
       padding: 8px;
       box-sizing: border-box;
     }
+
 
     .graph-panel:fullscreen .graph-svg,
     .graph-panel:-webkit-full-screen .graph-svg {
@@ -368,6 +383,41 @@
       position: relative;
       transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
     }
+
+    /* Save button is visible only in Edit mode */
+    [data-mode="view"] #globalSaveBtn {
+      display: none;
+    }
+
+    /* Save button: stand out when enabled, muted when disabled */
+    #globalSaveBtn {
+      letter-spacing: .2px;
+      transition: transform .12s ease, box-shadow .2s ease, filter .15s ease;
+    }
+
+    /* Enabled: bold green, subtle glow, disk icon */
+    #globalSaveBtn:not([disabled]) {
+      background: linear-gradient(180deg, #16a34a, #15803d);
+      color: #fff;
+      border: 1px solid #0f5132;
+      box-shadow: 0 6px 18px rgba(22, 163, 74, .35);
+    }
+
+    #globalSaveBtn:not([disabled]):hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+      box-shadow: 0 8px 22px rgba(22, 163, 74, .45);
+    }
+
+    /* Disabled: low contrast, dashed border */
+    #globalSaveBtn[disabled] {
+      background: transparent;
+      color: #6b7280;
+      border: 1px dashed #9ca3af;
+      box-shadow: none;
+      cursor: default;
+    }
+
 
     button[disabled],
     .btn[disabled] {
@@ -982,6 +1032,106 @@
       justify-content: flex-end;
       margin-top: 16px;
     }
+
+    /* Confirm dialog — uses your CSS vars */
+    .cfm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, .45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cfm-panel {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: min(420px, 92vw);
+      padding: 18px;
+      font: inherit;
+    }
+
+    .cfm-title {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .cfm-msg {
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .cfm-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .cfm-btn {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font: inherit;
+      border: 1px solid var(--line);
+      cursor: pointer;
+    }
+
+    .cfm-btn:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    /* Cancel: flat, simple */
+    .cfm-btn--cancel {
+      background: var(--input-bg);
+      color: var(--text);
+    }
+
+    .cfm-btn--cancel:hover {
+      filter: brightness(0.98);
+    }
+
+    /* OK: primary or danger, no gradients */
+    .cfm-btn--ok {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .cfm-btn--ok:hover {
+      filter: brightness(1.05);
+    }
+
+    .cfm-btn--danger {
+      background: var(--warn);
+      border-color: var(--warn);
+    }
+
+    .cfm-btn--neutral {
+      background: var(--input-bg);
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .cfm-btn--neutral:hover {
+      filter: brightness(0.98);
+    }
+
+    /* Subtle danger (calm, but distinct) */
+    .cfm-btn--subtleDanger {
+      background: var(--input-bg);
+      color: var(--warn);
+      border-color: var(--line);
+    }
+
+    .cfm-btn--subtleDanger:hover {
+      border-color: var(--warn);
+    }
   </style>
 </head>
 
@@ -1007,6 +1157,12 @@
             <button id="importHtmlBtn" class="btn">Import Viewer HTML…</button>
             <span id="importHtmlNote" class="small"></span>
           </div>
+
+          <button id="globalSaveBtn" disabled>Save</button>
+
+          <button id="resetSopBtn" class="btn">Reset</button>
+
+
           <div class="seg" id="modeSeg">
             <button id="modeView" class="seg-btn">Preview</button>
             <button id="modeEdit" class="seg-btn">Edit</button>
@@ -1121,7 +1277,7 @@
 
     <!-- tiny confirm modal -->
     <!-- Confirm modal -->
-    <div id="confirmModal" class="modal hidden">
+    <!-- <div id="confirmModal" class="modal hidden">
       <div class="modal-card">
         <h3 class="modal-title">Discard changes?</h3>
         <p id="confirmMsg" class="modal-text">You have unsaved header changes.</p>
@@ -1130,7 +1286,7 @@
           <button id="confirmYes" class="btn-danger">Discard</button>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <div id="dlgNewStarter" class="vw-dialog hidden">
       <div class="vw-dialog__panel" role="dialog">
@@ -1146,7 +1302,7 @@
 
         <div class="vw-field">
           <label for="nsSummary">Summary</label>
-          <textarea  maxlength="200"  id="nsSummary" rows="3" placeholder="Optional"></textarea>
+          <textarea maxlength="200" id="nsSummary" rows="3" placeholder="Optional"></textarea>
         </div>
 
         <div class="vw-actions">
@@ -1164,11 +1320,14 @@
 
   <script>
 
-    // // Read the embedded viewer once on load
-    // document.addEventListener('DOMContentLoaded', () => {
-    //   const el = document.getElementById('viewerHtmlEmbedded');
-    //   window.fullViewerHtml = el ? String(el.textContent || '').trim() : '';
-    // });
+
+
+    function flashSaved(btn) {
+      const old = btn.textContent;
+      btn.textContent = 'Saved ✓';
+      setTimeout(() => (btn.textContent = old), 1200);
+    }
+
 
     function exportViewerHTML() {
       // 1) Pull embedded full HTML
@@ -1225,13 +1384,188 @@
     // Wire the button (or call exportViewerHTML() from your existing handler)
     document.getElementById('exportViewerBtn')?.addEventListener('click', exportViewerHTML);
 
+    function openDB(name, version = 1, onUpgrade) {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(name, version);
+        req.onerror = () => reject(req.error);
+        req.onupgradeneeded = (e) => {
+          const db = req.result;
+          if (onUpgrade) onUpgrade(db, e.oldVersion, e.newVersion);
+        };
+        req.onsuccess = () => resolve(req.result);
+      });
+    }
+
+    async function idbPut(dbName, storeName, value) {
+      const db = await openDB(dbName, 1, (db) => {
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName, { keyPath: 'id' });
+        }
+      });
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        tx.objectStore(storeName).put(value);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function idbGet(dbName, storeName, key) {
+      const db = await openDB(dbName, 1, (db) => {
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName, { keyPath: 'id' });
+        }
+      });
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        const req = tx.objectStore(storeName).get(key);
+        req.onsuccess = () => resolve(req.result ? req.result.sop : null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbDel(dbName, storeName, key) {
+      const db = await openDB(dbName, 1);
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        tx.objectStore(storeName).delete(key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    // Any input/change inside header editor or starter editor toggles dirty
+    document.addEventListener('input', (e) => {
+      if (isInEditableArea(e.target)) setDirty(true);
+    }, true);
+
+    // Only mark dirty on change if the value actually differs from SOP
+    document.addEventListener('change', (e) => {
+      const t = e.target;
+      if (!t) return;
+      if (!isInEditableArea(t)) return;
+
+      if (t.id === 'vwTitleInput') {
+        const v = (t.value || '').trim();
+        if ((sop.title || '') !== v) { sop.title = v; setDirty(true); }
+        return;
+      }
+      if (t.id === 'vwDescInput') {
+        const v = (t.value || '').trim();
+        if ((sop.description || '') !== v) { sop.description = v; setDirty(true); }
+        return;
+      }
+
+      // For other controls in the editable area, keep the generic behavior:
+      setDirty(true);
+    }, true);
+
+    // If you already have specific save/cancel handlers for the header,
+    // you can also call clearDirty() there after applying title/description.
+
+
     /*** State ***/
     let sop = makeBlankSOP();
-    let formDirty = false;
+    let savedSop = null; // last saved snapshot
+    // let formDirty = false;
 
     const viewState = { starterIdx: 0, answers: {} };
 
 
+    // ---- Save button state ----
+    let isDirty = false;
+    function setDirty(v = true) { isDirty = !!v; updateSaveBtn(); }
+    function clearDirty() { setDirty(false); }
+
+    function updateSaveBtn() {
+      const btn = document.getElementById('globalSaveBtn');
+      if (!btn) return;
+      btn.disabled = !isDirty;
+      btn.classList.toggle('btn-accent', isDirty);
+      btn.classList.toggle('btn', !isDirty);
+    }
+
+    function isInEditableArea(el) {
+      const hdr = document.getElementById('vwHeaderEditor');
+      const edt = document.getElementById('editStarter');
+      return (hdr && hdr.contains(el)) || (edt && edt.contains(el));
+    }
+
+    async function performSave() {
+      if (!isDirty) return false;
+      try {
+        if (typeof syncHeaderInputsIntoSop === 'function') syncHeaderInputsIntoSop();
+        const payload = JSON.parse(JSON.stringify(sop));
+        await idbPut('opsPathDB', 'sops', {
+          id: 'current',
+          sop: payload,
+          updatedAt: new Date().toISOString()
+        });
+        savedSop = structuredClone(sop);
+        clearDirty();
+        return true;
+      } catch (err) {
+        console.error('Save failed', err);
+        alert('Save failed: ' + (err?.message || err));
+        return false;
+      }
+    }
+
+
+    // Click → write whole SOP to IndexedDB
+    // save? only if dirty
+
+
+    // document.getElementById('globalSaveBtn')?.addEventListener('click', async () => {
+    //   if (!isDirty) return;
+    //   try {
+    //     const payload = JSON.parse(JSON.stringify(sop));
+    //     console.log(`payload`, payload);
+    //     console.log('Saving SOP…', payload);
+    //     await idbPut('opsPathDB', 'sops', {
+    //       id: 'current',
+    //       sop: payload,
+    //       updatedAt: new Date().toISOString()
+    //     });
+    //     savedSop = structuredClone(sop);
+    //     clearDirty();
+    //     const btnSave = document.getElementById('globalSaveBtn');
+    //     const old = btnSave.textContent; btnSave.textContent = 'Saved ✓';
+    //     setTimeout(() => btnSave.textContent = old, 1200);
+    //   } catch (err) {
+    //     console.error('Save failed', err);
+    //     alert('Save failed: ' + (err?.message || err));
+    //   }
+    // });
+
+    document.getElementById('globalSaveBtn')?.addEventListener('click', async () => {
+      const ok = await performSave();
+      if (!ok) return;
+      const btnSave = document.getElementById('globalSaveBtn');
+      const old = btnSave.textContent; btnSave.textContent = 'Saved ✓';
+      setTimeout(() => btnSave.textContent = old, 1200);
+    });
+
+
+    let hotkeysWired = false;
+    function wireHotkeys() {
+      if (hotkeysWired) return; hotkeysWired = true;
+
+      document.addEventListener('keydown', async (e) => {
+        const isSave = (e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S');
+        if (!isSave) return;
+        e.preventDefault(); // stop browser's Save Page
+
+        // ensure header inputs are included
+        // if (typeof syncHeaderInputsIntoSop === 'function') syncHeaderInputsIntoSop();
+
+        if (isDirty) {
+          await performSave();
+          const btn = document.getElementById('globalSaveBtn');
+          if (btn) { const t = btn.textContent; btn.textContent = 'Saved ✓'; setTimeout(() => btn.textContent = t, 1200); }
+        }
+      });
+    }
 
 
     /*** Elements ***/
@@ -1240,25 +1574,55 @@
     const graphSvg = document.getElementById('graphSvg');
     const graphPanel = document.getElementById('graphPanel');
 
-    // const starterTitle = document.getElementById('starterTitle');
-    // const starterSummary = document.getElementById('starterSummary');
-    // const starterDesc = document.getElementById('starterDesc');
-    // const toolMsg = document.getElementById('toolMsg');
-
     /*** Init ***/
+    // document.addEventListener('DOMContentLoaded', () => {
+    //   if (!sop || !Array.isArray(sop.starters) || sop.starters.length === 0) {
+    //     sop = makeBlankSOP();
+    //   }
+    //   viewState.starterIdx = 0;
+    //   selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+    //   renderAll();        
+    //   wireGlobal();
+    // });
+
     document.addEventListener('DOMContentLoaded', () => {
-      if (!sop || !Array.isArray(sop.starters) || sop.starters.length === 0) {
-        sop = makeBlankSOP();
-      }
-      viewState.starterIdx = 0;
-      selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
-      renderAll();          // calls renderStarters/renderSteps/renderGraph/renderStarterMeta
-      applyMode();   // this now always shows landing; Edit just toggles the header inputs
-      // if (studioMode === 'view') renderViewAndEditLanding();
+      (async () => {
+        try {
+          const restored = await idbGet('opsPathDB', 'sops', 'current');
+          console.log('Restored SOP from IndexedDB', restored);
 
+          if (restored) {
+            sop = restored;
+            savedSop = structuredClone(sop);
 
-      wireGlobal();
+          }
+          console.log('Restored SOP from IndexedDB', restored);
+        } catch (_) { }
+        console.log(`!sop`, !sop);
+        if (!sop || !Array.isArray(sop.starters) || sop.starters.length === 0) {
+          sop = makeBlankSOP();
+        }
+
+        viewState.starterIdx = 0;
+        selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+
+        renderAll();
+        wireGlobal();
+        wireHotkeys();
+
+        if (typeof updateSaveBtn === 'function') updateSaveBtn();
+
+        // Warn on tab close / refresh / navigate away when there are unsaved changes
+        window.addEventListener('beforeunload', (e) => {
+          if (!isDirty) return;   // only if something is unsaved
+          e.preventDefault();                   // required by some browsers
+          e.returnValue = '';                   // shows the built-in confirmation dialog
+        });
+
+      })();
     });
+
+
 
     // ---- Import Viewer HTML → extract <script id="default-sop" type="application/json"> ----
     (function wireImportViewerHTML() {
@@ -1363,19 +1727,19 @@
     }
     syncArrowColor();
 
-    function applyMode() {
-      const view = document.getElementById('landing');   // viewer section (landing + wizard containers)
-      const starterEdit = document.getElementById('starter');   // studio section (left/center/right)
-      const wizard = document.getElementById('vwWizard');    // viewer wizard panel (inside landing)
-      const landing = document.getElementById('vwLanding');  // viewer landing host
+    // function applyMode() {
+    //   const view = document.getElementById('landing');   // viewer section (landing + wizard containers)
+    //   const starterEdit = document.getElementById('starter');   // studio section (left/center/right)
+    //   const wizard = document.getElementById('vwWizard');    // viewer wizard panel (inside landing)
+    //   const landing = document.getElementById('vwLanding');  // viewer landing host
 
-    }
+    // }
 
 
     (function themeInit() {
       const btn = document.getElementById('themeToggle');
       const saved = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const prefersDark = matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
       setTheme(saved || (prefersDark ? 'dark' : 'light'));
 
       btn?.addEventListener('click', () => {
@@ -1397,29 +1761,57 @@
       // const saved = localStorage.getItem('data-mode');
       changeDataMode('view');
 
-      btnPreview?.addEventListener('click', () => {
+      // btnPreview?.addEventListener('click', async () => {
+
+      //   if (isDirty) {
+      //     const ok = await confirmDialog({
+      //       title: 'Unsaved changes',
+      //       message: 'Switch to Preview without saving?',
+      //       confirmText: 'Continue',
+      //       cancelText: 'Stay in Edit'
+      //     });
+      //     if (!ok) return;
+      //   }
+
+
+
+      //   renderAll();
+      //   changeDataMode('view');
+      // });
+      btnPreview?.addEventListener('click', async () => {
+        if (isDirty) {
+          const ok = await confirmDialog({
+            title: 'Unsaved changes',
+            message: 'Preview now will discard edits.',
+            confirmText: 'Discard & Preview',
+            cancelText: 'Stay in Edit',
+            variant: 'subtleDanger'   // ← small “danger” cue, not aggressive
+          });
+
+          if (!ok) return;                 // Stay in Edit
+
+          // Discard → revert to last saved snapshot
+          if (savedSop) {
+            sop = structuredClone(savedSop);
+          }
+          clearDirty();
+        }
+
         changeDataMode('view');
-      });
-      btnEdit?.addEventListener('click', () => {
-        changeDataMode('edit');
-        formDirty = false;
-        wireLandingPageEdit();
+        renderAll();
       });
 
+
+      btnEdit?.addEventListener('click', () => {
+        // renderAll();
+        changeDataMode('edit');
+        // formDirty = false;
+        // renderAll();
+        // wireLandingPageEdit();
+      });
 
     })();
 
-    // one-time setup (e.g., after DOM ready)
-    // (function initBackBtn() {
-    //   document.addEventListener('click', (e) => {
-    //     const back = e.target.closest('#vwBackHome'); // or [data-action="back-home"]
-    //     if (!back) return;
-
-    //     // same body as your previous inline handler
-    //     resetStarterValues();
-    //     changeScreen('landing');
-    //   })
-    // })();
 
     function goHome() {
       resetStarterValues();
@@ -1442,7 +1834,7 @@
       }
       document.documentElement.setAttribute('data-mode', newDataMode);
       localStorage.setItem('data-mode', newDataMode);
-
+      // renderAll();
     }
 
     function changeScreen(screen) {
@@ -1467,6 +1859,64 @@
       document.getElementById('addAfterBtn').addEventListener('click', () => addStepRelative('after'));
       document.getElementById('dupStepBtn').addEventListener('click', dupStep);
       document.getElementById('delStepBtn').addEventListener('click', delStep);
+
+      // cache header inputs
+      const titleInputField = document.getElementById('vwTitleInput');
+      const descriptionInputField = document.getElementById('vwDescInput');
+
+      // live-sync SOP on typing (trimmed)
+      titleInputField?.addEventListener('input', () => {
+        const v = (titleInputField.value || '').trim();
+        if ((sop.title || '') !== v) {
+          sop.title = v;
+          console.log(`sop.title`, sop.title);
+          setDirty(true);
+          // renderViewAndEditLanding();
+        }
+      });
+
+      descriptionInputField?.addEventListener('input', () => {
+        const v = (descriptionInputField.value || '').trim();
+        if ((sop.description || '') !== v) {
+          sop.description = v;
+          console.log(`sop.description`, sop.description);
+          setDirty(true);
+          // renderViewAndEditLanding();
+        }
+      });
+
+      document.getElementById('resetSopBtn')?.addEventListener('click', async () => {
+        const ok = await confirmDialog({
+          title: 'Reset SOP?',
+          message: 'This will delete the saved SOP in this browser and start a brand-new one.',
+          confirmText: 'Reset',
+          cancelText: 'Cancel',
+          danger: true
+        });
+        if (!ok) return;
+
+
+
+        try { await idbDel('opsPathDB', 'sops', 'current'); } catch (e) { /* ignore */ }
+
+        // fresh model + clean state
+        sop = makeBlankSOP();
+        savedSop = structuredClone(sop);
+        isDirty = false;
+        // formDirty = false;
+
+        // reset pointers
+        viewState.starterIdx = 0;
+        selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+
+        // show edit landing for the new SOP
+        changeDataMode('view');
+        changeScreen('landing');
+        renderViewAndEditLanding();
+        updateSaveBtn?.();
+      });
+
+
 
       document.getElementById('zoomInBtn').addEventListener('click', () => { mapZoom *= 1.2; renderGraph(); console.log('mapZoom'); });
       document.getElementById('zoomOutBtn').addEventListener('click', () => { mapZoom /= 1.2; renderGraph(); });
@@ -1887,7 +2337,7 @@
     });
 
     // MOUSE MOVE
-    window.addEventListener('mousemove', (e) => {
+    addEventListener('mousemove', (e) => {
       if (!drag.active) return;
       const dx = e.clientX - drag.start.x;
       const dy = e.clientY - drag.start.y;
@@ -1898,7 +2348,7 @@
       renderGraph();
     });
 
-    window.addEventListener('mouseup', () => {
+    addEventListener('mouseup', () => {
       drag.active = false;
       graphSvg.classList.remove('dragging');
       graphPanel.classList.remove('dragging');
@@ -1984,6 +2434,7 @@
 
         g.appendChild(grp);
       });
+      // if (cy?.resize) cy.resize();
     }
 
     function buildGraph(starter) {
@@ -2107,6 +2558,8 @@
       st.steps.splice(insertAt, 0, step);
       selectedStepId = step.id;
       renderAll();
+      setDirty(true);
+
       // if (studioMode === 'view') renderViewAndEditLanding();
 
     }
@@ -2117,6 +2570,8 @@
       st.steps.splice(st.steps.findIndex(x => x.id === s.id) + 1, 0, c);
       selectedStepId = c.id;
       renderAll();
+      setDirty(true);
+
       // if (studioMode === 'view') renderViewAndEditLanding();
 
     }
@@ -2133,6 +2588,7 @@
         }
       }
       selectedStepId = st.steps[Math.max(0, i - 1)]?.id || null;
+      setDirty(true);
       renderAll();
       // if (studioMode === 'view') renderViewAndEditLanding();
 
@@ -2161,97 +2617,90 @@
       return clone;
     }
 
-    function confirmNice(message = 'Discard changes?') {
-      return new Promise((resolve) => {
-        const modal = document.getElementById('confirmModal');
-        const msg = document.getElementById('confirmMsg');
-        const yes = document.getElementById('confirmYes');
-        const no = document.getElementById('confirmNo');
-        if (!modal || !yes || !no) { resolve(confirm(message)); return; }
+    // function confirmNice(message = 'Discard changes?') {
+    //   return new Promise((resolve) => {
+    //     const modal = document.getElementById('confirmModal');
+    //     const msg = document.getElementById('confirmMsg');
+    //     const yes = document.getElementById('confirmYes');
+    //     const no = document.getElementById('confirmNo');
+    //     if (!modal || !yes || !no) { resolve(confirm(message)); return; }
 
-        msg.textContent = message;
-        modal.classList.remove('hidden');
+    //     msg.textContent = message;
+    //     modal.classList.remove('hidden');
 
-        const cleanup = () => {
-          modal.classList.add('hidden');
-          yes.removeEventListener('click', onYes);
-          no.removeEventListener('click', onNo);
-          document.removeEventListener('keydown', onKey);
-          modal.removeEventListener('click', onBackdrop);
-        };
-        const onYes = () => { cleanup(); resolve(true); };
-        const onNo = () => { cleanup(); resolve(false); };
-        const onKey = (e) => { if (e.key === 'Escape') onNo(); };
-        const onBackdrop = (e) => { if (e.target === modal) onNo(); };
+    //     const cleanup = () => {
+    //       modal.classList.add('hidden');
+    //       yes.removeEventListener('click', onYes);
+    //       no.removeEventListener('click', onNo);
+    //       document.removeEventListener('keydown', onKey);
+    //       modal.removeEventListener('click', onBackdrop);
+    //     };
+    //     const onYes = () => { cleanup(); resolve(true); };
+    //     const onNo = () => { cleanup(); resolve(false); };
+    //     const onKey = (e) => { if (e.key === 'Escape') onNo(); };
+    //     const onBackdrop = (e) => { if (e.target === modal) onNo(); };
 
-        yes.addEventListener('click', onYes);
-        no.addEventListener('click', onNo);
-        document.addEventListener('keydown', onKey);
-        modal.addEventListener('click', onBackdrop);
-      });
-    }
+    //     yes.addEventListener('click', onYes);
+    //     no.addEventListener('click', onNo);
+    //     document.addEventListener('keydown', onKey);
+    //     modal.addEventListener('click', onBackdrop);
+    //   });
+    // }
 
     // Gate that only asks if header edit is dirty
     function confirmDirtyThen(message = 'Discard header changes?') {
-      if (!formDirty) return Promise.resolve(true);
+      if (!isDirty) return Promise.resolve(true);
       return confirmNice(message);
     }
 
-    // Wire inline header editor (title/description) after the landing DOM is rendered
-    function wireLandingPageEdit() {
-      const titleInputField = document.getElementById('vwTitleInput');
-      const descriptionInputField = document.getElementById('vwDescInput');
-      const save = document.getElementById('vwSaveHeader');
-      const cancel = document.getElementById('vwCancelHeader');
-      if (!titleInputField || !descriptionInputField) return;
+    // Custom confirm dialog (uses CSS classes + your vars)
+    function confirmDialog({ title = 'Confirm', message = '', confirmText = 'OK', cancelText = 'Cancel', danger = false, variant = 'primary' } = {}) {
+      const okClass =
+        variant === 'neutral' ? 'cfm-btn cfm-btn--neutral' :
+          variant === 'subtleDanger' ? 'cfm-btn cfm-btn--subtleDanger' :
+            danger ? 'cfm-btn cfm-btn--ok cfm-btn--danger' :
+              'cfm-btn cfm-btn--ok';
 
-      const initialTitle = sop?.title || '';
-      const initialDesc = sop?.description || '';
-      const checkDirty = () => { formDirty = (titleInputField.value.trim() !== initialTitle.trim()) || (descriptionInputField.value.trim() !== initialDesc.trim()); };
 
-      titleInputField.addEventListener('input', checkDirty);
-      descriptionInputField.addEventListener('input', checkDirty);
+      return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'cfm-overlay';
 
-      save?.addEventListener('click', () => {
-        console.log('clicked save:');
+        const panel = document.createElement('div');
+        panel.className = 'cfm-panel';
+        panel.innerHTML = `
+      <div class="cfm-title">${title}</div>
+      <div class="cfm-msg">${message}</div>
+      <div class="cfm-actions">
+        <button id="cfmCancel" class="cfm-btn cfm-btn--cancel">${cancelText}</button>
+        <button id="cfmOk" class="${okClass}">${confirmText}</button>
+      </div>
+    `;
 
-        if (!window.sop) window.sop = {};
-        sop.title = titleInputField.value.trim() || 'New SOP Library';
-        sop.description = descriptionInputField.value.trim();
-        // formDirty = false;
-        // isEditMode = false;
-        // isLandingVw = true
-        // headerEditActive = false;
-        console.log('Saved header:', { title: sop.title, description: sop.description });
-        // applyMode();                           // back to Preview
-        renderViewAndEditLanding();
-        changeDataMode('view');
-      });
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
 
-      // cancel?.addEventListener('click', () => {
-      //   // formDirty = false;
-      //   // renderViewAndEditLanding();
-      //   // changeDataMode('view');
+        const done = (val) => {
+          document.removeEventListener('keydown', onKey);
+          overlay.remove();
+          resolve(val);
+        };
+        const onKey = (e) => {
+          if (e.key === 'Escape') done(false);
+          if (e.key === 'Enter') done(true);
+        };
 
-      // });
-      cancel?.addEventListener('click', () => {
-        if (formDirty) {
-          // show confirm dialog
-          showConfirm('You have unsaved header changes. Discard them?', () => {
-            // discard → reset dirty and go back to landing view
-            window.formDirty = false;
-            changeDataMode('view');
-            changeScreen('landing');
-            renderViewAndEditLanding();
-          });
-        } else {
-          // no changes → just go back
-          changeDataMode('view');
-          changeScreen('landing');
-          renderViewAndEditLanding();
-        }
+        const btnCancel = panel.querySelector('#cfmCancel');
+        const btnOk = panel.querySelector('#cfmOk');
+
+        btnCancel.addEventListener('click', () => done(false));
+        btnOk.addEventListener('click', () => done(true));
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) done(false); });
+        document.addEventListener('keydown', onKey);
+
       });
     }
+
 
     function viewEscape(s) { return String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
 
@@ -2347,8 +2796,6 @@
         <input id="vwDescInput" type="text" value="${escapeAttr(desc)}"
           style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font-size:14px;margin-top:8px;" />
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button id="vwSaveHeader" class="btn-accent">Save</button>
-          <button id="vwCancelHeader" class="btn">Cancel</button>
         </div>
       </div>
     </div>
@@ -2493,7 +2940,7 @@
     //     cleanup();
 
     //     if (typeof renderStarters === 'function') renderStarters();
-    //     if (window.viewState) viewState.starterIdx = idx;
+    //     if (viewState) viewState.starterIdx = idx;
     //     enterViewOrEditStarter(idx);
     //   }
 
@@ -2503,11 +2950,100 @@
     //   document.addEventListener('keydown', onEsc);
     // });
 
-    document.addEventListener('click', (e) => {
+    // document.addEventListener('click', (e) => {
+    //   const add = e.target.closest('[data-action="create-starter"], .vw-card--add');
+    //   if (!add) return;
+
+    //   const modal = document.getElementById('dlgNewStarter');
+    //   const labelI = document.getElementById('nsLabel');
+    //   const summaryI = document.getElementById('nsSummary');
+    //   const btnCreate = document.getElementById('nsCreate');
+    //   const btnCancel = document.getElementById('nsCancel');
+    //   const labelErr = document.getElementById('nsLabelErr');
+
+    //   // seed defaults + reset errors
+    //   labelI.value = `Starter ${sop.starters.length + 1}`;
+    //   summaryI.value = '';
+    //   labelI.classList.remove('is-invalid');
+    //   if (labelErr) labelErr.textContent = '';
+
+    //   // inline clear-on-type
+    //   function clearInvalid() {
+    //     if (labelI.value.trim()) {
+    //       labelI.classList.remove('is-invalid');
+    //       if (labelErr) labelErr.textContent = '';
+    //     }
+    //   }
+    //   labelI.addEventListener('input', clearInvalid);
+
+    //   // open
+    //   modal.classList.remove('hidden');
+    //   setTimeout(() => labelI.focus(), 0);
+
+    //   // one-time listeners per open
+    //   function cleanup() {
+    //     modal.classList.add('hidden');
+    //     btnCreate.removeEventListener('click', onCreate);
+    //     btnCancel.removeEventListener('click', onCancel);
+    //     modal.removeEventListener('click', onOverlay);
+    //     document.removeEventListener('keydown', onEsc);
+    //     labelI.removeEventListener('input', clearInvalid);
+    //   }
+    //   function onOverlay(ev) { if (ev.target === modal) cleanup(); }
+    //   function onCancel() { cleanup(); }
+    //   function onEsc(ev) { if (ev.key === 'Escape') cleanup(); }
+
+    //   function onCreate() {
+    //     const label = (labelI.value || '').trim();
+    //     if (!label) {
+    //       labelI.classList.add('is-invalid');
+    //       if (labelErr) labelErr.textContent = 'Label is required';
+    //       labelI.focus();
+    //       return;
+    //     }
+
+    //     const exists = sop.starters.some(s =>
+    //       (s && typeof s.label === 'string' ? s.label.trim().toLowerCase() : '') === label.toLowerCase()
+    //     );
+    //     if (exists) {
+    //       labelI.classList.add('is-invalid');
+    //       if (labelErr) labelErr.textContent = 'Label must be unique';
+    //       labelI.focus();
+    //       return;
+    //     }
+
+    //     const idx = createNewStarter();          // pushes new object, returns index
+    //     const st = sop.starters[idx];
+    //     st.label = label;
+    //     st.summary = (summaryI.value || '').trim();
+
+    //     cleanup();
+
+    //     if (typeof renderStarters === 'function') renderStarters();
+    //     if (viewState) viewState.starterIdx = idx;
+    //     setDirty(true);
+    //     enterViewOrEditStarter(idx);
+    //   }
+
+    //   btnCreate.addEventListener('click', onCreate);
+    //   btnCancel.addEventListener('click', onCancel);
+    //   modal.addEventListener('click', onOverlay);
+    //   document.addEventListener('keydown', onEsc);
+    // });
+
+    // open “New Starter” dialog on click (delegated)
+    document.addEventListener('click', onCreateStarterClick);
+
+    function onCreateStarterClick(e) {
       const add = e.target.closest('[data-action="create-starter"], .vw-card--add');
       if (!add) return;
+      openNewStarterDialog();
+    }
 
+    function openNewStarterDialog() {
       const modal = document.getElementById('dlgNewStarter');
+      if (!modal) return; // fail-safe
+
       const labelI = document.getElementById('nsLabel');
       const summaryI = document.getElementById('nsSummary');
       const btnCreate = document.getElementById('nsCreate');
@@ -2520,33 +3056,18 @@
       labelI.classList.remove('is-invalid');
       if (labelErr) labelErr.textContent = '';
 
-      // inline clear-on-type
-      function clearInvalid() {
+      // helpers
+      const clearInvalid = () => {
         if (labelI.value.trim()) {
           labelI.classList.remove('is-invalid');
           if (labelErr) labelErr.textContent = '';
         }
-      }
-      labelI.addEventListener('input', clearInvalid);
+      };
+      const onOverlay = (ev) => { if (ev.target === modal) cleanup(); };
+      const onCancel = () => cleanup();
+      const onEsc = (ev) => { if (ev.key === 'Escape') cleanup(); };
 
-      // open
-      modal.classList.remove('hidden');
-      setTimeout(() => labelI.focus(), 0);
-
-      // one-time listeners per open
-      function cleanup() {
-        modal.classList.add('hidden');
-        btnCreate.removeEventListener('click', onCreate);
-        btnCancel.removeEventListener('click', onCancel);
-        modal.removeEventListener('click', onOverlay);
-        document.removeEventListener('keydown', onEsc);
-        labelI.removeEventListener('input', clearInvalid);
-      }
-      function onOverlay(ev) { if (ev.target === modal) cleanup(); }
-      function onCancel() { cleanup(); }
-      function onEsc(ev) { if (ev.key === 'Escape') cleanup(); }
-
-      function onCreate() {
+      const onCreate = () => {
         const label = (labelI.value || '').trim();
         if (!label) {
           labelI.classList.add('is-invalid');
@@ -2554,7 +3075,6 @@
           labelI.focus();
           return;
         }
-
         const exists = sop.starters.some(s =>
           (s && typeof s.label === 'string' ? s.label.trim().toLowerCase() : '') === label.toLowerCase()
         );
@@ -2565,7 +3085,7 @@
           return;
         }
 
-        const idx = createNewStarter();          // pushes new object, returns index
+        const idx = createNewStarter(); // pushes new object, returns index
         const st = sop.starters[idx];
         st.label = label;
         st.summary = (summaryI.value || '').trim();
@@ -2573,15 +3093,32 @@
         cleanup();
 
         if (typeof renderStarters === 'function') renderStarters();
-        if (window.viewState) viewState.starterIdx = idx;
+        if (viewState) viewState.starterIdx = idx;
+        setDirty(true);
         enterViewOrEditStarter(idx);
+      };
+
+      function cleanup() {
+        modal.classList.add('hidden');
+        btnCreate.removeEventListener('click', onCreate);
+        btnCancel.removeEventListener('click', onCancel);
+        modal.removeEventListener('click', onOverlay);
+        document.removeEventListener('keydown', onEsc);
+        labelI.removeEventListener('input', clearInvalid);
       }
 
+      // open
+      modal.classList.remove('hidden');
+      setTimeout(() => labelI.focus(), 0);
+
+      // one-time listeners per open
+      labelI.addEventListener('input', clearInvalid, { passive: true });
       btnCreate.addEventListener('click', onCreate);
       btnCancel.addEventListener('click', onCancel);
       modal.addEventListener('click', onOverlay);
       document.addEventListener('keydown', onEsc);
-    });
+    }
+
 
 
 
@@ -2840,7 +3377,7 @@
     const libSave = document.getElementById('libSave');
     const libCancel = document.getElementById('libCancel');
 
-    const confirmModal = document.getElementById('confirmModal');
+    // const confirmModal = document.getElementById('confirmModal');
     const confirmYes = document.getElementById('confirmYes');
     const confirmNo = document.getElementById('confirmNo');
     const confirmMsg = document.getElementById('confirmMsg');
@@ -2854,19 +3391,19 @@
     // }
 
     // Nice confirm (no alert)
-    function showConfirm(message, onContinue) {
-      confirmMsg.textContent = message || 'Leave without saving?';
-      confirmModal.classList.remove('hidden');
-      const yes = () => { cleanup(); onContinue && onContinue(); };
-      const no = () => { cleanup(); };
-      function cleanup() {
-        confirmModal.classList.add('hidden');
-        confirmYes.removeEventListener('click', yes);
-        confirmNo.removeEventListener('click', no);
-      }
-      confirmYes.addEventListener('click', yes);
-      confirmNo.addEventListener('click', no);
-    }
+    // function showConfirm(message, onContinue) {
+    //   confirmMsg.textContent = message || 'Leave without saving?';
+    //   // confirmModal.classList.remove('hidden');
+    //   const yes = () => { cleanup(); onContinue && onContinue(); };
+    //   const no = () => { cleanup(); };
+    //   function cleanup() {
+    //     confirmModal.classList.add('hidden');
+    //     confirmYes.removeEventListener('click', yes);
+    //     confirmNo.removeEventListener('click', no);
+    //   }
+    //   confirmYes.addEventListener('click', yes);
+    //   confirmNo.addEventListener('click', no);
+    // }
 
 
     // Track dirty state
@@ -2877,14 +3414,19 @@
     libDesc?.addEventListener('input', checkDirty);
 
     // Save/cancel actions
-    libSave?.addEventListener('click', () => {
-      if (!window.sop) window.sop = {};
-      sop.title = libTitle.value.trim() || 'Untitled SOP';
-      sop.description = libDesc.value.trim();
-      libDirty = false;
-      showPreview(true);   // return to Preview after save
-    });
+    // libSave?.addEventListener('click', () => {
+    //   if (!sop) sop = {};
+    //   sop.title = libTitle.value.trim() || 'Untitled SOP';
+    //   sop.description = libDesc.value.trim();
+    //   setDirty(true);
+
+    //   libDirty = false;
+    //   showPreview(true);   // return to Preview after save
+    // });
     libCancel?.addEventListener('click', () => showPreview(false));
+
+
+
 
 
   </script>
