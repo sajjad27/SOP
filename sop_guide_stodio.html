@@ -140,7 +140,7 @@
     }
 
     .layout {
-      display: grid;
+      display: flex;
       grid-template-columns: 280px 1fr 360px;
       gap: 12px;
       align-items: start;
@@ -328,6 +328,7 @@
       padding: 8px;
       box-sizing: border-box;
     }
+
 
 
     .graph-panel:fullscreen .graph-svg,
@@ -742,7 +743,7 @@
     }
 
     [screen="starter"][data-mode="edit"] #editStarter {
-      display: grid;
+      display: flex;
     }
 
 
@@ -1172,6 +1173,29 @@
     .settings-item:hover {
       background: var(--input-bg);
     }
+
+    /* wrapper to anchor floating controls inside the graph area */
+    .graph-canvas {
+      position: relative;
+    }
+
+    /* top-centered buttons INSIDE the graph */
+    .graph-canvas .graph-fabs--top {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 6;
+      pointer-events: none;
+      /* let graph drag/pan pass through */
+    }
+
+    .graph-canvas .graph-action {
+      /* but keep buttons clickable */
+      pointer-events: auto;
+    }
   </style>
 </head>
 
@@ -1233,7 +1257,7 @@
       </div>
       <div id="editStarter" class="layout">
         <!-- Left: Starters & Steps -->
-        <div class="panel" id="leftPanel">
+        <!-- <div class="panel" id="leftPanel"> -->
           <!-- <h2>Starters</h2>
           <div class="rowflex">
             <select id="starterSelect"></select>
@@ -1247,15 +1271,15 @@
           </div> -->
 
           <!-- <div class="hr"></div> -->
-          <h2>Steps</h2>
+          <!-- <h2>Steps</h2>
           <div class="rowflex">
             <button id="addBeforeBtn" class="iconbtn">+ Before</button>
             <button id="addAfterBtn" class="iconbtn">+ After</button>
             <button id="dupStepBtn" class="iconbtn">⎘ Duplicate</button>
             <button id="delStepBtn" class="iconbtn warn">🗑 Delete step</button>
           </div>
-          <div class="list" id="stepsList"></div>
-        </div>
+          <div class="list" id="stepsList"></div> -->
+        <!-- </div> -->
 
         <!-- Center: Graph -->
         <div class="panel graph-panel" id="graphPanel">
@@ -1271,14 +1295,22 @@
               <button id="fullscreenBtn">Full screen</button>
             </div>
           </div>
-          <svg id="graphSvg" class="graph-svg" role="img">
-            <defs>
-              <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8"
-                orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#98a2b3"></path>
-              </marker>
-            </defs>
-          </svg>
+          <div class="graph-canvas" id="graphCanvas">
+            <svg id="graphSvg" class="graph-svg" role="img">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8"
+                  orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#98a2b3"></path>
+                </marker>
+              </defs>
+            </svg>
+            <div class="graph-fabs graph-fabs--top" id="graphFabsTop">
+              <button id="addAfterBtn" class="graph-action graph-action--accent" title="Add step after">+After</button>
+              <button id="addBeforeBtn" class="graph-action graph-action--accent" title="Add step after">+Before</button>
+              <button id="dupStepBtn" class="graph-action" title="Delete step">Duplicate</button>
+              <button id="delStepBtn" class="graph-action warn" title="Delete step">Delete</button>
+            </div>
+          </div>
           <div class="small">
             Click a node to edit. Edges come from <b>step.next</b> (instruction/input/multi-select) and from
             <b>option.next</b> (single-select). Edge labels show <i>option.value</i>.
@@ -1844,6 +1876,8 @@
       });
 
 
+
+
       btnEdit?.addEventListener('click', () => {
         // renderAll();
         changeDataMode('edit');
@@ -1853,6 +1887,11 @@
       });
 
     })();
+
+    function showCurrent() {
+      console.log(`viewState.stepIdx`, viewState.stepIdx);
+      console.log(`selectedStepId`, selectedStepId);
+    }
 
 
     function goHome() {
@@ -1977,7 +2016,7 @@
       renderStarterMeta();
       renderStarters();
       renderViewStep()
-      renderSteps();
+      // renderSteps();
       renderGraph();
     }
 
@@ -2016,24 +2055,24 @@
     }
 
 
-    function renderSteps() {
-      const st = getStarter();
-      stepsList.innerHTML = '';
-      st.steps.forEach(step => {
-        const btn = document.createElement('button');
-        btn.className = 'item' + (step.id === selectedStepId ? ' active' : '');
-        btn.innerHTML = `
-      <div>
-        <div><strong>${escapeHtml(step.id)}</strong> <span class="badge">${escapeHtml(step.type)}</span></div>
-        <div class="muted">${escapeHtml(step.title || step.label || '')}</div>
-      </div>
-      <div class="muted">→ ${escapeHtml(nextSummary(step))}</div>
-    `;
-        btn.addEventListener('click', () => { selectedStepId = step.id; renderSteps(); renderGraph(); renderInspector(); });
-        stepsList.appendChild(btn);
-      });
-      renderInspector();
-    }
+    // function renderSteps() {
+    //   const st = getStarter();
+    //   stepsList.innerHTML = '';
+    //   st.steps.forEach(step => {
+    //     const btn = document.createElement('button');
+    //     btn.className = 'item' + (step.id === selectedStepId ? ' active' : '');
+    //     btn.innerHTML = `
+    //   <div>
+    //     <div><strong>${escapeHtml(step.id)}</strong> <span class="badge">${escapeHtml(step.type)}</span></div>
+    //     <div class="muted">${escapeHtml(step.title || step.label || '')}</div>
+    //   </div>
+    //   <div class="muted">→ ${escapeHtml(nextSummary(step))}</div>
+    // `;
+    //     btn.addEventListener('click', () => { selectedStepId = step.id; renderSteps(); renderGraph(); renderInspector(); });
+    //     stepsList.appendChild(btn);
+    //   });
+    //   renderInspector();
+    // }
 
     ['pointerdown', 'mousedown', 'touchstart'].forEach(evt => {
       graphSvg.addEventListener(evt, () => {
@@ -2471,12 +2510,12 @@
 
         grp.addEventListener('click', () => {
           selectedStepId = n.id;
+          console.log(`selectedStepId`, selectedStepId);
           renderSteps(); renderInspector(); renderGraph();
         });
 
         g.appendChild(grp);
       });
-      // if (cy?.resize) cy.resize();
     }
 
     function buildGraph(starter) {
@@ -2941,7 +2980,6 @@
     function isEditMode() { return document.documentElement.getAttribute('data-mode') === 'edit'; }
 
     function enterViewOrEditStarter(idx) {
-      console.log(`idx`, idx);
       if (isEditMode()) {
         enterEditStarter(idx);
       }
@@ -2974,6 +3012,7 @@
 
       resetStarterValues();
       viewState.starterIdx = idx;
+      selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;
       changeScreen('starter');
 
       const st = sop.starters[idx];
@@ -3245,6 +3284,35 @@
       if (n) n.disabled = !enabled;
     }
 
+    // put this *after* setNextEnabled(...)
+    function validateValueForStep(step, value) {
+      console.log({ step, value });
+      if (step.required) {
+        if (step.type === 'input') {
+          if (!String(value || '').trim()) return { ok: false, msg: step.requiredMessage || 'This field is required' };
+        } else if (step.type === 'select') {
+          if (step.mode === 'multi') {
+            if (!Array.isArray(value) || value.length === 0) return { ok: false, msg: step.requiredMessage || 'Select at least one' };
+          } else {
+            if (!value) return { ok: false, msg: step.requiredMessage || 'Please choose an option' };
+          }
+        }
+      }
+      if (step.type === 'input' && step.regex) {
+        try {
+          const re = new RegExp(step.regex);
+          if (!re.test(String(value || ''))) return { ok: false, msg: step.error || 'Invalid format' };
+        } catch (e) { /* ignore invalid regex */ }
+      }
+      if (step.type === 'select' && step.mode === 'multi') {
+        const count = Array.isArray(value) ? value.length : 0;
+        if (typeof step.min === 'number' && count < step.min) return { ok: false, msg: step.minMessage || `Select at least ${step.min}` };
+        if (typeof step.max === 'number' && count > step.max) return { ok: false, msg: step.maxMessage || `Select at most ${step.max}` };
+      }
+      return { ok: true, msg: '' };
+    }
+
+
     function renderViewStep() {
       const st = sop.starters[viewState.starterIdx];
       const steps = st.steps || [];
@@ -3278,12 +3346,23 @@
         box.appendChild(node);
         const inp = node.querySelector('#vw_inp');
         inp.value = viewState.answers[step.id] || '';
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.style.display = 'none';
+        box.appendChild(err);
+
+        function refreshInput() {
+          const res = validateValueForStep(step, inp.value);
+          err.textContent = res.ok ? '' : res.msg;
+          err.style.display = res.ok ? 'none' : '';
+          setNextEnabled(res.ok);
+        }
         inp.addEventListener('input', () => {
           viewState.answers[step.id] = inp.value;
-          const ok = (inp.value.trim().length > 0) || !step.required;
-          setNextEnabled(ok);
+          refreshInput();
         });
-        setNextEnabled((inp.value.trim().length > 0) || !step.required);
+        refreshInput();  // initial
+
       }
       else if (step.type === 'select') {
         node = document.createElement('div');
@@ -3307,18 +3386,62 @@
               if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
               else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
               viewState.answers[step.id] = sel;
-              setNextEnabled(sel.length > 0 || !step.required);
+              // setNextEnabled(sel.length > 0 || !step.required);
+              // validate
+
+              refreshSelect();
             } else {
               viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
               wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
               btn.classList.add('selected');
-              setNextEnabled(true);
+              // setNextEnabled(true);
+              refreshSelect();
+
             }
           });
           wrap.appendChild(btn);
         });
 
         node.appendChild(wrap);
+        // error message area
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.style.display = 'none';
+        node.appendChild(err);
+
+        // validator for this step
+        function refreshSelect() {
+          console.log('validating select', { sel, value: viewState.answers[step.id], step });
+          // validateValueForStep(step, viewState.answers[step.id]);
+          // const val = viewState.answers[step.id];
+          // let ok = true, msg = '';
+
+          // if (step.required) {
+          //   if (step.mode === 'multi') {
+          //     ok = Array.isArray(val) && val.length > 0;
+          //     if (!ok) msg = step.requiredMessage || 'Select at least one';
+          //   } else {
+          //     ok = !!val;
+          //     if (!ok) {
+          //       const onlyOne = Array.isArray(step.options) && step.options.length === 1;
+          //       msg = step.requiredMessage || (onlyOne ? 'Tap the option to continue' : 'Please choose an option');
+          //     }
+          //   }
+          // }
+
+          // err.textContent = ok ? '' : msg;
+          // err.style.display = ok ? 'none' : '';
+          // setNextEnabled(ok || !step.required);
+
+          const res = validateValueForStep(step, viewState.answers[step.id]);
+          err.textContent = res.ok ? '' : res.msg;
+          err.style.display = res.ok ? 'none' : '';
+          setNextEnabled(res.ok);
+        }
+
+        // initial validate (covers preselected/empty)
+        refreshSelect();
+
         box.appendChild(node);
         const hasSel = mode === 'multi' ? (Array.isArray(sel) && sel.length > 0) : Boolean(sel);
         setNextEnabled(hasSel || !step.required);
@@ -3354,7 +3477,12 @@
             if (choice && choice.next) {
               // jump to label
               const to = steps.findIndex(x => x.id === choice.next);
-              if (to >= 0) { viewState.stepIdx = to; renderViewStep(); return; }
+              if (to >= 0) {
+                viewState.stepIdx = to;
+                selectedStepId = to;
+                renderViewStep();
+                return;
+              }
             }
           }
           // step-level next

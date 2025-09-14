@@ -10,14 +10,14 @@
 -  remove right panel in the edit starter, and put the add +Before +after Duplicate and delete
 -  download button
 -  Delete Starter
--  CTRL + S to save
--  New SOP
 -  Setting to combine some header buttons
 
 ---
 
 ## ✅ Done
 
+-  New SOP
+-  CTRL + S to save
 - Dark mode  
 - Add to GitHub  
 - Download picture  
@@ -42,6 +42,7 @@
 - Redirect to step using URL  
 - View picture (small, then maximize)  
 - Stop warning discard changes option for the user
+- On import ask if everything will be overrided, if yes then override it and import it
 - Take full screen, shrink side panels, make more space for the map  
 - Validation: all steps can be accessible  
 - Allow user to view current progress in a dialog (before exporting)  
