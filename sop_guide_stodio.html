@@ -1196,6 +1196,26 @@
       /* but keep buttons clickable */
       pointer-events: auto;
     }
+
+    /* Make the 'Required' checkbox bigger + aligned */
+    .kv div:has(#f_req) {
+      display: flex;
+      align-items: end;
+      gap: 0.4rem;
+    }
+
+    /* center it vertically */
+    #f_req {
+      transform: scale(1.5);
+      /* tweak 1.9–2.3 to match your input height */
+      transform-origin: bottom;
+      accent-color: var(--accent);
+      /* theme color when checked */
+      margin: 4px;
+      outline: none;
+      box-shadow: none;
+      /* small breathing room */
+    }
   </style>
 </head>
 
@@ -1258,7 +1278,7 @@
       <div id="editStarter" class="layout">
         <!-- Left: Starters & Steps -->
         <!-- <div class="panel" id="leftPanel"> -->
-          <!-- <h2>Starters</h2>
+        <!-- <h2>Starters</h2>
           <div class="rowflex">
             <select id="starterSelect"></select>
           </div>
@@ -1270,8 +1290,8 @@
             <button id="delStarterBtn" class="iconbtn warn">🗑 Delete starter</button>
           </div> -->
 
-          <!-- <div class="hr"></div> -->
-          <!-- <h2>Steps</h2>
+        <!-- <div class="hr"></div> -->
+        <!-- <h2>Steps</h2>
           <div class="rowflex">
             <button id="addBeforeBtn" class="iconbtn">+ Before</button>
             <button id="addAfterBtn" class="iconbtn">+ After</button>
@@ -1306,7 +1326,8 @@
             </svg>
             <div class="graph-fabs graph-fabs--top" id="graphFabsTop">
               <button id="addAfterBtn" class="graph-action graph-action--accent" title="Add step after">+After</button>
-              <button id="addBeforeBtn" class="graph-action graph-action--accent" title="Add step after">+Before</button>
+              <button id="addBeforeBtn" class="graph-action graph-action--accent"
+                title="Add step after">+Before</button>
               <button id="dupStepBtn" class="graph-action" title="Delete step">Duplicate</button>
               <button id="delStepBtn" class="graph-action warn" title="Delete step">Delete</button>
             </div>
@@ -2133,11 +2154,10 @@
         </select>
       </div>
       <div>
+        <div>
+          <input id="f_req" type="checkbox" ${step.required ? 'checked' : ''} />
+        </div>
         <label>Required</label>
-        <select id="f_req">
-          <option value="">No</option>
-          <option value="1" ${step.required ? 'selected' : ''}>Yes</option>
-        </select>
       </div>
     </div>
   `;
@@ -2271,7 +2291,8 @@
 
         }
       });
-      f_req.addEventListener('change', () => { step.required = Boolean(f_req.value); });
+      // f_req.addEventListener('change', () => { step.required = Boolean(f_req.value); });
+      f_req?.addEventListener('change', () => { step.required = f_req.checked; setDirty(true); });
 
       // -------- Wire per-type ----------
       if (step.type === 'instruction' || step.type === 'end') {
@@ -2327,7 +2348,7 @@
         f_err.addEventListener('input', () => { step.error = f_err.value || undefined; });
         f_reqmsg.addEventListener('input', () => { step.requiredMessage = f_reqmsg.value || undefined; });
         f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
-        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri;  }));
+        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }));
         f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
       }
       else if (step.type === 'select') {
@@ -2379,8 +2400,8 @@
           const ff = row.querySelector('.f_opt_file');
           const fd = row.querySelector('.f_opt_del');
 
-          fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph();  });
-          fl.addEventListener('input', () => { o.label = fl.value;  });
+          fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph(); });
+          fl.addEventListener('input', () => { o.label = fl.value; });
           fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
           fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
           fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
@@ -2512,7 +2533,7 @@
         grp.addEventListener('click', () => {
           selectedStepId = n.id;
           console.log(`selectedStepId`, selectedStepId);
-           renderInspector(); renderGraph();
+          renderInspector(); renderGraph();
         });
 
         g.appendChild(grp);

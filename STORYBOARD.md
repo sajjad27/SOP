@@ -4,10 +4,6 @@
 
 ## 🏇 Doing
 
--  ADD Button to Save Changes
--  required is checkbox
--  only one save button shown in the edit mode, lighted when form is dirty, discard changes when go to preview
--  remove right panel in the edit starter, and put the add +Before +after Duplicate and delete
 -  download button
 -  Delete Starter
 -  Setting to combine some header buttons
@@ -16,6 +12,10 @@
 
 ## ✅ Done
 
+-  required is checkbox
+-  remove right panel in the edit starter, and put the add +Before +after Duplicate and delete
+-  ADD Button to Save Changes
+-  only one save button shown in the edit mode, lighted when form is dirty, discard changes when go to preview
 -  New SOP
 -  CTRL + S to save
 - Dark mode  
