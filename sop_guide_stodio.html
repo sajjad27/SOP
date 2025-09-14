@@ -2285,7 +2285,8 @@
           const v = f_title.value.trim();
           if ((step.title || '') === v) return;
           step.title = v;
-          renderSteps(); renderGraph();
+          // renderSteps(); 
+          renderGraph();
         }
         f_title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitTitle(); f_title.blur(); } });
         f_title.addEventListener('blur', commitTitle);
@@ -2293,11 +2294,11 @@
         // Others can be live-updated
         f_body.addEventListener('input', () => { step.body = f_body.value; });
         f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
-        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; renderSteps(); }));
+        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }));
 
         if (step.type !== 'end') {
           const f_next = box.querySelector('#f_next');
-          f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderSteps(); renderGraph(); });
+          f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
         }
       }
       else if (step.type === 'input') {
@@ -2315,7 +2316,7 @@
           const v = f_label.value.trim();
           if ((step.label || '') === v) return;
           step.label = v;
-          renderSteps(); // map not required
+          // renderSteps(); // map not required
         }
         f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
         f_label.addEventListener('blur', commitLabel);
@@ -2326,7 +2327,7 @@
         f_err.addEventListener('input', () => { step.error = f_err.value || undefined; });
         f_reqmsg.addEventListener('input', () => { step.requiredMessage = f_reqmsg.value || undefined; });
         f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
-        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; renderSteps(); }));
+        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri;  }));
         f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
       }
       else if (step.type === 'select') {
@@ -2345,14 +2346,14 @@
           const v = f_label.value.trim();
           if ((step.label || '') === v) return;
           step.label = v;
-          renderSteps();
+          // renderSteps();
         }
         f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
         f_label.addEventListener('blur', commitLabel);
 
         // Others live
         f_display.addEventListener('change', () => { step.display = f_display.value; });
-        f_mode.addEventListener('change', () => { step.mode = f_mode.value; renderSteps(); });
+        f_mode.addEventListener('change', () => { step.mode = f_mode.value; });
         f_min.addEventListener('input', () => { step.min = f_min.value === '' ? undefined : Number(f_min.value); });
         f_max.addEventListener('input', () => { step.max = f_max.value === '' ? undefined : Number(f_max.value); });
         f_minmsg.addEventListener('input', () => { step.minMessage = f_minmsg.value || undefined; });
@@ -2378,8 +2379,8 @@
           const ff = row.querySelector('.f_opt_file');
           const fd = row.querySelector('.f_opt_del');
 
-          fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph(); renderSteps(); });
-          fl.addEventListener('input', () => { o.label = fl.value; renderSteps(); });
+          fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph();  });
+          fl.addEventListener('input', () => { o.label = fl.value;  });
           fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
           fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
           fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
@@ -2511,7 +2512,7 @@
         grp.addEventListener('click', () => {
           selectedStepId = n.id;
           console.log(`selectedStepId`, selectedStepId);
-          renderSteps(); renderInspector(); renderGraph();
+           renderInspector(); renderGraph();
         });
 
         g.appendChild(grp);
