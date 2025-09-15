@@ -433,7 +433,7 @@
       gap: 8px;
     }
 
-    #importHtmlBtn {
+    /* #importHtmlBtn {
       background: var(--card);
       color: var(--fg);
       border: 1px solid var(--line);
@@ -441,7 +441,7 @@
 
     #importHtmlBtn:hover {
       box-shadow: 0 4px 14px rgba(2, 6, 23, .08);
-    }
+    } */
 
     #importHtmlNote {
       color: var(--muted);
@@ -1236,15 +1236,20 @@
             🏠 Home
           </button>
 
-          <div class="upload">
+          <!-- <div class="upload">
             <input id="importHtmlInput" type="file" accept=".html,text/html" hidden>
             <button id="importHtmlBtn" class="btn">Import Viewer HTML…</button>
             <span id="importHtmlNote" class="small"></span>
-          </div>
+          </div> -->
+
+          <input id="importHtmlInput" type="file" accept=".html,text/html" hidden>
+          <span id="importHtmlNote" class="small"></span>
+
+
 
           <button id="globalSaveBtn" disabled>Save</button>
 
-          <button id="resetSopBtn" class="btn">Reset</button>
+          <!-- <button id="resetSopBtn" class="btn">Reset</button> -->
 
 
           <div class="seg" id="modeSeg">
@@ -1252,8 +1257,8 @@
             <button id="modeEdit" class="seg-btn">Edit</button>
           </div>
 
-          <button id="themeToggle" class="btn">🌙 Dark</button>
-          <button id="exportViewerBtn" class="btn-accent">Export Viewer HTML</button>
+          <!-- <button id="themeToggle" class="btn">🌙 Dark</button> -->
+          <!-- <button id="exportViewerBtn" class="btn-accent">Export Viewer HTML</button> -->
           <button id="settingsBtn" class="btn">⚙️</button>
 
         </div>
@@ -1367,21 +1372,6 @@
       </div>
     </section>
 
-    <!-- Library title + description mini editor -->
-
-
-    <!-- tiny confirm modal -->
-    <!-- Confirm modal -->
-    <!-- <div id="confirmModal" class="modal hidden">
-      <div class="modal-card">
-        <h3 class="modal-title">Discard changes?</h3>
-        <p id="confirmMsg" class="modal-text">You have unsaved header changes.</p>
-        <div class="modal-actions">
-          <button id="confirmNo" class="btn">Cancel</button>
-          <button id="confirmYes" class="btn-danger">Discard</button>
-        </div>
-      </div>
-    </div> -->
 
     <div id="dlgNewStarter" class="vw-dialog hidden">
       <div class="vw-dialog__panel" role="dialog">
@@ -1424,60 +1414,18 @@
     }
 
 
-    function exportViewerHTML() {
-      // 1) Pull embedded full HTML
-      const holder = document.getElementById('viewerHtmlEmbedded');
-      if (!holder) { alert('Missing #viewerHtmlEmbedded'); return; }
-      let src = String(holder.textContent || '').trim();
-      if (!src) { alert('No HTML inside #viewerHtmlEmbedded'); return; }
 
-      // 2) If someone pasted encoded text (&lt;html&gt;), decode once
-      if (/&lt;html\b/i.test(src) && !/<html\b/i.test(src)) {
-        src = src
-          .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-          .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-          .replace(/&amp;/g, '&');
-      }
-
-      // 3) Restore escaped closing script tags so the HTML parses correctly
-      //    (Inside the text/plain wrapper you MUST use <\/script>; we fix it here)
-      src = src.replace(/<\\\/script>/gi, '</' + 'script>');
-
-      // 4) Parse as a real HTML document
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(src, 'text/html');
-
-      // 5) Find/insert the JSON slot
-      let slot = doc.querySelector('script#default-sop[type="application/json"]');
-      if (!slot) {
-        slot = doc.createElement('script');
-        slot.id = 'default-sop';
-        slot.type = 'application/json';
-        (doc.body || doc.documentElement).appendChild(slot);
-      }
-
-      // 6) Replace JSON with the current SOP
-      try {
-        slot.textContent = JSON.stringify(sop, null, 2);
-      } catch (e) {
-        alert('Failed to stringify SOP JSON: ' + (e && e.message ? e.message : e));
-        return;
-      }
-
-      // 7) Serialize + download
-      const htmlOut = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
-      const blob = new Blob([htmlOut], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = (typeof slugify === 'function' ? slugify(sop?.title || 'sop-viewer') : 'sop-viewer') + '.html';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 400);
-    }
 
 
     // Wire the button (or call exportViewerHTML() from your existing handler)
-    document.getElementById('exportViewerBtn')?.addEventListener('click', exportViewerHTML);
+    // document.getElementById('exportViewerBtn')?.addEventListener('click', exportViewerHTML);
+    // document.getElementById('exportViewerBtn')?.addEventListener('click', exportCurrentHTMLAsViewer);
+
+
+
+
+
+
 
     function openDB(name, version = 1, onUpgrade) {
       return new Promise((resolve, reject) => {
@@ -1589,7 +1537,7 @@
     async function performSave() {
       if (!isDirty) return false;
       try {
-        if (typeof syncHeaderInputsIntoSop === 'function') syncHeaderInputsIntoSop();
+        // if (typeof syncHeaderInputsIntoSop === 'function') syncHeaderInputsIntoSop();
         const payload = JSON.parse(JSON.stringify(sop));
         await idbPut('opsPathDB', 'sops', {
           id: 'current',
@@ -1607,39 +1555,26 @@
     }
 
 
-    // Click → write whole SOP to IndexedDB
-    // save? only if dirty
+    // document.getElementById('globalSaveBtn')?.addEventListener('click', await saveSop());
+    // document.getElementById('globalSaveBtn')?.addEventListener('click', await saveSop());
+    document.getElementById('globalSaveBtn')?.addEventListener('click', saveSop);
 
 
-    // document.getElementById('globalSaveBtn')?.addEventListener('click', async () => {
-    //   if (!isDirty) return;
-    //   try {
-    //     const payload = JSON.parse(JSON.stringify(sop));
-    //     console.log(`payload`, payload);
-    //     console.log('Saving SOP…', payload);
-    //     await idbPut('opsPathDB', 'sops', {
-    //       id: 'current',
-    //       sop: payload,
-    //       updatedAt: new Date().toISOString()
-    //     });
-    //     savedSop = structuredClone(sop);
-    //     clearDirty();
-    //     const btnSave = document.getElementById('globalSaveBtn');
-    //     const old = btnSave.textContent; btnSave.textContent = 'Saved ✓';
-    //     setTimeout(() => btnSave.textContent = old, 1200);
-    //   } catch (err) {
-    //     console.error('Save failed', err);
-    //     alert('Save failed: ' + (err?.message || err));
-    //   }
-    // });
-
-    document.getElementById('globalSaveBtn')?.addEventListener('click', async () => {
+    async function saveSop() {
       const ok = await performSave();
       if (!ok) return;
       const btnSave = document.getElementById('globalSaveBtn');
       const old = btnSave.textContent; btnSave.textContent = 'Saved ✓';
       setTimeout(() => btnSave.textContent = old, 1200);
-    });
+    }
+
+    async function saveSop() {
+      const ok = await performSave();
+      if (!ok) return;
+      const btnSave = document.getElementById('globalSaveBtn');
+      const old = btnSave.textContent; btnSave.textContent = 'Saved ✓';
+      setTimeout(() => btnSave.textContent = old, 1200);
+    }
 
 
     let hotkeysWired = false;
@@ -1649,15 +1584,12 @@
       document.addEventListener('keydown', async (e) => {
         const isSave = (e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S');
         if (!isSave) return;
-        e.preventDefault(); // stop browser's Save Page
-
-        // ensure header inputs are included
-        // if (typeof syncHeaderInputsIntoSop === 'function') syncHeaderInputsIntoSop();
-
+        e.preventDefault();
         if (isDirty) {
-          await performSave();
-          const btn = document.getElementById('globalSaveBtn');
-          if (btn) { const t = btn.textContent; btn.textContent = 'Saved ✓'; setTimeout(() => btn.textContent = t, 1200); }
+          saveSop();
+          // await performSave();
+          // const btn = document.getElementById('globalSaveBtn');
+          // if (btn) { const t = btn.textContent; btn.textContent = 'Saved ✓'; setTimeout(() => btn.textContent = t, 1200); }
         }
       });
     }
@@ -1720,87 +1652,89 @@
 
 
     // ---- Import Viewer HTML → extract <script id="default-sop" type="application/json"> ----
-    (function wireImportViewerHTML() {
-      const btn = document.getElementById('importHtmlBtn');
-      const input = document.getElementById('importHtmlInput');
-      const note = document.getElementById('importHtmlNote');
+    // (function wireImportViewerHTML() {
+    //   const btn = document.getElementById('importHtmlBtn');
+    //   const input = document.getElementById('importHtmlInput');
+    //   const note = document.getElementById('importHtmlNote');
 
-      if (!btn || !input) return;
+    //   if (!btn || !input) return;
 
-      btn.addEventListener('click', () => input.click());
-      input.addEventListener('change', (e) => {
-        const f = e.target.files && e.target.files[0];
-        if (!f) return;
-        importFromViewerHtmlFile(f);
-        // allow picking the same file again later
-        input.value = '';
-      });
+    //   btn.addEventListener('click', () => input.click());
+    //   input.addEventListener('change', (e) => {
+    //     const f = e.target.files && e.target.files[0];
+    //     if (!f) return;
+    //     importFromViewerHtmlFile(f);
+    //     // allow picking the same file again later
+    //     input.value = '';
+    //   });
 
-      function importFromViewerHtmlFile(file) {
-        const r = new FileReader();
-        r.onload = () => {
-          try {
-            let text = String(r.result || '');
+    //   function importFromViewerHtmlFile(file) {
+    //     const r = new FileReader();
+    //     r.onload = () => {
+    //       try {
+    //         let text = String(r.result || '');
 
-            // If someone handed us entity-escaped HTML (&lt;html>…), unescape once.
-            if (/&lt;html\b/i.test(text) && !/<html\b/i.test(text)) {
-              text = text
-                .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-                .replace(/&amp;/g, '&');
-            }
+    //         // If someone handed us entity-escaped HTML (&lt;html>…), unescape once.
+    //         if (/&lt;html\b/i.test(text) && !/<html\b/i.test(text)) {
+    //           text = text
+    //             .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    //             .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    //             .replace(/&amp;/g, '&');
+    //         }
 
-            // Parse the HTML, locate the JSON slot
-            const doc = new DOMParser().parseFromString(text, 'text/html');
-            console.log('doc', doc);
+    //         // Parse the HTML, locate the JSON slot
+    //         const doc = new DOMParser().parseFromString(text, 'text/html');
+    //         console.log('doc', doc);
 
-            let slot = doc.querySelector('script#default-sop[type="application/json"]');
+    //         let slot = doc.querySelector('script#default-sop[type="application/json"]');
 
-            // Fallback: any application/json <script> that looks like a SOP
-            if (!slot) {
-              slot = Array.from(doc.querySelectorAll('script[type="application/json"]'))
-                .find(s => /\bstarters\b/.test(s.textContent || ''));
-            }
-            if (!slot) throw new Error('Incompatible SOP structure — can’t read data from this file.');
-            const raw = (slot.textContent || '').trim();
-            if (!raw) throw new Error(
-              'The SOP data in this file is not readable (invalid JSON). Export a fresh Viewer or fix the JSON, then try again.'
-            );
+    //         // Fallback: any application/json <script> that looks like a SOP
+    //         if (!slot) {
+    //           slot = Array.from(doc.querySelectorAll('script[type="application/json"]'))
+    //             .find(s => /\bstarters\b/.test(s.textContent || ''));
+    //         }
+    //         if (!slot) throw new Error('Incompatible SOP structure — can’t read data from this file.');
+    //         const raw = (slot.textContent || '').trim();
+    //         if (!raw) throw new Error(
+    //           'The SOP data in this file is not readable (invalid JSON). Export a fresh Viewer or fix the JSON, then try again.'
+    //         );
 
-            let parsed;
-            try { parsed = JSON.parse(raw); }
-            catch (err) {
-              throw new Error(
-                'The SOP data is missing “starters”. Export again from the Viewer after adding at least one starter.'
+    //         let parsed;
+    //         try { parsed = JSON.parse(raw); }
+    //         catch (err) {
+    //           throw new Error(
+    //             'The SOP data is missing “starters”. Export again from the Viewer after adding at least one starter.'
 
-              );
-            }
+    //           );
+    //         }
 
-            if (!parsed || !Array.isArray(parsed.starters))
-              throw new Error('JSON does not contain starters[]');
+    //         if (!parsed || !Array.isArray(parsed.starters))
+    //           throw new Error('JSON does not contain starters[]');
 
-            // Load into Studio state
-            sop = parsed;
-            viewState.starterIdx = 0;
-            selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+    //         // Load into Studio state
+    //         sop = parsed;
+    //         viewState.starterIdx = 0;
+    //         selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
 
-            renderAll(); // refresh UI
-            // if (studioMode === 'view') renderViewAndEditLanding();
-            // applyMode();
-            changeScreen('landing');
-            changeDataMode('view');
+    //         renderAll(); // refresh UI
+    //         // if (studioMode === 'view') renderViewAndEditLanding();
+    //         // applyMode();
+    //         changeScreen('landing');
+    //         changeDataMode('view');
 
-            if (note) note.textContent = `Imported: ${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
-          } catch (err) {
-            alert(
-              'We couldn’t import this file.\n\n' +
-              (err && err.message ? err.message : 'Unexpected error while reading the file.')
-            );
-          }
-        };
-        r.readAsText(file);
-      }
-    })();
+    //         if (note) note.textContent = `Imported: ${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
+    //       } catch (err) {
+    //         alert(
+    //           'We couldn’t import this file.\n\n' +
+    //           (err && err.message ? err.message : 'Unexpected error while reading the file.')
+    //         );
+    //       }
+    //     };
+    //     r.readAsText(file);
+    //   }
+    // })();
+
+
 
 
 
@@ -1832,21 +1766,22 @@
 
 
     (function themeInit() {
-      const btn = document.getElementById('themeToggle');
+      // const btn = document.getElementById('themeToggle');
       const saved = localStorage.getItem('theme');
       const prefersDark = matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
       setTheme(saved || (prefersDark ? 'dark' : 'light'));
 
-      btn?.addEventListener('click', () => {
-        const next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
-        setTheme(next);
-      });
+      // btn?.addEventListener('click', () => {
 
-      function setTheme(mode) {
-        document.documentElement.setAttribute('data-theme', mode);
-        localStorage.setItem('theme', mode);
-        if (btn) btn.textContent = (mode === 'dark') ? '🌞 Light' : '🌙 Dark';
-      }
+      // });
+
+
+    })();
+
+    (function stodioOrGuideInit() {
+
+      document.documentElement.setAttribute('run-mode', 'stodio');
+
     })();
 
     (function modeInit() {
@@ -1987,36 +1922,38 @@
         }
       });
 
-      document.getElementById('resetSopBtn')?.addEventListener('click', async () => {
-        const ok = await confirmDialog({
-          title: 'Reset SOP?',
-          message: 'This will delete the saved SOP in this browser and start a brand-new one.',
-          confirmText: 'Reset',
-          cancelText: 'Cancel',
-          danger: true
-        });
-        if (!ok) return;
+      // document.getElementById('resetSopBtn')?.addEventListener('click', async () => {
+      //   const ok = await confirmDialog({
+      //     title: 'Reset SOP?',
+      //     message: 'This will delete the saved SOP in this browser and start a brand-new one.',
+      //     confirmText: 'Reset',
+      //     cancelText: 'Cancel',
+      //     danger: true
+      //   });
+      //   if (!ok) return;
 
 
 
-        try { await idbDel('opsPathDB', 'sops', 'current'); } catch (e) { /* ignore */ }
+      //   try { await idbDel('opsPathDB', 'sops', 'current'); } catch (e) { /* ignore */ }
 
-        // fresh model + clean state
-        sop = makeBlankSOP();
-        savedSop = structuredClone(sop);
-        isDirty = false;
-        // formDirty = false;
+      //   // fresh model + clean state
+      //   sop = makeBlankSOP();
+      //   savedSop = structuredClone(sop);
+      //   isDirty = false;
+      //   // formDirty = false;
 
-        // reset pointers
-        viewState.starterIdx = 0;
-        selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+      //   // reset pointers
+      //   viewState.starterIdx = 0;
+      //   selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
 
-        // show edit landing for the new SOP
-        changeDataMode('view');
-        changeScreen('landing');
-        renderViewAndEditLanding();
-        updateSaveBtn?.();
-      });
+      //   // show edit landing for the new SOP
+      //   changeDataMode('view');
+      //   changeScreen('landing');
+      //   renderViewAndEditLanding();
+      //   updateSaveBtn?.();
+      // });
+
+
 
 
 
@@ -2038,6 +1975,7 @@
       renderStarters();
       renderViewStep()
       // renderSteps();
+      renderInspector();
       renderGraph();
     }
 
@@ -2226,7 +2164,7 @@
       </div>
       <label>Options</label>
       <table class="table" id="optTable">
-        <thead><tr><th style="width:18%">value</th><th style="width:18%">label</th><th>hint</th><th style="width:20%">next</th><th>img</th><th class="center">del</th></tr></thead>
+        <thead><tr><th style="width:18%">value</th><th style="width:18%">label</th><th>hint</th><th style="width:20%">next</th><th class="center">del</th></tr></thead>
         <tbody>
           ${(step.options || []).map((o, i) => optionRowHtml(o, i, st.steps)).join('')}
         </tbody>
@@ -2396,7 +2334,7 @@
           const fl = row.querySelector('.f_opt_label');
           const fh = row.querySelector('.f_opt_hint');
           const fn = row.querySelector('.f_opt_next');
-          const fi = row.querySelector('.f_opt_img');
+          // const fi = row.querySelector('.f_opt_img');
           const ff = row.querySelector('.f_opt_file');
           const fd = row.querySelector('.f_opt_del');
 
@@ -2404,7 +2342,7 @@
           fl.addEventListener('input', () => { o.label = fl.value; });
           fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
           fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
-          fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
+          // fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
           ff.addEventListener('change', ev => handleImageToBase64(ev, uri => { o.img_b64 = uri; fi.value = uri; }));
           fd.addEventListener('click', () => { step.options.splice(i, 1); renderInspector(); renderGraph(); });
         });
@@ -2751,10 +2689,10 @@
     // }
 
     // Gate that only asks if header edit is dirty
-    function confirmDirtyThen(message = 'Discard header changes?') {
-      if (!isDirty) return Promise.resolve(true);
-      return confirmNice(message);
-    }
+    // function confirmDirtyThen(message = 'Discard header changes?') {
+    //   if (!isDirty) return Promise.resolve(true);
+    //   return confirmNice(message);
+    // }
 
     // Custom confirm dialog (uses CSS classes + your vars)
     function confirmDialog({ title = 'Confirm', message = '', confirmText = 'OK', cancelText = 'Cancel', danger = false, variant = 'primary' } = {}) {
@@ -2813,7 +2751,293 @@
       return `<p>${viewEscape(body)}</p>`;
     }
 
-    // Drop this once in your helpers (before renderViewAndEditLanding uses it)
+    function exportCurrentHTMLAsViewer() {
+      const holder = document.getElementById('viewerHtmlEmbedded');
+      if (!holder) { alert('Missing #viewerHtmlEmbedded'); return; }
+      let src = String(holder.textContent || '').trim();
+      if (!src) { alert('No HTML inside #viewerHtmlEmbedded'); return; }
+
+      // 2) If someone pasted encoded text (&lt;html&gt;), decode once
+      if (/&lt;html\b/i.test(src) && !/<html\b/i.test(src)) {
+        src = src
+          .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+          .replace(/&amp;/g, '&');
+      }
+
+      // 3) Restore escaped closing script tags so the HTML parses correctly
+      //    (Inside the text/plain wrapper you MUST use <\/script>; we fix it here)
+      src = src.replace(/<\\\/script>/gi, '</' + 'script>');
+
+      // 4) Parse as a real HTML document
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(src, 'text/html');
+
+      // 5) Find/insert the JSON slot
+      let slot = doc.querySelector('script#default-sop[type="application/json"]');
+      if (!slot) {
+        slot = doc.createElement('script');
+        slot.id = 'default-sop';
+        slot.type = 'application/json';
+        (doc.body || doc.documentElement).appendChild(slot);
+      }
+
+      // 6) Replace JSON with the current SOP
+      try {
+        slot.textContent = JSON.stringify(sop, null, 2);
+      } catch (e) {
+        alert('Failed to stringify SOP JSON: ' + (e && e.message ? e.message : e));
+        return;
+      }
+
+      // 7) Serialize + download
+      const htmlOut = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+      const blob = new Blob([htmlOut], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (typeof slugify === 'function' ? slugify(sop?.title || 'sop-viewer') : 'sop-viewer') + '.html';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 400);
+    }
+
+
+async function handleImportSop() {
+  // 1) pick a file
+  const file = await pickFile('.html,.htm');
+  if (!file) return;
+
+  // 2) read & parse
+  let text = await file.text();
+
+  // unescape if entity-escaped html
+  if (/&lt;html\b/i.test(text) && !/<html\b/i.test(text)) {
+    text = text
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+      .replace(/&amp;/g, '&');
+  }
+
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+  let jsonText = '';
+
+  // prefer your embedded viewer slot
+  const slotPlain = doc.querySelector('script#viewerHtmlEmbedded');
+  if (slotPlain && slotPlain.textContent.trim()) jsonText = slotPlain.textContent.trim();
+
+  // fallback: default-sop JSON
+  if (!jsonText) {
+    const slotDefault = doc.querySelector('script#default-sop[type="application/json"]');
+    if (slotDefault && slotDefault.textContent.trim()) jsonText = slotDefault.textContent.trim();
+  }
+
+  // fallback: any JSON script that looks like a SOP
+  if (!jsonText) {
+    const anyJson = Array.from(doc.querySelectorAll('script[type="application/json"]'))
+      .find(s => /\bstarters\b/.test(s.textContent || ''));
+    if (anyJson) jsonText = anyJson.textContent.trim();
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonText);
+    if (!parsed || !Array.isArray(parsed.starters)) throw new Error('Missing starters[]');
+  } catch (err) {
+    alert('Could not import this file.\n\n' + (err?.message || 'Invalid or missing SOP JSON.'));
+    return;
+  }
+
+  // 3) confirm
+  const ok = await confirmDialog({
+    title: 'Import SOP?',
+    message: `Replace the current SOP with “${file.name}”?`,
+    confirmText: 'Import',
+    cancelText: 'Cancel',
+    variant: 'subtleDanger' // calm but distinct
+  });
+  if (!ok) return;
+
+  // 4) apply, save, refresh UI
+  sop = parsed;
+  viewState.starterIdx = 0;
+  selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+  console.log(`sop`, sop);
+  setDirty(true);
+  const saved = await performSave();   // persists + updates savedSop
+  console.log(`saved`, saved);
+  if (!saved) return;
+
+  renderAll();
+  changeScreen('landing');
+  changeDataMode('view');
+  if (typeof updateSaveBtn === 'function') updateSaveBtn();
+
+  console.log('[import] done:', file.name);
+}
+
+// tiny file picker (no permanent DOM needed)
+function pickFile(accept = '') {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    if (accept) input.accept = accept;
+    input.addEventListener('change', () => resolve(input.files?.[0] || null), { once: true });
+    input.click();
+    // cleanup next tick
+    setTimeout(() => input.remove(), 0);
+  });
+}
+
+    // function importHTML() {
+    //   // const btn = document.getElementById('importHtmlBtn');
+    //   const input = document.getElementById('importHtmlInput');
+    //   const note = document.getElementById('importHtmlNote');
+
+    //   if (!input) return;
+
+    //   // btn.addEventListener('click', () => input.click());
+    //   input.click();
+
+    //   input.addEventListener('change', (e) => {
+    //     const file = e.target.files && e.target.files[0];
+    //     if (!file) return;
+    //     importHtmlWithConfirmation(file);
+    //     input.value = '';
+    //   }
+    //   );
+
+    //   async function importHtmlWithConfirmation(file) {
+    //     let parsedImportedJson = fromViewerHtmlToJson(file);
+    //     console.log(`parsedImportedJson`, parsedImportedJson);
+    //     if (parsedImportedJson) {
+    //       importAfterConfirmation(parsedImportedJson);
+    //     }
+    //   }
+
+
+
+    //   function fromViewerHtmlToJson(file) {
+    //     const r = new FileReader();
+    //     let parsedImportedJson = null;
+    //     r.onload = () => {
+    //       try {
+    //         let text = String(r.result || '');
+
+    //         // If someone handed us entity-escaped HTML (&lt;html>…), unescape once.
+    //         if (/&lt;html\b/i.test(text) && !/<html\b/i.test(text)) {
+    //           text = text
+    //             .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    //             .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    //             .replace(/&amp;/g, '&');
+    //         }
+
+    //         // Parse the HTML, locate the JSON slot
+    //         const doc = new DOMParser().parseFromString(text, 'text/html');
+    //         console.log('doc', doc);
+
+    //         let slot = doc.querySelector('script#default-sop[type="application/json"]');
+
+    //         // Fallback: any application/json <script> that looks like a SOP
+    //         if (!slot) {
+    //           slot = Array.from(doc.querySelectorAll('script[type="application/json"]'))
+    //             .find(s => /\bstarters\b/.test(s.textContent || ''));
+    //         }
+    //         if (!slot) throw new Error('Incompatible SOP structure — can’t read data from this file.');
+    //         const raw = (slot.textContent || '').trim();
+    //         if (!raw) throw new Error(
+    //           'The SOP data in this file is not readable (invalid JSON). Export a fresh Viewer or fix the JSON, then try again.'
+    //         );
+
+    //         let parsed;
+    //         try { parsed = JSON.parse(raw); }
+    //         catch (err) {
+    //           throw new Error(
+    //             'The SOP data is missing “starters”. Export again from the Viewer after adding at least one starter.'
+    //           );
+    //         }
+
+    //         if (!parsed || !Array.isArray(parsed.starters)){
+    //           throw new Error('JSON does not contain starters[]');
+    //         }
+    //         console.log(`parsed`, parsed);
+    //         parsedImportedJson = parsed;
+    //         // Load into Studio state
+    //         // importAfterConfirmation(parsed);
+
+    //         if (note) note.textContent = `Imported: ${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
+    //       } catch (err) {
+    //         alert(
+    //           'We couldn’t import this file.\n\n' +
+    //           (err && err.message ? err.message : 'Unexpected error while reading the file.')
+    //         );
+    //       }
+    //     };
+    //     r.readAsText(file);
+    //     return parsedImportedJson;
+    //   }
+    // };
+
+    // async function importAfterConfirmation(parsedImportedJson) {
+    //   const ok = await confirmDialog({
+    //     title: 'Import SOP?',
+    //     message: 'This will override the saved SOP in this browser and import the selected one.',
+    //     confirmText: 'Import',
+    //     cancelText: 'Cancel',
+    //     danger: true
+    //   });
+
+    //   if (!ok) return;
+      
+    //   sop = parsedImportedJson;
+    //   console.log(`sop`, sop);
+    //   console.log(`parsedImportedJson`, parsedImportedJson);
+    //   viewState.starterIdx = 0;
+    //   performSave();
+    //   selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+    //   savedSop = structuredClone(sop);
+
+    //   renderAll();
+    //   changeScreen('landing');
+    //   changeDataMode('view');
+    // }
+
+    function setTheme(mode) {
+      document.documentElement.setAttribute('data-theme', mode);
+      localStorage.setItem('theme', mode);
+      // if (btn) btn.textContent = (mode === 'dark') ? '🌞 Light' : '🌙 Dark';
+    }
+
+
+    async function createNewSop() {
+      const ok = await confirmDialog({
+        title: 'New SOP?',
+        message: 'This will delete the saved SOP in this browser and start a brand-new one.',
+        confirmText: 'Proceed',
+        cancelText: 'Cancel',
+        danger: true
+      });
+      if (!ok) return;
+
+
+
+      try { await idbDel('opsPathDB', 'sops', 'current'); } catch (e) { /* ignore */ }
+
+      // fresh model + clean state
+      sop = makeBlankSOP();
+      savedSop = structuredClone(sop);
+      isDirty = false;
+      // formDirty = false;
+
+      // reset pointers
+      viewState.starterIdx = 0;
+      selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+
+      // show edit landing for the new SOP
+      changeDataMode('view');
+      changeScreen('landing');
+      renderViewAndEditLanding();
+      updateSaveBtn?.();
+    }
 
     function openSettingsMenu(anchorBtn) {
       // prevent duplicates
@@ -2828,13 +3052,13 @@
       const panel = document.createElement('div');
       panel.className = 'settings-panel';
 
-      // dummy options
+      // current theme from DOM
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
       const options = [
-        { label: 'Theme & Appearance', action: 'theme' },
-        { label: 'Keyboard Shortcuts', action: 'shortcuts' },
-        { label: 'Data & Storage', action: 'storage' },
-        { label: 'About This App', action: 'about' },
-        { label: 'Check for Updates', action: 'updates' },
+        { label: 'New SOP', action: 'new-sop' },
+        { label: 'Import', action: 'import' },
+        { label: 'Export', action: 'export' },
+        { label: (currentTheme === 'dark') ? '🌞 Light' : '🌙 Dark', action: 'theme' },
       ];
 
       // build items
@@ -2855,11 +3079,25 @@
       panel.style.left = `${left}px`;
 
       // handlers
-      const onItemClick = (e) => {
+      const onItemClick = async  (e) => {
         const btn = e.target.closest('.settings-item');
         if (!btn) return;
         const action = btn.getAttribute('data-action');
-        console.log('[settings]', action);
+        if (action == "new-sop") {
+          createNewSop();
+        } else if (action == "import") {
+          // importHTML();
+          await handleImportSop();
+        } else if (action == "export") {
+          exportCurrentHTMLAsViewer();
+        } else if (action == "theme") {
+
+          const nextTheme = (currentTheme === 'light') ? 'dark' : 'light';
+          setTheme(nextTheme);
+          // toggleTheme();
+
+        }
+
         cleanup();
       };
       const onOutside = (e) => { if (e.target === overlay) cleanup(); };
@@ -3061,152 +3299,6 @@
     }
 
 
-    // REPLACE your current [data-action="create-starter"] handler with this:
-    // document.addEventListener('click', (e) => {
-    //   const add = e.target.closest('[data-action="create-starter"], .vw-card--add');
-    //   if (!add) return;
-
-    //   const modal = document.getElementById('dlgNewStarter');
-    //   const labelI = document.getElementById('nsLabel');
-    //   const summaryI = document.getElementById('nsSummary');
-    //   const btnCreate = document.getElementById('nsCreate');
-    //   const btnCancel = document.getElementById('nsCancel');
-    //   const labelErr = document.getElementById('nsLabelErr');
-
-    //   // seed defaults
-    //   labelI.value = `Starter ${sop.starters.length + 1}`;
-    //   summaryI.value = '';
-
-    //   labelI.classList.remove('is-invalid');
-    //   labelErr.textContent = '';
-
-
-    //   // open
-    //   modal.classList.remove('hidden');
-    //   setTimeout(() => labelI.focus(), 0);
-
-    //   // one-time listeners per open
-    //   function cleanup() {
-    //     modal.classList.add('hidden');
-    //     btnCreate.removeEventListener('click', onCreate);
-    //     btnCancel.removeEventListener('click', onCancel);
-    //     modal.removeEventListener('click', onOverlay);
-    //     document.removeEventListener('keydown', onEsc);
-    //   }
-    //   function onOverlay(ev) { if (ev.target === modal) cleanup(); }
-    //   function onCancel() { cleanup(); }
-    //   function onEsc(ev) { if (ev.key === 'Escape') cleanup(); }
-
-    //   function onCreate() {
-    //     const label = (labelI.value || '').trim();
-    //     if (!label) {
-    //       labelI.classList.add('is-invalid');
-    //       labelErr.textContent = 'Label is required';
-    //       labelI.focus();
-    //       return;
-    //     }
-    //     labelI.classList.remove('is-invalid');
-
-    //     const idx = createNewStarter();           // your existing function: pushes + returns index
-    //     const st = sop.starters[idx];
-    //     st.label = label;
-    //     st.summary = (summaryI.value || '').trim();
-
-    //     cleanup();
-
-    //     if (typeof renderStarters === 'function') renderStarters();
-    //     if (viewState) viewState.starterIdx = idx;
-    //     enterViewOrEditStarter(idx);
-    //   }
-
-    //   btnCreate.addEventListener('click', onCreate);
-    //   btnCancel.addEventListener('click', onCancel);
-    //   modal.addEventListener('click', onOverlay);
-    //   document.addEventListener('keydown', onEsc);
-    // });
-
-    // document.addEventListener('click', (e) => {
-    //   const add = e.target.closest('[data-action="create-starter"], .vw-card--add');
-    //   if (!add) return;
-
-    //   const modal = document.getElementById('dlgNewStarter');
-    //   const labelI = document.getElementById('nsLabel');
-    //   const summaryI = document.getElementById('nsSummary');
-    //   const btnCreate = document.getElementById('nsCreate');
-    //   const btnCancel = document.getElementById('nsCancel');
-    //   const labelErr = document.getElementById('nsLabelErr');
-
-    //   // seed defaults + reset errors
-    //   labelI.value = `Starter ${sop.starters.length + 1}`;
-    //   summaryI.value = '';
-    //   labelI.classList.remove('is-invalid');
-    //   if (labelErr) labelErr.textContent = '';
-
-    //   // inline clear-on-type
-    //   function clearInvalid() {
-    //     if (labelI.value.trim()) {
-    //       labelI.classList.remove('is-invalid');
-    //       if (labelErr) labelErr.textContent = '';
-    //     }
-    //   }
-    //   labelI.addEventListener('input', clearInvalid);
-
-    //   // open
-    //   modal.classList.remove('hidden');
-    //   setTimeout(() => labelI.focus(), 0);
-
-    //   // one-time listeners per open
-    //   function cleanup() {
-    //     modal.classList.add('hidden');
-    //     btnCreate.removeEventListener('click', onCreate);
-    //     btnCancel.removeEventListener('click', onCancel);
-    //     modal.removeEventListener('click', onOverlay);
-    //     document.removeEventListener('keydown', onEsc);
-    //     labelI.removeEventListener('input', clearInvalid);
-    //   }
-    //   function onOverlay(ev) { if (ev.target === modal) cleanup(); }
-    //   function onCancel() { cleanup(); }
-    //   function onEsc(ev) { if (ev.key === 'Escape') cleanup(); }
-
-    //   function onCreate() {
-    //     const label = (labelI.value || '').trim();
-    //     if (!label) {
-    //       labelI.classList.add('is-invalid');
-    //       if (labelErr) labelErr.textContent = 'Label is required';
-    //       labelI.focus();
-    //       return;
-    //     }
-
-    //     const exists = sop.starters.some(s =>
-    //       (s && typeof s.label === 'string' ? s.label.trim().toLowerCase() : '') === label.toLowerCase()
-    //     );
-    //     if (exists) {
-    //       labelI.classList.add('is-invalid');
-    //       if (labelErr) labelErr.textContent = 'Label must be unique';
-    //       labelI.focus();
-    //       return;
-    //     }
-
-    //     const idx = createNewStarter();          // pushes new object, returns index
-    //     const st = sop.starters[idx];
-    //     st.label = label;
-    //     st.summary = (summaryI.value || '').trim();
-
-    //     cleanup();
-
-    //     if (typeof renderStarters === 'function') renderStarters();
-    //     if (viewState) viewState.starterIdx = idx;
-    //     setDirty(true);
-    //     enterViewOrEditStarter(idx);
-    //   }
-
-    //   btnCreate.addEventListener('click', onCreate);
-    //   btnCancel.addEventListener('click', onCancel);
-    //   modal.addEventListener('click', onOverlay);
-    //   document.addEventListener('keydown', onEsc);
-    // });
-
-    // open “New Starter” dialog on click (delegated)
     document.addEventListener('click', onCreateStarterClick);
 
     function onCreateStarterClick(e) {
@@ -3575,10 +3667,7 @@
           ${steps.map(s => `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(s.id)}</option>`).join('')}
         </select>
       </td>
-      <td>
-        <input class="f_opt_img" type="text" value="${escapeAttr(o.img_b64 || '')}" placeholder="data:image/*;base64,..."/>
-        <input class="f_opt_file" type="file" accept="image/*"/>
-      </td>
+      
       <td class="center"><button class="f_opt_del">🗑</button></td>
     </tr>
   `;
