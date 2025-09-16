@@ -705,7 +705,9 @@
     }
 
     [screen="landing"][data-mode="edit"] .vw-card--add {
-      display: grid;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     [screen="landing"] #vwLanding {
@@ -941,8 +943,9 @@
     }
 
     .vw-card--add {
-      display: grid;
-      place-items: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       border: 2px dashed var(--line, #3a4353);
       background: transparent;
       color: var(--muted, #9aa4b2);
@@ -1150,6 +1153,47 @@
       /* click-outside catcher */
     }
 
+    /* Default (view): hide edit cards */
+    html[data-mode="view"] .vw-card--edit {
+      display: none;
+    }
+
+    /* Edit: hide read-only cards, show edit cards */
+    html[data-mode="edit"] .vw-card {
+      display: none;
+    }
+
+    html[data-mode="edit"] .vw-card--edit {
+      display: block;
+    }
+
+
+    /* Starter card — inline edit */
+    .vw-card--edit input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--fg);
+    }
+
+    .vw-card--edit input+input {
+      margin-top: 8px;
+    }
+
+    .vw-card__meta {
+      margin-top: 10px;
+    }
+
+    .vw-card__actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+
     .settings-panel {
       position: absolute;
       z-index: 9999;
@@ -1165,6 +1209,13 @@
       min-width: 0;
       padding: 6px;
     }
+
+    /* Let the two variants participate in the grid like normal cards */
+    .starter-dual {
+      display: contents;
+      /* children become the grid items */
+    }
+
 
     .settings-item {
       width: 100%;
@@ -1505,9 +1556,6 @@
       }
     }
 
-
-    // document.getElementById('globalSaveBtn')?.addEventListener('click', await saveSop());
-    // document.getElementById('globalSaveBtn')?.addEventListener('click', await saveSop());
     document.getElementById('globalSaveBtn')?.addEventListener('click', saveSop);
 
 
@@ -1538,9 +1586,6 @@
         e.preventDefault();
         if (isDirty) {
           saveSop();
-          // await performSave();
-          // const btn = document.getElementById('globalSaveBtn');
-          // if (btn) { const t = btn.textContent; btn.textContent = 'Saved ✓'; setTimeout(() => btn.textContent = t, 1200); }
         }
       });
     }
@@ -1552,16 +1597,6 @@
     const graphSvg = document.getElementById('graphSvg');
     const graphPanel = document.getElementById('graphPanel');
 
-    /*** Init ***/
-    // document.addEventListener('DOMContentLoaded', () => {
-    //   if (!sop || !Array.isArray(sop.starters) || sop.starters.length === 0) {
-    //     sop = makeBlankSOP();
-    //   }
-    //   viewState.starterIdx = 0;
-    //   selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
-    //   renderAll();        
-    //   wireGlobal();
-    // });
 
     document.addEventListener('DOMContentLoaded', () => {
 
@@ -1623,95 +1658,6 @@
 
       })();
     });
-
-
-
-    // ---- Import Viewer HTML → extract <script id="default-sop" type="application/json"> ----
-    // (function wireImportViewerHTML() {
-    //   const btn = document.getElementById('importHtmlBtn');
-    //   const input = document.getElementById('importHtmlInput');
-    //   const note = document.getElementById('importHtmlNote');
-
-    //   if (!btn || !input) return;
-
-    //   btn.addEventListener('click', () => input.click());
-    //   input.addEventListener('change', (e) => {
-    //     const f = e.target.files && e.target.files[0];
-    //     if (!f) return;
-    //     importFromViewerHtmlFile(f);
-    //     // allow picking the same file again later
-    //     input.value = '';
-    //   });
-
-    //   function importFromViewerHtmlFile(file) {
-    //     const r = new FileReader();
-    //     r.onload = () => {
-    //       try {
-    //         let text = String(r.result || '');
-
-    //         // If someone handed us entity-escaped HTML (&lt;html>…), unescape once.
-    //         if (/&lt;html\b/i.test(text) && !/<html\b/i.test(text)) {
-    //           text = text
-    //             .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    //             .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    //             .replace(/&amp;/g, '&');
-    //         }
-
-    //         // Parse the HTML, locate the JSON slot
-    //         const doc = new DOMParser().parseFromString(text, 'text/html');
-    //         console.log('doc', doc);
-
-    //         let slot = doc.querySelector('script#default-sop[type="application/json"]');
-
-    //         // Fallback: any application/json <script> that looks like a SOP
-    //         if (!slot) {
-    //           slot = Array.from(doc.querySelectorAll('script[type="application/json"]'))
-    //             .find(s => /\bstarters\b/.test(s.textContent || ''));
-    //         }
-    //         if (!slot) throw new Error('Incompatible SOP structure — can’t read data from this file.');
-    //         const raw = (slot.textContent || '').trim();
-    //         if (!raw) throw new Error(
-    //           'The SOP data in this file is not readable (invalid JSON). Export a fresh Viewer or fix the JSON, then try again.'
-    //         );
-
-    //         let parsed;
-    //         try { parsed = JSON.parse(raw); }
-    //         catch (err) {
-    //           throw new Error(
-    //             'The SOP data is missing “starters”. Export again from the Viewer after adding at least one starter.'
-
-    //           );
-    //         }
-
-    //         if (!parsed || !Array.isArray(parsed.starters))
-    //           throw new Error('JSON does not contain starters[]');
-
-    //         // Load into Studio state
-    //         sop = parsed;
-    //         viewState.starterIdx = 0;
-    //         selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
-
-    //         renderAll(); // refresh UI
-    //         // if (studioMode === 'view') renderViewAndEditLanding();
-    //         // applyMode();
-    //         changeScreen('landing');
-    //         changeDataMode('view');
-
-    //         if (note) note.textContent = `Imported: ${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
-    //       } catch (err) {
-    //         alert(
-    //           'We couldn’t import this file.\n\n' +
-    //           (err && err.message ? err.message : 'Unexpected error while reading the file.')
-    //         );
-    //       }
-    //     };
-    //     r.readAsText(file);
-    //   }
-    // })();
-
-
-
-
 
 
     // Force-blur active input when interacting with the map (so Enter/blur commits fire)
@@ -1902,43 +1848,8 @@
           sop.description = v;
           console.log(`sop.description`, sop.description);
           setDirty(true);
-          // renderViewAndEditLanding();
         }
       });
-
-      // document.getElementById('resetSopBtn')?.addEventListener('click', async () => {
-      //   const ok = await confirmDialog({
-      //     title: 'Reset SOP?',
-      //     message: 'This will delete the saved SOP in this browser and start a brand-new one.',
-      //     confirmText: 'Reset',
-      //     cancelText: 'Cancel',
-      //     danger: true
-      //   });
-      //   if (!ok) return;
-
-
-
-      //   try { await idbDel('opsPathDB', 'sops', 'current'); } catch (e) { /* ignore */ }
-
-      //   // fresh model + clean state
-      //   sop = makeBlankSOP();
-      //   savedSop = structuredClone(sop);
-      //   isDirty = false;
-      //   // formDirty = false;
-
-      //   // reset pointers
-      //   viewState.starterIdx = 0;
-      //   selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
-
-      //   // show edit landing for the new SOP
-      //   changeDataMode('view');
-      //   changeScreen('landing');
-      //   renderViewAndEditLanding();
-      //   updateSaveBtn?.();
-      // });
-
-
-
 
 
       document.getElementById('zoomInBtn').addEventListener('click', () => { mapZoom *= 1.2; renderGraph(); console.log('mapZoom'); });
@@ -1974,48 +1885,9 @@
           steps: [makeStep('instruction'), makeStep('end')]
         });
       }
-
-      // starterSelect.innerHTML = sop.starters
-      //   .map((s, i) => `<option value="${i}">${escapeHtml(s.label || ('Starter ' + (i + 1)))}</option>`)
-      //   .join('');
-
-      // clamp index and set selection
       viewState.starterIdx = Math.min(viewState.starterIdx, sop.starters.length - 1);
-      // starterSelect.value = String(viewState.starterIdx);
-
-      // change handler
-      // starterSelect.onchange = () => {
-      //   viewState.starterIdx = parseInt(starterSelect.value, 10);
-      //   selectedStepId = sop.starters[viewState.starterIdx]?.steps?.[0]?.id || null;
-      //   mapPan = { x: 0, y: 0 };      // recenter
-      //   mapZoom = 1;                 // reset zoom
-      //   renderSteps();
-      //   renderGraph();
-      //   renderInspector();
-      //   renderStarterMeta();
-      // };
 
     }
-
-
-    // function renderSteps() {
-    //   const st = getStarter();
-    //   stepsList.innerHTML = '';
-    //   st.steps.forEach(step => {
-    //     const btn = document.createElement('button');
-    //     btn.className = 'item' + (step.id === selectedStepId ? ' active' : '');
-    //     btn.innerHTML = `
-    //   <div>
-    //     <div><strong>${escapeHtml(step.id)}</strong> <span class="badge">${escapeHtml(step.type)}</span></div>
-    //     <div class="muted">${escapeHtml(step.title || step.label || '')}</div>
-    //   </div>
-    //   <div class="muted">→ ${escapeHtml(nextSummary(step))}</div>
-    // `;
-    //     btn.addEventListener('click', () => { selectedStepId = step.id; renderSteps(); renderGraph(); renderInspector(); });
-    //     stepsList.appendChild(btn);
-    //   });
-    //   renderInspector();
-    // }
 
     ['pointerdown', 'mousedown', 'touchstart'].forEach(evt => {
       graphSvg.addEventListener(evt, () => {
@@ -2642,41 +2514,6 @@
       return clone;
     }
 
-    // function confirmNice(message = 'Discard changes?') {
-    //   return new Promise((resolve) => {
-    //     const modal = document.getElementById('confirmModal');
-    //     const msg = document.getElementById('confirmMsg');
-    //     const yes = document.getElementById('confirmYes');
-    //     const no = document.getElementById('confirmNo');
-    //     if (!modal || !yes || !no) { resolve(confirm(message)); return; }
-
-    //     msg.textContent = message;
-    //     modal.classList.remove('hidden');
-
-    //     const cleanup = () => {
-    //       modal.classList.add('hidden');
-    //       yes.removeEventListener('click', onYes);
-    //       no.removeEventListener('click', onNo);
-    //       document.removeEventListener('keydown', onKey);
-    //       modal.removeEventListener('click', onBackdrop);
-    //     };
-    //     const onYes = () => { cleanup(); resolve(true); };
-    //     const onNo = () => { cleanup(); resolve(false); };
-    //     const onKey = (e) => { if (e.key === 'Escape') onNo(); };
-    //     const onBackdrop = (e) => { if (e.target === modal) onNo(); };
-
-    //     yes.addEventListener('click', onYes);
-    //     no.addEventListener('click', onNo);
-    //     document.addEventListener('keydown', onKey);
-    //     modal.addEventListener('click', onBackdrop);
-    //   });
-    // }
-
-    // Gate that only asks if header edit is dirty
-    // function confirmDirtyThen(message = 'Discard header changes?') {
-    //   if (!isDirty) return Promise.resolve(true);
-    //   return confirmNice(message);
-    // }
 
     // Custom confirm dialog (uses CSS classes + your vars)
     function confirmDialog({ title = 'Confirm', message = '', confirmText = 'OK', cancelText = 'Cancel', danger = false, variant = 'primary' } = {}) {
@@ -2729,11 +2566,54 @@
 
     function viewEscape(s) { return String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
 
+    // function viewBodyHtml(body) {
+    //   if (!body) return '';
+    //   if (Array.isArray(body)) return `<ul>${body.map(li => `<li>${viewEscape(li)}</li>`).join('')}</ul>`;
+    //   return `<p>${viewEscape(body)}</p>`;
+    // }
+
     function viewBodyHtml(body) {
       if (!body) return '';
-      if (Array.isArray(body)) return `<ul>${body.map(li => `<li>${viewEscape(li)}</li>`).join('')}</ul>`;
-      return `<p>${viewEscape(body)}</p>`;
+      if (Array.isArray(body)) {
+        return `<ul>${body.map(li => `<li>${viewSafeInterpolate(String(li))}</li>`).join('')}</ul>`;
+      }
+      return `<p>${viewSafeInterpolate(String(body))}</p>`;
     }
+
+    // --- helpers for {{var}} interpolation in Studio Preview ---
+    function viewSafeInterpolate(str) {
+      // supports {{var}}, {{var.label}}, and multi-select join
+      return String(str).replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, path) => viewEscape(viewReadAnswerPath(path)));
+    }
+
+    function viewReadAnswerPath(path) {
+      const [head, ...rest] = String(path).split('.');
+      const base = (viewState && viewState.answers) ? viewState.answers[head] : undefined;
+      return viewFormatAnswerPath(base, rest);
+    }
+
+    function viewFormatAnswerPath(base, props) {
+      if (base == null) return '';
+      if (Array.isArray(base)) {
+        if (props && props.length) {
+          return base.map(x => viewPickPath(x, props)).filter(v => v != null && v !== '').join(', ');
+        }
+        return base.map(x => (x && (x.label || x.value)) || String(x)).join(', ');
+      }
+      if (typeof base === 'object') {
+        if (props && props.length) return viewPickPath(base, props) ?? '';
+        return base.label || base.value || '';
+      }
+      return String(base);
+    }
+
+    function viewPickPath(obj, props) {
+      let cur = obj;
+      for (const p of props) { if (cur == null) return ''; cur = cur[p]; }
+      return cur ?? '';
+    }
+
+
 
     function exportCurrentHTMLAsViewer() {
       // ensure latest header inputs are reflected
@@ -2784,57 +2664,6 @@
       setTimeout(() => URL.revokeObjectURL(url), 300);
     }
 
-
-
-    // function exportCurrentHTMLAsViewer() {
-    //   const jsonHolder = document.getElementById('jsonEmbedded');
-    //   if (!jsonHolder) { alert('Missing #jsonEmbedded'); return; }
-    //   let src = String(jsonHolder.textContent || '').trim();
-    //   if (!src) { alert('No HTML inside #jsonEmbedded'); return; }
-
-    //   // 2) If someone pasted encoded text (&lt;html&gt;), decode once
-    //   if (/&lt;html\b/i.test(src) && !/<html\b/i.test(src)) {
-    //     src = src
-    //       .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    //       .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    //       .replace(/&amp;/g, '&');
-    //   }
-
-    //   // 3) Restore escaped closing script tags so the HTML parses correctly
-    //   //    (Inside the text/plain wrapper you MUST use <\/script>; we fix it here)
-    //   src = src.replace(/<\\\/script>/gi, '</' + 'script>');
-
-    //   // 4) Parse as a real HTML document
-    //   const parser = new DOMParser();
-    //   const doc = parser.parseFromString(src, 'text/html');
-
-    //   // 5) Find/insert the JSON slot
-    //   let slot = doc.querySelector('script#default-sop[type="application/json"]');
-    //   if (!slot) {
-    //     slot = doc.createElement('script');
-    //     slot.id = 'default-sop';
-    //     slot.type = 'application/json';
-    //     (doc.body || doc.documentElement).appendChild(slot);
-    //   }
-
-    //   // 6) Replace JSON with the current SOP
-    //   try {
-    //     slot.textContent = JSON.stringify(sop, null, 2);
-    //   } catch (e) {
-    //     alert('Failed to stringify SOP JSON: ' + (e && e.message ? e.message : e));
-    //     return;
-    //   }
-
-    //   // 7) Serialize + download
-    //   const htmlOut = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
-    //   const blob = new Blob([htmlOut], { type: 'text/html;charset=utf-8' });
-    //   const url = URL.createObjectURL(blob);
-    //   const a = document.createElement('a');
-    //   a.href = url;
-    //   a.download = (typeof slugify === 'function' ? slugify(sop?.title || 'sop-viewer') : 'sop-viewer') + '.html';
-    //   document.body.appendChild(a); a.click(); a.remove();
-    //   setTimeout(() => URL.revokeObjectURL(url), 400);
-    // }
 
 
     async function handleImportSop() {
@@ -2922,119 +2751,6 @@
         setTimeout(() => input.remove(), 0);
       });
     }
-
-    // function importHTML() {
-    //   // const btn = document.getElementById('importHtmlBtn');
-    //   const input = document.getElementById('importHtmlInput');
-    //   const note = document.getElementById('importHtmlNote');
-
-    //   if (!input) return;
-
-    //   // btn.addEventListener('click', () => input.click());
-    //   input.click();
-
-    //   input.addEventListener('change', (e) => {
-    //     const file = e.target.files && e.target.files[0];
-    //     if (!file) return;
-    //     importHtmlWithConfirmation(file);
-    //     input.value = '';
-    //   }
-    //   );
-
-    //   async function importHtmlWithConfirmation(file) {
-    //     let parsedImportedJson = fromViewerHtmlToJson(file);
-    //     console.log(`parsedImportedJson`, parsedImportedJson);
-    //     if (parsedImportedJson) {
-    //       importAfterConfirmation(parsedImportedJson);
-    //     }
-    //   }
-
-
-
-    //   function fromViewerHtmlToJson(file) {
-    //     const r = new FileReader();
-    //     let parsedImportedJson = null;
-    //     r.onload = () => {
-    //       try {
-    //         let text = String(r.result || '');
-
-    //         // If someone handed us entity-escaped HTML (&lt;html>…), unescape once.
-    //         if (/&lt;html\b/i.test(text) && !/<html\b/i.test(text)) {
-    //           text = text
-    //             .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    //             .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    //             .replace(/&amp;/g, '&');
-    //         }
-
-    //         // Parse the HTML, locate the JSON slot
-    //         const doc = new DOMParser().parseFromString(text, 'text/html');
-    //         console.log('doc', doc);
-
-    //         let slot = doc.querySelector('script#default-sop[type="application/json"]');
-
-    //         // Fallback: any application/json <script> that looks like a SOP
-    //         if (!slot) {
-    //           slot = Array.from(doc.querySelectorAll('script[type="application/json"]'))
-    //             .find(s => /\bstarters\b/.test(s.textContent || ''));
-    //         }
-    //         if (!slot) throw new Error('Incompatible SOP structure — can’t read data from this file.');
-    //         const raw = (slot.textContent || '').trim();
-    //         if (!raw) throw new Error(
-    //           'The SOP data in this file is not readable (invalid JSON). Export a fresh Viewer or fix the JSON, then try again.'
-    //         );
-
-    //         let parsed;
-    //         try { parsed = JSON.parse(raw); }
-    //         catch (err) {
-    //           throw new Error(
-    //             'The SOP data is missing “starters”. Export again from the Viewer after adding at least one starter.'
-    //           );
-    //         }
-
-    //         if (!parsed || !Array.isArray(parsed.starters)){
-    //           throw new Error('JSON does not contain starters[]');
-    //         }
-    //         console.log(`parsed`, parsed);
-    //         parsedImportedJson = parsed;
-    //         // Load into Studio state
-    //         // importAfterConfirmation(parsed);
-
-    //         if (note) note.textContent = `Imported: ${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
-    //       } catch (err) {
-    //         alert(
-    //           'We couldn’t import this file.\n\n' +
-    //           (err && err.message ? err.message : 'Unexpected error while reading the file.')
-    //         );
-    //       }
-    //     };
-    //     r.readAsText(file);
-    //     return parsedImportedJson;
-    //   }
-    // };
-
-    // async function importAfterConfirmation(parsedImportedJson) {
-    //   const ok = await confirmDialog({
-    //     title: 'Import SOP?',
-    //     message: 'This will override the saved SOP in this browser and import the selected one.',
-    //     confirmText: 'Import',
-    //     cancelText: 'Cancel',
-    //     danger: true
-    //   });
-
-    //   if (!ok) return;
-
-    //   sop = parsedImportedJson;
-    //   console.log(`sop`, sop);
-    //   console.log(`parsedImportedJson`, parsedImportedJson);
-    //   viewState.starterIdx = 0;
-    //   performSave();
-    //   selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
-    //   savedSop = structuredClone(sop);
-
-    //   renderAll();
-    //   changeScreen('landing');
-    //   changeDataMode('view');
-    // }
 
     function setTheme(mode) {
       document.documentElement.setAttribute('data-theme', mode);
@@ -3258,15 +2974,40 @@
 
     <div class="vw-grid">
       ${starters.map((st, idx) => `
-        <button class="vw-card" data-idx="${idx}" onclick="enterViewOrEditStarter(${idx})">
-          <h3>${escapeHtml(st.label || ('Starter ' + (idx + 1)))}</h3>
-          ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ``}
-          <div class="vw-pill">
-            <span>Steps</span>
-            <strong>${(typeof countReachable === 'function' ? countReachable(st) : (st.steps || []).length)}</strong>
+        <div class="starter-dual" data-idx="${idx}">
+          <!-- read-only card (shown in view mode) -->
+          <button class="vw-card" data-idx="${idx}" onclick="enterViewOrEditStarter(${idx})">
+            <h3>${escapeHtml(st.label || ('Starter ' + (idx + 1)))}</h3>
+            ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ``}
+            <div class="vw-pill">
+              <span>Steps</span>
+              <strong>${(typeof countReachable === 'function' ? countReachable(st) : (st.steps || []).length)}</strong>
+            </div>
+          </button>
+
+          <!-- editable card (shown in edit mode) -->
+          <div class="vw-card vw-card--edit" data-idx="${idx}">
+            <input class="st-label" type="text"
+                  placeholder="Label"
+                  value="${escapeAttr(st.label || ('Starter ' + (idx + 1)))}" />
+            <input class="st-summary" type="text"
+                  placeholder="Summary"
+                  value="${escapeAttr(st.summary || '')}" />
+            <div class="vw-card__meta">
+              <div class="vw-pill">
+                <span>Steps</span>
+                <strong>${(typeof countReachable === 'function' ? countReachable(st) : (st.steps || []).length)}</strong>
+              </div>
+            </div>
+            <div class="vw-card__actions">
+              <button class="btn"      data-action="starter-edit"   data-idx="${idx}">Edit</button>
+              <button class="cfm-btn cfm-btn--subtleDanger" data-action="starter-delete" data-idx="${idx}">Delete</button>
+            </div>
           </div>
-        </button>
+        </div>
       `).join('')}
+
+
 
       <!-- “+ New” card -->
       <button type="button" class="vw-card vw-card--add" data-action="create-starter" >
@@ -3290,6 +3031,41 @@
         enterViewStarter(idx);
       }
     }
+
+    // Inline edit for starter cards (landing, edit mode)
+    let starterCardWired = false;
+    (function wireStarterCards() {
+      if (starterCardWired) return; starterCardWired = true;
+
+      // Update label/summary live
+      document.addEventListener('input', (e) => {
+        if (document.documentElement.getAttribute('data-mode') !== 'edit') return;
+        const inp = e.target;
+        if (!inp.classList?.contains('st-label') && !inp.classList?.contains('st-summary')) return;
+        const card = inp.closest('.vw-card--edit');
+        if (!card) return;
+        const idx = parseInt(card.dataset.idx, 10);
+        const st = sop.starters[idx]; if (!st) return;
+
+        if (inp.classList.contains('st-label')) st.label = inp.value;
+        if (inp.classList.contains('st-summary')) st.summary = inp.value;
+        setDirty?.(true);
+      }, true);
+
+      // Edit / Delete buttons
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action="starter-edit"],[data-action="starter-delete"]');
+        if (!btn) return;
+        const idx = parseInt(btn.dataset.idx, 10);
+
+        if (btn.dataset.action === 'starter-edit') {
+          enterViewOrEditStarter(idx);          // as-is
+        } else {
+          console.log('[starter delete]', idx); // placeholder only
+        }
+      });
+    })();
+
 
     function enterEditStarter(idx) {
       resetStarterValues();
