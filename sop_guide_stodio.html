@@ -1514,7 +1514,7 @@
     let sop = makeBlankSOP();
     let savedSop = null; // last saved snapshot
 
-    const viewState = { starterIdx: 0, answers: {} };
+    const viewState = { starterIdx: 0, answers: {}, selectedStepId: 0 };
 
 
     // ---- Save button state ----
@@ -1581,11 +1581,32 @@
       if (hotkeysWired) return; hotkeysWired = true;
 
       document.addEventListener('keydown', async (e) => {
+        console.log(`e.key`, e.key);
+        // if is dirty anywhere in the doc, Ctrl+S / Cmd+S triggers save
         const isSave = (e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S');
-        if (!isSave) return;
-        e.preventDefault();
-        if (isDirty) {
-          saveSop();
+        // if (!) return;
+        if(isSave && isDirty){
+
+          e.preventDefault();
+          // if (isDirty) {
+            saveSop();
+          // }
+        }
+
+        // if in edit mode and on the graph and a step is selected, Del triggers delete
+        const currentMode = document.documentElement.getAttribute('data-mode');
+        console.log(`currentMode`, currentMode);
+        console.log(`viewState.selectedStepId`, viewState.selectedStepId);
+        if (currentMode === 'edit' && viewState.selectedStepId && (e.key === 'Delete' || e.key === 'Backspace')) {
+          // const graphRect = graphSvg.getBoundingClientRect();
+          // if (e.clientX >= graphRect.left && e.clientX <= graphRect.right
+          //   && e.clientY >= graphRect.top && e.clientY <= graphRect.bottom) {
+            // inside graph
+            e.preventDefault();
+            delStep();
+            // deleteStep(viewState.selectedStepId);
+            console.log('Del key on graph');
+          // }
         }
       });
     }
@@ -1641,7 +1662,7 @@
         }
 
         viewState.starterIdx = 0;
-        selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+        viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
 
         renderAll();
         wireGlobal();
@@ -1770,7 +1791,7 @@
 
     function showCurrent() {
       console.log(`viewState.stepIdx`, viewState.stepIdx);
-      console.log(`selectedStepId`, selectedStepId);
+      console.log(`viewState.selectedStepId`, viewState.selectedStepId);
     }
 
 
@@ -1854,7 +1875,7 @@
 
       document.getElementById('zoomInBtn').addEventListener('click', () => { mapZoom *= 1.2; renderGraph(); console.log('mapZoom'); });
       document.getElementById('zoomOutBtn').addEventListener('click', () => { mapZoom /= 1.2; renderGraph(); });
-      document.getElementById('zoomResetBtn').addEventListener('click', () => { mapZoom = 2.4; mapPan = { x: 0, y: 0 }; renderGraph(); });
+      document.getElementById('zoomResetBtn').addEventListener('click', () => { mapZoom = 2.4; mapPan = { x: 0, y: -20 }; renderGraph(); });
 
       const fsBtn = document.getElementById('fullscreenBtn');
       fsBtn.addEventListener('click', () => {
@@ -1933,7 +1954,7 @@
     function renderInspector() {
       const box = document.getElementById('propBox');
       const st = getStarter();
-      const step = st.steps.find(x => x.id === selectedStepId);
+      const step = st.steps.find(x => x.id === viewState.selectedStepId);
       if (!step) { box.innerHTML = '<span class="small">Select a step.</span>'; return; }
 
       // Common fields
@@ -2059,7 +2080,7 @@
 
         rewriteRefs(oldId, v);
         step.id = v;
-        selectedStepId = v;
+        viewState.selectedStepId = v;
         f_id.value = v;
         f_id_err.style.display = 'none'; f_id_err.textContent = '';
         renderAll();
@@ -2079,7 +2100,7 @@
           repl.title = step.title || repl.title;
           repl.label = step.label || repl.label;
           replaceStep(step.id, repl);
-          selectedStepId = repl.id;
+          viewState.selectedStepId = repl.id;
           renderAll();
           // if (studioMode === 'view') renderViewAndEditLanding();
 
@@ -2199,15 +2220,15 @@
           fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
           fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
           // fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
-          ff.addEventListener('change', ev => handleImageToBase64(ev, uri => { o.img_b64 = uri; fi.value = uri; }));
+          // ff.addEventListener('change', ev => handleImageToBase64(ev, uri => { o.img_b64 = uri; fi.value = uri; }));
           fd.addEventListener('click', () => { step.options.splice(i, 1); renderInspector(); renderGraph(); });
         });
       }
     }
 
     /*** Graph ***/
-    let mapZoom = 2.4, mapPan = { x: 0, y: 0 };
-    let drag = { active: false, start: { x: 0, y: 0 }, pan0: { x: 0, y: 0 }, vw: 0, vh: 0, wpp: 1 };
+    let mapZoom = 2.4, mapPan = { x: 0, y: -20 };
+    let drag = { active: false, start: { x: 0, y: 0 }, pan0: { x: 0, y: -8 }, vw: 0, vh: 0, wpp: 1 };
     let lastGraphSize = { width: 900, height: 600 };
 
     // MOUSE DOWN
@@ -2313,7 +2334,7 @@
         const grp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         grp.setAttribute('transform', `translate(${layout[n.id].x}, ${layout[n.id].y})`);
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('class', 'node-rect' + (n.id === selectedStepId ? ' current' : ''));
+        rect.setAttribute('class', 'node-rect' + (n.id === viewState.selectedStepId ? ' current' : ''));
         rect.setAttribute('x', -80); rect.setAttribute('y', -28); rect.setAttribute('width', 160); rect.setAttribute('height', 56);
         grp.appendChild(rect);
 
@@ -2325,8 +2346,8 @@
         grp.appendChild(tx);
 
         grp.addEventListener('click', () => {
-          selectedStepId = n.id;
-          console.log(`selectedStepId`, selectedStepId);
+          viewState.selectedStepId = n.id;
+          console.log(`viewState.selectedStepId`, viewState.selectedStepId);
           renderInspector(); renderGraph();
         });
 
@@ -2449,11 +2470,11 @@
     /*** Actions ***/
     function addStepRelative(where) {
       const st = getStarter(); if (!st) return;
-      const idx = st.steps.findIndex(s => s.id === selectedStepId);
+      const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
       const insertAt = (idx < 0 ? st.steps.length : (where === 'before' ? idx : idx + 1));
       const step = makeStep('instruction');
       st.steps.splice(insertAt, 0, step);
-      selectedStepId = step.id;
+      viewState.selectedStepId = step.id;
       renderAll();
       setDirty(true);
 
@@ -2461,11 +2482,11 @@
 
     }
     function dupStep() {
-      const st = getStarter(); const s = st.steps.find(x => x.id === selectedStepId); if (!s) return;
+      const st = getStarter(); const s = st.steps.find(x => x.id === viewState.selectedStepId); if (!s) return;
       const c = JSON.parse(JSON.stringify(s));
       c.id = uniqueId(s.id + '_copy');
       st.steps.splice(st.steps.findIndex(x => x.id === s.id) + 1, 0, c);
-      selectedStepId = c.id;
+      viewState.selectedStepId = c.id;
       renderAll();
       setDirty(true);
 
@@ -2473,7 +2494,7 @@
 
     }
     function delStep() {
-      const st = getStarter(); const i = st.steps.findIndex(x => x.id === selectedStepId); if (i < 0) return;
+      const st = getStarter(); const i = st.steps.findIndex(x => x.id === viewState.selectedStepId); if (i < 0) return;
       const delId = st.steps[i].id;
       st.steps.splice(i, 1);
       // remove refs
@@ -2484,7 +2505,7 @@
           if (step.next === delId) delete step.next;
         }
       }
-      selectedStepId = st.steps[Math.max(0, i - 1)]?.id || null;
+      viewState.selectedStepId = st.steps[Math.max(0, i - 1)]?.id || null;
       setDirty(true);
       renderAll();
       // if (studioMode === 'view') renderViewAndEditLanding();
@@ -2724,7 +2745,7 @@
       // 4) apply, save, refresh UI
       sop = parsed;
       viewState.starterIdx = 0;
-      selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+      viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
       console.log(`sop`, sop);
       setDirty(true);
       const saved = await performSave();   // persists + updates savedSop
@@ -2781,7 +2802,7 @@
 
       // reset pointers
       viewState.starterIdx = 0;
-      selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+      viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
 
       // show edit landing for the new SOP
       changeDataMode('view');
@@ -3070,7 +3091,7 @@
     function enterEditStarter(idx) {
       resetStarterValues();
       viewState.starterIdx = idx;
-      selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;;
+      viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;;
       renderAll();
 
       changeScreen('starter');
@@ -3091,7 +3112,7 @@
 
       resetStarterValues();
       viewState.starterIdx = idx;
-      selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;
+      viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;
       changeScreen('starter');
 
       const st = sop.starters[idx];
@@ -3385,7 +3406,7 @@
               const to = steps.findIndex(x => x.id === choice.next);
               if (to >= 0) {
                 viewState.stepIdx = to;
-                selectedStepId = to;
+                viewState.selectedStepId = to;
                 renderViewStep();
                 return;
               }

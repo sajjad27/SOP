@@ -4,14 +4,16 @@
 
 ## 🏇 Doing
 
--  download button
 -  Delete Starter
--  Setting to combine some header buttons
+- Add, delete, duplicate and delete should be well functioning
+- show actual values insted of variables on view guide
 
 ---
 
 ## ✅ Done
 
+-  Setting to combine some header buttons
+-  download button
 -  required is checkbox
 -  remove right panel in the edit starter, and put the add +Before +after Duplicate and delete
 -  ADD Button to Save Changes
@@ -33,17 +35,16 @@
 - Add Save and Cancel buttons in the map editor  
 - On Cancel/Import/Export, add discard prompt (same for map edit)  
 - Fix crash when: enter **Edit** → click on **Starter** → click on **Preview**  
+- Download HTML exactly as what we have without the need to upload it everytime 
+- fix on select step in the edit mode
 
 
 ---
 
 ## ⏳ Not Done
 
-- Download HTML exactly as what we have without the need to upload it everytime 
 - Undo and redo    
 - on click enter should go the next step on view guide
-- show actual values insted of variables on view guide
-- fix on select step in the edit mode
 - Search capability  
 - Zoom on cursor (not general zoom) 
 - Hand tool to move the map, cursor to select  
