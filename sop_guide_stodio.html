@@ -2745,13 +2745,22 @@
       // const rowGap = 140;     // vertical 
       // const x0 = 200, y0 = 60; // top-left origin
 
+      // const pos = {};
+      // nodes.forEach(n => {
+      //   // console.log(`n`, n);
+      //   // const d = depth[n.id] || 0;
+      //   // const i = colIndex[n.id] || 0;
+
+      //   pos[n.id] = n.pos ? { x: n.pos.x, y: n.pos.y }
+      //     : { x: x0 + i * colWidth, y: y0 + d * rowGap };
+
+      //   // pos[n.id] = { x: n.pos.x, y: n.pos.y }
+
+      //   pos[n.id] = { x: x0 + i * colWidth, y: y0 + d * rowGap };
+      // });
+
       const pos = {};
       nodes.forEach(n => {
-        // console.log(`n`, n);
-        // const d = depth[n.id] || 0;
-        // const i = colIndex[n.id] || 0;
-        // pos[n.id] = n.pos ? { x: n.pos.x, y: n.pos.y }
-        //   : { x: x0 + i * colWidth, y: y0 + d * rowGap };
 
         pos[n.id] = { x: n.pos.x, y: n.pos.y }
       });
@@ -3098,42 +3107,42 @@
  * - Never sets next on the final step of a starter (removes it if present)
  * - Never adds next to steps of type "end"
  */
-function addNextPointers(sop) {
-  const clone = (obj) =>
-    (typeof structuredClone === "function"
-      ? structuredClone(obj)
-      : JSON.parse(JSON.stringify(obj)));
+    function addNextPointers(sop) {
+      const clone = (obj) =>
+      (typeof structuredClone === "function"
+        ? structuredClone(obj)
+        : JSON.parse(JSON.stringify(obj)));
 
-  const out = clone(sop);
-  if (!out || !Array.isArray(out.starters)) return out;
+      const out = clone(sop);
+      if (!out || !Array.isArray(out.starters)) return out;
 
-  out.starters.forEach((starter) => {
-    const steps = Array.isArray(starter.steps) ? starter.steps : [];
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
+      out.starters.forEach((starter) => {
+        const steps = Array.isArray(starter.steps) ? starter.steps : [];
+        for (let i = 0; i < steps.length; i++) {
+          const step = steps[i];
 
-      // Last step: ensure no "next"
-      if (i === steps.length - 1) {
-        if (step && Object.prototype.hasOwnProperty.call(step, "next")) {
-          delete step.next;
+          // Last step: ensure no "next"
+          if (i === steps.length - 1) {
+            if (step && Object.prototype.hasOwnProperty.call(step, "next")) {
+              delete step.next;
+            }
+            continue;
+          }
+
+          // For non-last steps: add "next" only if missing and not an "end" step
+          if (
+            step &&
+            step.type !== "end" &&
+            !Object.prototype.hasOwnProperty.call(step, "next")
+          ) {
+            const nextId = steps[i + 1] && steps[i + 1].id;
+            if (nextId) step.next = nextId;
+          }
         }
-        continue;
-      }
+      });
 
-      // For non-last steps: add "next" only if missing and not an "end" step
-      if (
-        step &&
-        step.type !== "end" &&
-        !Object.prototype.hasOwnProperty.call(step, "next")
-      ) {
-        const nextId = steps[i + 1] && steps[i + 1].id;
-        if (nextId) step.next = nextId;
-      }
+      return out;
     }
-  });
-
-  return out;
-}
 
 
 
@@ -3712,124 +3721,214 @@ function addNextPointers(sop) {
     //   return changed;
     // }
 
+    // function ensurePositions(starter) {
+    //   console.log('ensurePositions called');
+    //   if (!starter) return false;
+    //   const steps = starter.steps || [];
+    //   if (!steps.length) return false;
+
+    //   const x0 = 200, y0 = 60;    // origin
+    //   const colWidth = 220;       // horizontal gap
+    //   const rowGap = 140;         // vertical gap
+
+    //   const byId = Object.fromEntries(steps.map(s => [s.id, s]));
+    //   const hasPos = s => s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
+
+    //   // explicit start (supports legacy), else first step
+    //   const startId =
+    //     (typeof starter.startId === 'string' && byId[starter.startId]) ? starter.startId :
+    //       (typeof starter.rootStepId === 'string' && byId[starter.rootStepId]) ? starter.rootStepId :
+    //         steps[0].id;
+
+    //   // in-degree (counts step.next and select option.next)
+    //   const indeg = Object.fromEntries(steps.map(s => [s.id, 0]));
+    //   for (const s of steps) {
+    //     if (s.next && byId[s.next]) indeg[s.next] += 1;
+    //     if (s.type === 'select') {
+    //       for (const o of (s.options || [])) {
+    //         if (o && o.next && byId[o.next]) indeg[o.next] += 1;
+    //       }
+    //     }
+    //   }
+
+    //   // roots: chosen start first, then other in-degree-0 nodes
+    //   const roots = [];
+    //   if (byId[startId]) roots.push(byId[startId]);
+    //   for (const s of steps) if (s.id !== startId && indeg[s.id] === 0) roots.push(s);
+
+    //   let changed = false;
+    //   const visited = new Set();
+
+    //   const place = (col, row, node) => {
+    //     if (!hasPos(node)) {
+    //       node.pos = { x: x0 + colWidth * col, y: y0 + rowGap * row };
+    //       changed = true;
+    //     }
+    //     visited.add(node.id);
+    //   };
+
+    //   // Lay a chain with branching:
+    //   // - primary child (first) continues downward in same column
+    //   // - additional children start new columns to the right at (row+1)
+    //   const layFrom = (startNode, baseCol, baseRow) => {
+    //     let rightmost = baseCol;
+    //     let node = startNode, col = baseCol, row = baseRow;
+    //     const guardMax = steps.length * 3;
+    //     const queue = [];
+
+    //     for (let g = 0; node && g < guardMax; g++) {
+    //       if (!visited.has(node.id)) place(col, row, node);
+
+    //       // gather children
+    //       const children = [];
+    //       if (node.type === 'select') {
+    //         for (const o of (node.options || [])) {
+    //           if (o && o.next && byId[o.next]) children.push(byId[o.next]);
+    //         }
+    //       } else if (node.next && byId[node.next]) {
+    //         children.push(byId[node.next]);
+    //       }
+
+    //       if (!children.length) break;
+
+    //       // enqueue side branches (each to the right)
+    //       for (let i = 1; i < children.length; i++) {
+    //         const branchCol = col + i;
+    //         rightmost = Math.max(rightmost, branchCol);
+    //         queue.push({ node: children[i], col: branchCol, row: row + 1 });
+    //       }
+
+    //       // continue with primary child downward
+    //       node = children[0];
+    //       row += 1;
+    //     }
+
+    //     // process queued branches (breadth-first)
+    //     while (queue.length) {
+    //       const { node: seedNode, col: seedCol, row: seedRow } = queue.shift();
+    //       if (visited.has(seedNode.id)) continue;
+    //       rightmost = Math.max(rightmost, layFrom(seedNode, seedCol, seedRow));
+    //     }
+
+    //     return rightmost;
+    //   };
+
+    //   // 1) layout each root chain; keep track of rightmost used column
+    //   let nextRootCol = 0;
+    //   for (const r of roots) {
+    //     if (visited.has(r.id)) continue;
+    //     const right = layFrom(r, nextRootCol, 0);
+    //     nextRootCol = right + 1;
+    //   }
+
+    //   // 2) leftover nodes (cycles/broken links) → top row, continuing columns
+    //   for (const s of steps) {
+    //     if (visited.has(s.id)) continue;
+    //     if (!hasPos(s)) {
+    //       s.pos = { x: x0 + colWidth * nextRootCol, y: y0 };
+    //       changed = true;
+    //     }
+    //     visited.add(s.id);
+    //     nextRootCol++;
+    //   }
+
+    //   // normalize to startId for future saves
+    //   if (starter.startId !== startId) {
+    //     starter.startId = startId;
+    //     changed = true;
+    //   }
+
+    //   return changed;
+    // }
+
+
     function ensurePositions(starter) {
-      if (!starter) return false;
-      const steps = starter.steps || [];
+      if (!starter || !Array.isArray(starter.steps)) return false;
+      const steps = starter.steps;
       if (!steps.length) return false;
 
-      const x0 = 200, y0 = 60;    // origin
-      const colWidth = 220;       // horizontal gap
-      const rowGap = 140;         // vertical gap
-
-      const byId = Object.fromEntries(steps.map(s => [s.id, s]));
-      const hasPos = s => s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
-
-      // explicit start (supports legacy), else first step
-      const startId =
-        (typeof starter.startId === 'string' && byId[starter.startId]) ? starter.startId :
-          (typeof starter.rootStepId === 'string' && byId[starter.rootStepId]) ? starter.rootStepId :
-            steps[0].id;
-
-      // in-degree (counts step.next and select option.next)
-      const indeg = Object.fromEntries(steps.map(s => [s.id, 0]));
+      // NODES & EDGES (mirror layoutVertical)
+      const nodes = steps.map(s => ({ id: s.id, pos: s.pos }));
+      const edges = [];
       for (const s of steps) {
-        if (s.next && byId[s.next]) indeg[s.next] += 1;
+        if (s.next) edges.push({ from: s.id, to: s.next });
         if (s.type === 'select') {
-          for (const o of (s.options || [])) {
-            if (o && o.next && byId[o.next]) indeg[o.next] += 1;
+          for (const o of (s.options || [])) if (o && o.next) edges.push({ from: s.id, to: o.next });
+        }
+      }
+
+      if (!nodes.length) return false;
+
+      // adjacency
+      const adj = {};
+      nodes.forEach(n => adj[n.id] = []);
+      edges.forEach(e => { (adj[e.from] ||= []).push(e.to); });
+
+      // depths from FIRST node (same as layoutVertical)
+      const depth = {};
+      const start = nodes[0].id;
+      depth[start] = 0;
+
+      // BFS
+      const q = [start];
+      while (q.length) {
+        const u = q.shift();
+        for (const v of adj[u] || []) {
+          if (depth[v] == null) {
+            depth[v] = (depth[u] || 0) + 1;
+            q.push(v);
+          }
+        }
+      }
+      // unreached → depth 0
+      nodes.forEach(n => { if (depth[n.id] == null) depth[n.id] = 0; });
+
+      // relax so every edge goes downward
+      let changedDepth = true, guard = 0;
+      while (changedDepth && guard < 50) {
+        changedDepth = false; guard++;
+        for (const e of edges) {
+          const a = depth[e.from], b = depth[e.to];
+          if (a != null && b != null && b <= a) {
+            depth[e.to] = a + 1;
+            changedDepth = true;
           }
         }
       }
 
-      // roots: chosen start first, then other in-degree-0 nodes
-      const roots = [];
-      if (byId[startId]) roots.push(byId[startId]);
-      for (const s of steps) if (s.id !== startId && indeg[s.id] === 0) roots.push(s);
+      // rows & stable order within row
+      const rows = {};
+      nodes.forEach(n => {
+        const d = depth[n.id] || 0;
+        (rows[d] ||= []).push(n.id);
+      });
+      const colIndex = {};
+      Object.keys(rows).sort((a, b) => a - b).forEach(d => {
+        rows[d].forEach((id, i) => colIndex[id] = i);
+      });
 
-      let changed = false;
-      const visited = new Set();
+      // compute lane positions (same constants as layoutVertical)
+      const colWidth = 200;    // horizontal spacing
+      const rowGap = 140;     // vertical spacing
+      const x0 = 200, y0 = 60; // origin
 
-      const place = (col, row, node) => {
-        if (!hasPos(node)) {
-          node.pos = { x: x0 + colWidth * col, y: y0 + rowGap * row };
-          changed = true;
+      // WRITE BACK positions only if missing
+      let wroteAny = false;
+      for (const n of nodes) {
+        const s = steps.find(x => x.id === n.id);
+        const has = s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
+        if (!has) {
+          const d = depth[n.id] || 0;
+          const i = colIndex[n.id] || 0;
+          s.pos = { x: x0 + i * colWidth, y: y0 + d * rowGap };
+          wroteAny = true;
         }
-        visited.add(node.id);
-      };
-
-      // Lay a chain with branching:
-      // - primary child (first) continues downward in same column
-      // - additional children start new columns to the right at (row+1)
-      const layFrom = (startNode, baseCol, baseRow) => {
-        let rightmost = baseCol;
-        let node = startNode, col = baseCol, row = baseRow;
-        const guardMax = steps.length * 3;
-        const queue = [];
-
-        for (let g = 0; node && g < guardMax; g++) {
-          if (!visited.has(node.id)) place(col, row, node);
-
-          // gather children
-          const children = [];
-          if (node.type === 'select') {
-            for (const o of (node.options || [])) {
-              if (o && o.next && byId[o.next]) children.push(byId[o.next]);
-            }
-          } else if (node.next && byId[node.next]) {
-            children.push(byId[node.next]);
-          }
-
-          if (!children.length) break;
-
-          // enqueue side branches (each to the right)
-          for (let i = 1; i < children.length; i++) {
-            const branchCol = col + i;
-            rightmost = Math.max(rightmost, branchCol);
-            queue.push({ node: children[i], col: branchCol, row: row + 1 });
-          }
-
-          // continue with primary child downward
-          node = children[0];
-          row += 1;
-        }
-
-        // process queued branches (breadth-first)
-        while (queue.length) {
-          const { node: seedNode, col: seedCol, row: seedRow } = queue.shift();
-          if (visited.has(seedNode.id)) continue;
-          rightmost = Math.max(rightmost, layFrom(seedNode, seedCol, seedRow));
-        }
-
-        return rightmost;
-      };
-
-      // 1) layout each root chain; keep track of rightmost used column
-      let nextRootCol = 0;
-      for (const r of roots) {
-        if (visited.has(r.id)) continue;
-        const right = layFrom(r, nextRootCol, 0);
-        nextRootCol = right + 1;
       }
 
-      // 2) leftover nodes (cycles/broken links) → top row, continuing columns
-      for (const s of steps) {
-        if (visited.has(s.id)) continue;
-        if (!hasPos(s)) {
-          s.pos = { x: x0 + colWidth * nextRootCol, y: y0 };
-          changed = true;
-        }
-        visited.add(s.id);
-        nextRootCol++;
-      }
-
-      // normalize to startId for future saves
-      if (starter.startId !== startId) {
-        starter.startId = startId;
-        changed = true;
-      }
-
-      return changed;
+      if (wroteAny && typeof setDirty === 'function') setDirty(true);
+      return wroteAny;
     }
+
 
 
 
@@ -3872,11 +3971,26 @@ function addNextPointers(sop) {
       // }
 
       // 2) Legacy type: 'end' → 'instruction' (implicit end = no next)
+      // for (const s of steps) {
+      //   if (s.type !== 'instruction' || s.type !== 'input' || s.type !== 'select') {
+      //     s.type = 'instruction'; changed = true;
+      //   }
+      // }
+
+      // 2) Normalize type and coerce unknowns → 'instruction'
       for (const s of steps) {
-        if (s.type !== 'instruction' || s.type !== 'input' || s.type !== 'select') {
-          s.type = 'instruction'; changed = true;
+        let t = (s.type ?? 'instruction');
+        if (typeof t !== 'string') t = 'instruction';
+        t = t.trim().toLowerCase();
+
+        if (t !== 'instruction' && t !== 'input' && t !== 'select') {
+          if (s.type !== 'instruction') { s.type = 'instruction'; changed = true; }
+        } else if (s.type !== t) {
+          s.type = t; // normalize casing
+          changed = true;
         }
       }
+
 
       // 3) Build byId and clean `next` (empty or missing target -> remove)
       const byId = Object.fromEntries(steps.map(s => [s.id, s]));
@@ -3910,7 +4024,7 @@ function addNextPointers(sop) {
 
       // 5) Ensure single valid startId at starter level
       //    Prefer a node with in-degree 0; among them prefer one that has an outgoing edge; else first.
-      console.log('hello');
+      // console.log('hello');
       // if (!(typeof starter.startId === 'string' && byId[starter.startId])) {
 
       //   const indeg = Object.fromEntries(steps.map(s => [s.id, 0]));

@@ -14,6 +14,7 @@
 -  for multi select it should have onle one next
 -  group right label to have matching fields together
 -  mandate starter label while editing
+-  make selected or active starter and active step on the url instead of variable to be able to share it
 
 ---
 
