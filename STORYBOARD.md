@@ -48,6 +48,7 @@
 - Search capability  
 - Zoom on cursor (not general zoom) 
 - Hand tool to move the map, cursor to select  
+- move starters around to make them ordered as i need
 - View picture (small, then maximize)  
 - Scroll up and down in the graph
 - have map link in the preview 

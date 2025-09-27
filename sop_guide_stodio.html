@@ -776,6 +776,7 @@
 
     .vw-card {
       display: block;
+      cursor: pointer;
       text-align: left;
       background: var(--card);
       border: 2px solid var(--line);
@@ -1103,9 +1104,9 @@
       color: var(--text);
     }
 
-    .cfm-btn--cancel:hover {
+    /* {
       filter: brightness(0.98);
-    }
+    } */
 
     /* OK: primary or danger, no gradients */
     .cfm-btn--ok {
@@ -1114,8 +1115,9 @@
       border-color: var(--accent);
     }
 
-    .cfm-btn--ok:hover {
-      filter: brightness(1.05);
+    .cfm-btn--ok:hover,
+    .cfm-btn--cancel:hover {
+      filter: brightness(1.5);
     }
 
     .cfm-btn--danger {
@@ -1130,7 +1132,7 @@
     }
 
     .cfm-btn--neutral:hover {
-      filter: brightness(0.98);
+      filter: brightness(2.5);
     }
 
     /* Subtle danger (calm, but distinct) */
@@ -1255,6 +1257,10 @@
       pointer-events: auto;
     }
 
+    .graph-canvas .graph-action[disabled] {
+      cursor: not-allowed;
+    }
+
     /* Make the 'Required' checkbox bigger + aligned */
     .kv div:has(#f_req) {
       display: flex;
@@ -1350,7 +1356,8 @@
             <div class="graph-zoom">
               <button id="zoomOutBtn">−</button>
               <button id="zoomInBtn">+</button>
-              <button id="zoomResetBtn">Reset</button>
+              <button id="zoomResetBtn">Reset position & zoom</button>
+              <button id="formatBtn" class="graph-action" title="Auto format">Format graph</button>
               <button id="fullscreenBtn">Full screen</button>
             </div>
           </div>
@@ -1365,8 +1372,9 @@
             </svg>
             <div class="graph-fabs graph-fabs--top" id="graphFabsTop">
               <button id="addAfterBtn" class="graph-action graph-action--accent" title="Add step after">+After</button>
+              <button id="addFreeBtn" class="graph-action" title="Add step (free)">Add</button>
               <button id="addBeforeBtn" class="graph-action graph-action--accent"
-                title="Add step after">+Before</button>
+                title="Add step before">+Before</button>
               <button id="dupStepBtn" class="graph-action" title="Delete step">Duplicate</button>
               <button id="delStepBtn" class="graph-action warn" title="Delete step">Delete</button>
             </div>
@@ -1460,6 +1468,41 @@
         tx.onerror = () => reject(tx.error);
       });
     }
+
+    // async function idbPut(dbName, storeName, value) {
+    //   // 1) open without forcing a version, see what's there
+    //   let db = await new Promise((res, rej) => {
+    //     const req = indexedDB.open(dbName);
+    //     req.onsuccess = () => res(req.result);
+    //     req.onerror = () => rej(req.error);
+    //   });
+
+    //   // 2) if the store is missing, reopen with version+1 and create it in upgrade
+    //   if (!db.objectStoreNames.contains(storeName)) {
+    //     const newVersion = (db.version || 1) + 1;
+    //     db.close();
+    //     db = await new Promise((res, rej) => {
+    //       const req = indexedDB.open(dbName, newVersion);
+    //       req.onupgradeneeded = () => {
+    //         const udb = req.result;
+    //         if (!udb.objectStoreNames.contains(storeName)) {
+    //           udb.createObjectStore(storeName, { keyPath: 'id' });
+    //         }
+    //       };
+    //       req.onsuccess = () => res(req.result);
+    //       req.onerror = () => rej(req.error);
+    //     });
+    //   }
+
+    //   // 3) put
+    //   return new Promise((resolve, reject) => {
+    //     const tx = db.transaction(storeName, 'readwrite');
+    //     tx.oncomplete = () => resolve(true);
+    //     tx.onerror = () => reject(tx.error);
+    //     tx.objectStore(storeName).put(value);
+    //   });
+    // }
+
 
     async function idbGet(dbName, storeName, key) {
       const db = await openDB(dbName, 1, (db) => {
@@ -1567,14 +1610,6 @@
       setTimeout(() => btnSave.textContent = old, 1200);
     }
 
-    async function saveSop() {
-      const ok = await performSave();
-      if (!ok) return;
-      const btnSave = document.getElementById('globalSaveBtn');
-      const old = btnSave.textContent; btnSave.textContent = 'Saved ✓';
-      setTimeout(() => btnSave.textContent = old, 1200);
-    }
-
 
     let hotkeysWired = false;
     function wireHotkeys() {
@@ -1582,31 +1617,33 @@
 
       document.addEventListener('keydown', async (e) => {
         console.log(`e.key`, e.key);
+        const currentMode = document.documentElement.getAttribute('data-mode');
+        const activeEl = document.activeElement;
         // if is dirty anywhere in the doc, Ctrl+S / Cmd+S triggers save
         const isSave = (e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S');
+
         // if (!) return;
-        if(isSave && isDirty){
+        if (
+          isSave &&
+          isDirty &&
+          currentMode === 'edit') {
 
           e.preventDefault();
           // if (isDirty) {
-            saveSop();
+          saveSop();
           // }
         }
 
         // if in edit mode and on the graph and a step is selected, Del triggers delete
-        const currentMode = document.documentElement.getAttribute('data-mode');
-        console.log(`currentMode`, currentMode);
-        console.log(`viewState.selectedStepId`, viewState.selectedStepId);
-        if (currentMode === 'edit' && viewState.selectedStepId && (e.key === 'Delete' || e.key === 'Backspace')) {
-          // const graphRect = graphSvg.getBoundingClientRect();
-          // if (e.clientX >= graphRect.left && e.clientX <= graphRect.right
-          //   && e.clientY >= graphRect.top && e.clientY <= graphRect.bottom) {
-            // inside graph
-            e.preventDefault();
-            delStep();
-            // deleteStep(viewState.selectedStepId);
-            console.log('Del key on graph');
-          // }
+        if (
+          e.key === 'Delete' &&
+          currentMode === 'edit' &&
+          viewState.selectedStepId &&
+          !isInEditableArea(activeEl)
+        ) {
+          e.preventDefault();
+          delStep();
+          console.log('Del key on graph');
         }
       });
     }
@@ -1635,7 +1672,7 @@
               const parsed = JSON.parse(embedded.textContent);
               if (parsed && Array.isArray(parsed.starters)) {
                 sop = parsed;
-                savedSop = structuredClone(sop);
+                // savedSop = structuredClone(sop);
                 console.log('Loaded embedded SOP', sop);
               }
             } catch (err) {
@@ -1650,7 +1687,7 @@
 
             if (restored) {
               sop = restored;
-              savedSop = structuredClone(sop);
+              // savedSop = structuredClone(sop);
 
             }
             console.log('Restored SOP from IndexedDB', restored);
@@ -1667,6 +1704,8 @@
         renderAll();
         wireGlobal();
         wireHotkeys();
+        savedSop = structuredClone(sop);
+
 
         if (typeof updateSaveBtn === 'function') updateSaveBtn();
 
@@ -1733,26 +1772,8 @@
       let btnPreview = document.getElementById('modeView');
       let btnEdit = document.getElementById('modeEdit');
 
-      // const saved = localStorage.getItem('data-mode');
       changeDataMode('view');
 
-      // btnPreview?.addEventListener('click', async () => {
-
-      //   if (isDirty) {
-      //     const ok = await confirmDialog({
-      //       title: 'Unsaved changes',
-      //       message: 'Switch to Preview without saving?',
-      //       confirmText: 'Continue',
-      //       cancelText: 'Stay in Edit'
-      //     });
-      //     if (!ok) return;
-      //   }
-
-
-
-      //   renderAll();
-      //   changeDataMode('view');
-      // });
       btnPreview?.addEventListener('click', async () => {
         if (isDirty) {
           const ok = await confirmDialog({
@@ -1762,10 +1783,11 @@
             cancelText: 'Stay in Edit',
             variant: 'subtleDanger'   // ← small “danger” cue, not aggressive
           });
+          console.log('world');
 
           if (!ok) return;                 // Stay in Edit
-
-          // Discard → revert to last saved snapshot
+          console.log('hello');
+          console.log(`savedSop`, savedSop);
           if (savedSop) {
             sop = structuredClone(savedSop);
           }
@@ -1789,10 +1811,10 @@
 
     })();
 
-    function showCurrent() {
-      console.log(`viewState.stepIdx`, viewState.stepIdx);
-      console.log(`viewState.selectedStepId`, viewState.selectedStepId);
-    }
+    // function showCurrent() {
+    //   console.log(`viewState.stepIdx`, viewState.stepIdx);
+    //   console.log(`viewState.selectedStepId`, viewState.selectedStepId);
+    // }
 
 
     function goHome() {
@@ -1848,34 +1870,21 @@
       document.getElementById('dupStepBtn').addEventListener('click', dupStep);
       document.getElementById('delStepBtn').addEventListener('click', delStep);
 
-      // cache header inputs
-      const titleInputField = document.getElementById('vwTitleInput');
-      const descriptionInputField = document.getElementById('vwDescInput');
-
-      // live-sync SOP on typing (trimmed)
-      titleInputField?.addEventListener('input', () => {
-        const v = (titleInputField.value || '').trim();
-        if ((sop.title || '') !== v) {
-          sop.title = v;
-          console.log(`sop.title`, sop.title);
-          setDirty(true);
-          // renderViewAndEditLanding();
-        }
+      document.getElementById('addFreeBtn').addEventListener('click', () => {
+        placingFree = true;
+        ghostPos = null;
+        renderGraph();
       });
 
-      descriptionInputField?.addEventListener('input', () => {
-        const v = (descriptionInputField.value || '').trim();
-        if ((sop.description || '') !== v) {
-          sop.description = v;
-          console.log(`sop.description`, sop.description);
-          setDirty(true);
-        }
-      });
+
 
 
       document.getElementById('zoomInBtn').addEventListener('click', () => { mapZoom *= 1.2; renderGraph(); console.log('mapZoom'); });
       document.getElementById('zoomOutBtn').addEventListener('click', () => { mapZoom /= 1.2; renderGraph(); });
-      document.getElementById('zoomResetBtn').addEventListener('click', () => { mapZoom = 2.4; mapPan = { x: 0, y: -20 }; renderGraph(); });
+      document.getElementById('zoomResetBtn').addEventListener('click', () => { resetGraphZoom(); renderGraph(); });
+
+      document.getElementById('formatBtn').addEventListener('click', formatGraph);
+
 
       const fsBtn = document.getElementById('fullscreenBtn');
       fsBtn.addEventListener('click', () => {
@@ -1888,7 +1897,7 @@
     function renderAll() {
       renderViewAndEditLanding();
       renderStarterMeta();
-      renderStarters();
+
       renderViewStep()
       // renderSteps();
       renderInspector();
@@ -1910,12 +1919,12 @@
 
     }
 
-    ['pointerdown', 'mousedown', 'touchstart'].forEach(evt => {
-      graphSvg.addEventListener(evt, () => {
-        const a = document.activeElement;
-        if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) a.blur();
-      }, true);
-    });
+    // ['pointerdown', 'mousedown', 'touchstart'].forEach(evt => {
+    //   graphSvg.addEventListener(evt, () => {
+    //     const a = document.activeElement;
+    //     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) a.blur();
+    //   }, true);
+    // });
 
     function renderStarterMeta() {
       const st = getStarter();
@@ -1944,8 +1953,8 @@
       const s = box.querySelector('#st_summary');
       const d = box.querySelector('#st_desc');
 
-      t.addEventListener('input', () => { st.title = t.value; renderStarters(); });
-      s.addEventListener('input', () => { st.summary = s.value; renderStarters(); });
+      t.addEventListener('input', () => { st.title = t.value; });
+      s.addEventListener('input', () => { st.summary = s.value; });
       d.addEventListener('input', () => { st.description = d.value; });
     }
 
@@ -1984,7 +1993,7 @@
       <label>Body</label><textarea id="f_body" rows="4">${escapeHtml(step.body || '')}</textarea>
       ${step.type !== 'end' ? `
         <label>Next (step.id)</label>
-        ${nextSelectHtml(st.steps, step.next)}
+        ${nextSelectHtml(st.steps, step.next, step.id)}
       ` : ''}
       <div class="kv">
         <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
@@ -2005,7 +2014,7 @@
         <div></div>
         </div>
         <label>Next (step.id)</label>
-        ${nextSelectHtml(st.steps, step.next)}
+        ${nextSelectHtml(st.steps, step.next, step.id)}
       <div class="kv">
         <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
         <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
@@ -2050,7 +2059,7 @@
         <button id="addOptBtn" class="iconbtn">+ Option</button>
       </div>
       <label>After (step.next, used esp. for multi)</label>
-      ${nextSelectHtml(st.steps, step.next)}
+      ${nextSelectHtml(st.steps, step.next, step.id)}
     `;
       }
 
@@ -2227,58 +2236,207 @@
     }
 
     /*** Graph ***/
-    let mapZoom = 2.4, mapPan = { x: 0, y: -20 };
+    let mapZoom = 0;
+    let mapPan = { x: 0, y: 0 };
     let drag = { active: false, start: { x: 0, y: 0 }, pan0: { x: 0, y: -8 }, vw: 0, vh: 0, wpp: 1 };
     let lastGraphSize = { width: 900, height: 600 };
 
-    // MOUSE DOWN
-    graphSvg.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      drag.active = true;
-      drag.start = { x: e.clientX, y: e.clientY };
-      drag.pan0 = { ...mapPan };
+    let placingFree = false;
+    let ghostPos = null; // {x, y} in world coords
 
+    let draggingStepId = null;
+    let dragOffset = null;
+    let lastPositions = {}; // stepId -> {x,y} snapshot from last render
+
+
+
+
+
+    // (function initGraphZoom() {
+    //   mapZoom = 2.4;
+    //   mapPan = { x: 0, y: -20 }
+    // })
+
+    (function initGraphZoom() {
+      resetGraphZoom();
+    })();
+
+    function resetGraphZoom() {
+      mapZoom = 2.4;
+      mapPan = { x: 0, y: -20 }
+    };
+
+    function clientToWorld(e) {
       const bb = graphSvg.getBoundingClientRect();
-      lastGraphSize.width = bb.width;
-      lastGraphSize.height = bb.height;
+      const vw = 1000, vh = 1000; // must match renderGraph() viewBox world size
+      const x = mapPan.x + (e.clientX - bb.left) * (vw / mapZoom) / bb.width;
+      const y = mapPan.y + (e.clientY - bb.top) * (vh / mapZoom) / bb.height;
+      return { x, y };
+    }
 
-      // These MUST match the viewBox setup in renderGraph()
-      const worldW = 1000 / mapZoom;
-      const worldH = 1000 / mapZoom;
 
-      // world-units per pixel on each axis
-      drag.wppX = worldW / bb.width;
-      drag.wppY = worldH / bb.height;
+    function formatGraph() {
+      const st = getStarter(); if (!st) return;
+      (st.steps || []).forEach(s => { s.pos = null; }); // drop manual positions
+      // setDirty(true);
+      renderAll(); // layoutVertical will place everything
+    }
 
-      graphSvg.classList.add('dragging');
-      graphPanel.classList.add('dragging');
-    });
 
-    // MOUSE MOVE
-    addEventListener('mousemove', (e) => {
-      if (!drag.active) return;
-      const dx = e.clientX - drag.start.x;
-      const dy = e.clientY - drag.start.y;
+    // MOUSE DOWN
+    // graphSvg.addEventListener('mousedown', (e) => {
+    //   e.preventDefault();
+    //   drag.active = true;
+    //   drag.start = { x: e.clientX, y: e.clientY };
+    //   drag.pan0 = { ...mapPan };
 
-      mapPan.x = drag.pan0.x - dx * drag.wppX;
-      mapPan.y = drag.pan0.y - dy * drag.wppY;
+    //   const bb = graphSvg.getBoundingClientRect();
+    //   lastGraphSize.width = bb.width;
+    //   lastGraphSize.height = bb.height;
 
+    //   // These MUST match the viewBox setup in renderGraph()
+    //   const worldW = 1000 / mapZoom;
+    //   const worldH = 1000 / mapZoom;
+
+    //   // world-units per pixel on each axis
+    //   drag.wppX = worldW / bb.width;
+    //   drag.wppY = worldH / bb.height;
+
+    //   graphSvg.classList.add('dragging');
+    //   graphPanel.classList.add('dragging');
+    // });
+
+    // graphSvg.addEventListener('mousedown', (e) => {
+    //   if (!placingFree || !ghostPos) return;
+    //   const st = getStarter(); if (!st) return;
+    //   const step = makeStep('instruction');
+    //   step.pos = { x: ghostPos.x, y: ghostPos.y };
+    //   st.steps.push(step);
+    //   viewState.selectedStepId = step.id;
+    //   placingFree = false; ghostPos = null;
+    //   setDirty(true);
+    //   renderAll();
+    // }, true);
+
+
+    // addEventListener('mousemove', (e) => {
+    //   if (!placingFree) return;
+    //   const bb = graphSvg.getBoundingClientRect();
+    //   // convert client → world
+    //   const vw = 1000, vh = 1000;
+    //   const wx = mapPan.x + (e.clientX - bb.left) * (vw / mapZoom) / bb.width;
+    //   const wy = mapPan.y + (e.clientY - bb.top) * (vh / mapZoom) / bb.height;
+    //   ghostPos = { x: wx, y: wy };
+    //   renderGraph();
+    // }, true);
+
+    //   ]
+
+    graphSvg.addEventListener('mousemove', (e) => {
+      if (!placingFree) return;
+      ghostPos = clientToWorld(e);
       renderGraph();
-    });
+    }, true);
+
+
+    // graphSvg.addEventListener('mousemove', (e) => {
+    //   if (!placingFree) return;
+    //   const bb = graphSvg.getBoundingClientRect();
+    //   const vw = 1000, vh = 1000; // same virtual canvas you render with
+    //   const wx = mapPan.x + (e.clientX - bb.left) * (vw / mapZoom) / bb.width;
+    //   const wy = mapPan.y + (e.clientY - bb.top) * (vh / mapZoom) / bb.height;
+    //   ghostPos = { x: wx, y: wy };
+    //   renderGraph();
+    // }, true);
+
+    // graphSvg.addEventListener('mousedown', (e) => {
+    //   const rect = e.target.closest('rect');
+    //   if (!rect) return;
+    //   const id = rect.getAttribute('step-id');
+    //   if (!id || !lastPositions[id]) return;
+
+    //   const p0 = clientToWorld(e);
+    //   const p = lastPositions[id];
+    //   draggingStepId = id;
+    //   dragOffset = { dx: p.x - p0.x, dy: p.y - p0.y };
+    //   e.preventDefault();
+    //   e.stopPropagation();
+    // }, true);
+
+    graphSvg.addEventListener('mousedown', (e) => {
+      // A) PLACE NEW STEP if we're in Add (ghost) mode
+      if (placingFree) {
+        const pt = clientToWorld(e);
+        const st = getStarter(); if (!st) return;
+        const step = makeStep('instruction');
+        step.pos = { x: pt.x, y: pt.y };
+        st.steps.push(step);
+        viewState.selectedStepId = step.id;
+        placingFree = false; ghostPos = null;
+        // setDirty(true);
+        renderAll();
+        e.preventDefault();
+        e.stopPropagation();
+        return; // don't fall through to drag
+      }
+
+      // B) DRAG EXISTING NODE
+      const rect = e.target.closest('rect');
+      if (!rect) return;
+      const id = rect.getAttribute('step-id');
+      if (!id || !lastPositions[id]) return;
+
+      const p0 = clientToWorld(e);
+      const p = lastPositions[id];
+      draggingStepId = id;
+      dragOffset = { dx: p.x - p0.x, dy: p.y - p0.y };
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+
+
+    addEventListener('mousemove', (e) => {
+      if (!draggingStepId) return;
+      const st = getStarter(); if (!st) return;
+      const step = (st.steps || []).find(s => s.id === draggingStepId);
+      if (!step) return;
+
+      const pt = clientToWorld(e);
+      step.pos = { x: pt.x + dragOffset.dx, y: pt.y + dragOffset.dy };
+      renderGraph(); // live move
+    }, true);
 
     addEventListener('mouseup', () => {
-      drag.active = false;
-      graphSvg.classList.remove('dragging');
-      graphPanel.classList.remove('dragging');
-    });
+      if (!draggingStepId) return;
+      draggingStepId = null;
+      dragOffset = null;
+      // setDirty(true); // enable Save button
+    }, true);
+
+
+
 
     graphSvg.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const delta = Math.sign(e.deltaY);
-      const factor = (delta > 0) ? 1 / 1.1 : 1.1;
-      mapZoom *= factor;
-      renderGraph();
+      e.preventDefault(); // stop the page from scrolling
+      const k = 1 / mapZoom; // keep speed consistent under zoom
+      // vertical wheel → move up/down, horizontal wheel (trackpads) → left/right
+      mapPan.x += e.deltaX * k;
+      mapPan.y += e.deltaY * k;
+      renderAll();
     }, { passive: false });
+
+    graphSvg.addEventListener('click', () => {
+      if (!placingFree || !ghostPos) return;
+      const st = getStarter(); if (!st) return;
+      const step = makeStep('instruction');
+      step.pos = { x: ghostPos.x, y: ghostPos.y }; // lock position
+      st.steps.push(step);
+      viewState.selectedStepId = step.id;
+      placingFree = false; ghostPos = null;
+      setDirty(true);
+      renderAll();
+    }, true);
+
 
     function renderGraph() {
       const st = getStarter();
@@ -2289,6 +2447,7 @@
       }
       const { nodes, edges } = buildGraph(st);
       const layout = layoutVertical(nodes, edges);
+      lastPositions = layout;
       const svg = graphSvg;
       svg.innerHTML = `
                       <defs>
@@ -2305,6 +2464,7 @@
       const vw = 1000, vh = 1000; // world units used by layout
       const viewBox = `${mapPan.x} ${mapPan.y} ${vw / mapZoom} ${vh / mapZoom}`;
       svg.setAttribute('viewBox', viewBox);
+
 
       // edges (orthogonal: down then across)
       edges.forEach(e => {
@@ -2336,6 +2496,10 @@
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('class', 'node-rect' + (n.id === viewState.selectedStepId ? ' current' : ''));
         rect.setAttribute('x', -80); rect.setAttribute('y', -28); rect.setAttribute('width', 160); rect.setAttribute('height', 56);
+        rect.setAttribute('step-id', n.id);
+        rect.style.cursor = 'move';
+
+
         grp.appendChild(rect);
 
         const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -2343,30 +2507,89 @@
         tx.setAttribute('text-anchor', 'middle');
         tx.setAttribute('y', 4);
         tx.textContent = n.label;
+        tx.setAttribute('pointer-events', 'none');
         grp.appendChild(tx);
 
         grp.addEventListener('click', () => {
           viewState.selectedStepId = n.id;
-          console.log(`viewState.selectedStepId`, viewState.selectedStepId);
-          renderInspector(); renderGraph();
+          // console.log(`viewState.selectedStepId`, viewState.selectedStepId);
+          renderInspector();
+          renderGraph();
+          updateAddAfterState(); // disable Add After when 'done' is selected
         });
 
         g.appendChild(grp);
       });
+
+      if (placingFree && ghostPos) {
+        const grp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        grp.setAttribute('transform', `translate(${ghostPos.x}, ${ghostPos.y})`);
+        grp.setAttribute('opacity', '0.35');
+        grp.setAttribute('pointer-events', 'none');
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', -80); rect.setAttribute('y', -28);
+        rect.setAttribute('width', 160); rect.setAttribute('height', 56);
+        rect.setAttribute('rx', 8);
+        rect.setAttribute('class', 'node-rect');
+        rect.setAttribute('stroke-dasharray', '6,6');
+        grp.appendChild(rect);
+
+        const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        tx.setAttribute('class', 'node-label');
+        tx.setAttribute('text-anchor', 'middle');
+        tx.setAttribute('y', 4);
+        tx.textContent = 'New step';
+        grp.appendChild(tx);
+
+        g.appendChild(grp);
+      }
+
     }
+
+    function updateAddAfterState() {
+      const btn = document.getElementById('addAfterBtn');
+      if (!btn) return;
+      const st = getStarter();
+      const cur = st?.steps?.find(s => s.id === viewState.selectedStepId);
+      // if (!!(cur && cur.type === 'end')) {
+      //   btn.toggleAttribute('disabled', true);
+      //   // btn.classList.add('disabled');
+      //   // return;
+      // }
+      btn.toggleAttribute('disabled', !!(cur && cur.type === 'end'));
+      btn.title = (cur && cur.type === 'end') ? 'Cannot add step after the terminal "end" step' : 'Add step after current';
+      // btn.classList.toggle('disabled', !!(cur && cur.type === 'end'));
+    }
+
 
     function buildGraph(starter) {
       const steps = starter.steps || [];
-      const nodes = steps.map(s => ({ id: s.id, label: s.title || s.label || s.id }));
+      // const nodes = steps.map(s => ({ id: s.id, label: s.title || s.label || s.id }));
+      const nodes = steps.map(s => ({
+        id: s.id,
+        label: s.id || s.title || s.label,
+        pos: s.pos || null
+      }));
       const edges = [];
 
       for (let i = 0; i < steps.length; i++) {
         const s = steps[i];
-        const defaultNext = steps[i + 1]?.id || null; // ← fall back to sequential order
+        // const defaultNext = steps[i + 1]?.id || null; // ← fall back to sequential order
+        // const defaultNext = null;
+
+
 
         if (s.type === 'instruction' || s.type === 'input') {
-          const target = s.next || defaultNext;
+          // const target = s.next || defaultNext;
+          // if (target) edges.push({ from: s.id, to: target });
+          const target = s.next || null;
           if (target) edges.push({ from: s.id, to: target });
+
+          (s.options || []).forEach(o => {
+            if (o && o.next) edges.push({ from: s.id, to: o.next, label: o.label || '' });
+          });
+
         }
         else if (s.type === 'select') {
           // option-level branches (single-select)
@@ -2380,12 +2603,19 @@
 
           if (s.mode === 'multi') {
             // multi-select: go to step.next or next step after selection phase
-            const target = s.next || defaultNext;
+            // const target = s.next || defaultNext;
+            // if (target) edges.push({ from: s.id, to: target, label: 'after' });
+            // multi-select → only if step.next is set
+            const target = s.next || null;
             if (target) edges.push({ from: s.id, to: target, label: 'after' });
+
           } else {
             // single-select: if no option.next and no step.next, fall back to sequential
+            // const hasOptNext = (s.options || []).some(o => o?.next);
+            // const target = s.next || (!hasOptNext ? defaultNext : null);
+            // if (target) edges.push({ from: s.id, to: target });
             const hasOptNext = (s.options || []).some(o => o?.next);
-            const target = s.next || (!hasOptNext ? defaultNext : null);
+            const target = s.next || null;
             if (target) edges.push({ from: s.id, to: target });
           }
         }
@@ -2397,8 +2627,12 @@
 
 
 
+
     function layoutVertical(nodes, edges) {
       if (!nodes.length) return {};
+
+      const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
+
 
       // adjacency for forward edges
       const adj = {};
@@ -2460,27 +2694,121 @@
       nodes.forEach(n => {
         const d = depth[n.id] || 0;
         const i = colIndex[n.id] || 0;
-        pos[n.id] = { x: x0 + i * colWidth, y: y0 + d * rowGap };
+        pos[n.id] = n.pos ? { x: n.pos.x, y: n.pos.y }
+          : { x: x0 + i * colWidth, y: y0 + d * rowGap };
       });
+
 
       return pos;
     }
 
 
     /*** Actions ***/
-    function addStepRelative(where) {
+    // function addStepRelative(where) {
+    //   const st = getStarter();
+    //   if (!st) {
+    //     return;
+    //   }
+    //   const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
+    //   console.log(`viewState.selectedStepId`, viewState.selectedStepId);
+    //   console.log(`idx`, idx);
+    //   const insertAt = (idx < 0 ? st.steps.length : (where === 'before' ? idx : idx + 1));
+    //   const step = makeStep('instruction');
+    //   st.steps.splice(insertAt, 0, step);
+    //   viewState.selectedStepId = step.id;
+    //   renderAll();
+    //   setDirty(true);
+    // }
+
+
+    /////////////////////////////////////
+
+
+    // function addStepRelative(where) {
+    //   const st = getStarter(); if (!st) return;
+
+    //   const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
+    //   const insertAt = (idx < 0 ? st.steps.length : idx + 1);
+    //   const current = idx >= 0 ? st.steps[idx] : null;
+    //   console.log(`current`, current);
+
+    //   // create the new step
+    //   const step = makeStep('instruction');
+
+    //   // only when adding AFTER an instruction/input: rewire "next"
+    //   if (where === 'after' && current && (current.type === 'instruction' || current.type === 'input')) {
+    //     const prevNext = (typeof current.next !== 'undefined') ? current.next : null;
+    //     step.next = prevNext || null;      // new step points to what current used to point to
+    //     current.next = step.id;            // current now points to the new step
+    //   } 
+    //   // else if (where === 'before' && current && (current.type === 'instruction' || current.type === 'input')) {
+    //   //   // place new step before current in the flow
+    //   //   step.next = current.id; // new → current
+    //   //   // redirect predecessor (if any) to point to the new step
+    //   //   const pred = st.steps.find(s => s.next === current.id);
+    //   //   if (pred) pred.next = step.id;
+    //   // }
+
+
+    //   st.steps.splice(insertAt, 0, step);
+    //   if (where === 'before' && current && (current.type === 'instruction' || current.type === 'input')) step.next = current.id;
+
+    //   viewState.selectedStepId = step.id;
+    //   renderAll();
+    //   setDirty(true);
+    // }
+
+    async function addStepRelative(where) {
+      // when done and 'after' is requested, show dialog and abort on confirm
+      if (where === 'after') {
+        const st = getStarter(); if (!st) return;
+        const cur = st.steps.find(s => s.id === viewState.selectedStepId);
+        if (cur && cur.type === 'end') {
+          const ok = await confirmDialog({
+            // title: '??',
+            title: 'Inspector hacks won’t work: adding after the terminal end step is forbidden.',
+            confirmText: 'I am sorry and I won’t do that again 😔',
+            // cancelText: 'Cancel',
+            variant: 'danger',
+            one: true
+          });
+          return;
+          // if (!ok) console.log(`not ok`);
+        }
+      }
       const st = getStarter(); if (!st) return;
+
       const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
-      const insertAt = (idx < 0 ? st.steps.length : (where === 'before' ? idx : idx + 1));
+      const current = idx >= 0 ? st.steps[idx] : null;
+
+      // always create an instruction (your button semantics)
       const step = makeStep('instruction');
-      st.steps.splice(insertAt, 0, step);
+
+      if (where === 'after') {
+        if (current && (current.type === 'instruction' || current.type === 'input')) {
+          // insert after an instruction/input and splice the flow
+          const prevNext = ('next' in current) ? current.next : null;
+          step.next = (prevNext || 'done');   // new → old next (or done)
+          current.next = step.id;             // current → new
+          st.steps.splice(idx + 1, 0, step);  // place after current
+        } else {
+          // no selection or non-actionable selection: append and point to done if present
+          const done = st.steps.find(s => s.type === 'end') || st.steps.find(s => s.id === 'done');
+          step.next = done ? done.id : null;
+          st.steps.splice(idx < 0 ? st.steps.length : idx + 1, 0, step);
+        }
+      } else {
+        // fallback (if someone calls 'before'): insert before without rewiring
+        st.steps.splice(idx < 0 ? st.steps.length : idx, 0, step);
+      }
+
       viewState.selectedStepId = step.id;
       renderAll();
       setDirty(true);
-
-      // if (studioMode === 'view') renderViewAndEditLanding();
-
     }
+
+
+
     function dupStep() {
       const st = getStarter(); const s = st.steps.find(x => x.id === viewState.selectedStepId); if (!s) return;
       const c = JSON.parse(JSON.stringify(s));
@@ -2537,11 +2865,11 @@
 
 
     // Custom confirm dialog (uses CSS classes + your vars)
-    function confirmDialog({ title = 'Confirm', message = '', confirmText = 'OK', cancelText = 'Cancel', danger = false, variant = 'primary' } = {}) {
+    function confirmDialog({ title = 'Confirm', message = '', confirmText = 'OK', cancelText = 'Cancel', variant = 'primary', one = false } = {}) {
       const okClass =
         variant === 'neutral' ? 'cfm-btn cfm-btn--neutral' :
           variant === 'subtleDanger' ? 'cfm-btn cfm-btn--subtleDanger' :
-            danger ? 'cfm-btn cfm-btn--ok cfm-btn--danger' :
+            variant === 'danger' ? 'cfm-btn cfm-btn--ok cfm-btn--danger' :
               'cfm-btn cfm-btn--ok';
 
 
@@ -2551,14 +2879,22 @@
 
         const panel = document.createElement('div');
         panel.className = 'cfm-panel';
+
+        const actionsHtml = one
+          ? `<div class="cfm-actions">
+                <button id="cfmOk" class="${okClass}">${confirmText}</button>
+              </div>`
+          : `<div class="cfm-actions">
+                <button id="cfmCancel" class="cfm-btn cfm-btn--cancel">${cancelText}</button>
+                <button id="cfmOk" class="${okClass}">${confirmText}</button>
+              </div>`;
+
         panel.innerHTML = `
-      <div class="cfm-title">${title}</div>
-      <div class="cfm-msg">${message}</div>
-      <div class="cfm-actions">
-        <button id="cfmCancel" class="cfm-btn cfm-btn--cancel">${cancelText}</button>
-        <button id="cfmOk" class="${okClass}">${confirmText}</button>
-      </div>
-    `;
+            <div class="cfm-title">${title}</div>
+            <div class="cfm-msg">${message}</div>
+            ${actionsHtml}
+          `;
+
 
         overlay.appendChild(panel);
         document.body.appendChild(overlay);
@@ -2576,7 +2912,7 @@
         const btnCancel = panel.querySelector('#cfmCancel');
         const btnOk = panel.querySelector('#cfmOk');
 
-        btnCancel.addEventListener('click', () => done(false));
+        btnCancel?.addEventListener('click', () => done(false));
         btnOk.addEventListener('click', () => done(true));
         overlay.addEventListener('click', (e) => { if (e.target === overlay) done(false); });
         document.addEventListener('keydown', onKey);
@@ -2584,14 +2920,7 @@
       });
     }
 
-
     function viewEscape(s) { return String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
-
-    // function viewBodyHtml(body) {
-    //   if (!body) return '';
-    //   if (Array.isArray(body)) return `<ul>${body.map(li => `<li>${viewEscape(li)}</li>`).join('')}</ul>`;
-    //   return `<p>${viewEscape(body)}</p>`;
-    // }
 
     function viewBodyHtml(body) {
       if (!body) return '';
@@ -2790,13 +3119,13 @@
       });
       if (!ok) return;
 
-
-
       try { await idbDel('opsPathDB', 'sops', 'current'); } catch (e) { /* ignore */ }
 
       // fresh model + clean state
       sop = makeBlankSOP();
       savedSop = structuredClone(sop);
+      isDirty = true;
+      performSave();
       isDirty = false;
       // formDirty = false;
 
@@ -2805,7 +3134,7 @@
       viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
 
       // show edit landing for the new SOP
-      changeDataMode('view');
+      changeDataMode('edit');
       changeScreen('landing');
       renderViewAndEditLanding();
       updateSaveBtn?.();
@@ -3007,7 +3336,7 @@
           </button>
 
           <!-- editable card (shown in edit mode) -->
-          <div class="vw-card vw-card--edit" data-idx="${idx}">
+          <div class="vw-card vw-card--edit" data-action="starter-edit" data-idx="${idx}">
             <input class="st-label" type="text"
                   placeholder="Label"
                   value="${escapeAttr(st.label || ('Starter ' + (idx + 1)))}" />
@@ -3020,9 +3349,8 @@
                 <strong>${(typeof countReachable === 'function' ? countReachable(st) : (st.steps || []).length)}</strong>
               </div>
             </div>
-            <div class="vw-card__actions">
-              <button class="btn"      data-action="starter-edit"   data-idx="${idx}">Edit</button>
-              <button class="cfm-btn cfm-btn--subtleDanger" data-action="starter-delete" data-idx="${idx}">Delete</button>
+            <div class="vw-card__actions" >
+              <button class="cfm-btn cfm-btn--subtleDanger" data-action="starter-delete">Delete</button>
             </div>
           </div>
         </div>
@@ -3051,7 +3379,33 @@
       else {
         enterViewStarter(idx);
       }
+      ensurePositions(getStarter());
     }
+
+    // Ensure every step has a pos; keep existing pos untouched.
+    // Vertical-first grid: fills rows top→bottom, then moves to next column.
+    function ensurePositions(starter) {
+      if (!starter) return false;
+      const steps = starter.steps || [];
+      let changed = false;
+
+      const x0 = 200, y0 = 60;   // origin
+      const colWidth = 220;      // horizontal gap
+      const rowGap = 140;        // vertical gap
+      const rows = 5;            // how many rows before wrapping to next column
+
+      steps.forEach((s, idx) => {
+        const hasPos = s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
+        if (hasPos) return;
+        const ry = idx % rows;
+        const cx = Math.floor(idx / rows);
+        s.pos = { x: x0 + cx * colWidth, y: y0 + ry * rowGap };
+        changed = true;
+      });
+
+      return changed;
+    }
+
 
     // Inline edit for starter cards (landing, edit mode)
     let starterCardWired = false;
@@ -3060,6 +3414,7 @@
 
       // Update label/summary live
       document.addEventListener('input', (e) => {
+
         if (document.documentElement.getAttribute('data-mode') !== 'edit') return;
         const inp = e.target;
         if (!inp.classList?.contains('st-label') && !inp.classList?.contains('st-summary')) return;
@@ -3074,22 +3429,80 @@
       }, true);
 
       // Edit / Delete buttons
-      document.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-action="starter-edit"],[data-action="starter-delete"]');
-        if (!btn) return;
-        const idx = parseInt(btn.dataset.idx, 10);
+      // document.addEventListener('click', (e) => {
+      //   const btn = e.target.closest('[data-action="starter-edit"],[data-action="starter-delete"]');
+      //   if (!btn) return;
+      //   const idx = parseInt(btn.dataset.idx, 10);
 
-        if (btn.dataset.action === 'starter-edit') {
-          enterViewOrEditStarter(idx);          // as-is
-        } else {
-          console.log('[starter delete]', idx); // placeholder only
+      //   if (btn.dataset.action === 'starter-edit') {
+      //     enterEditStarter(idx);          // as-is
+      //   } else {
+      //     console.log('[starter delete]', idx); // placeholder only
+      //   }
+      // });
+      document.addEventListener('click', async (e) => {
+        // delete button inside the card
+        const del = e.target.closest('[data-action="starter-delete"]');
+        if (del) {
+          const card = del.closest('.vw-card[data-idx]');
+          if (!card) return;
+          const idx = parseInt(card.dataset.idx, 10);
+          // console.log('[starter delete]', idx); // your delete logic here
+          const label = sop.starters[idx]?.label || `Starter ${idx + 1}`;
+
+          let haveOneStarterOnly = false;
+          if (sop?.starters?.length === 1) {
+            haveOneStarterOnly = await confirmDialog({
+              // title: '??',
+              title: 'You must have at least one starter.',
+              confirmText: 'Okay',
+              // cancelText: 'Cancel',
+              variant: 'neutral',
+              one: true
+            });
+
+            // return false;
+          }
+          console.log(`haveOneStarterOnly`, haveOneStarterOnly);
+          if (haveOneStarterOnly) return;
+
+
+
+          const ok = await confirmDialog({
+            title: `Delete “${label}”?`,
+            message: `Are you sure you want to delete “${label}” and  all its steps? This action cannot be undone.`,
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            variant: 'subtleDanger'   // ← small “danger” cue, not aggressive
+          });
+
+          if (!ok) return;
+
+          deleteStarter(idx);
+
+          setDirty?.(true);
+          renderViewAndEditLanding();
+
+
+          return;
         }
+
+        if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+
+
+        // open on any click inside the card
+        const card = e.target.closest('.vw-card[data-idx]');
+        if (!card) return;
+        const idx = parseInt(card.dataset.idx, 10);
+        enterEditStarter(idx);
       });
+
     })();
 
 
     function enterEditStarter(idx) {
       resetStarterValues();
+      resetGraphZoom();
       viewState.starterIdx = idx;
       viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;;
       renderAll();
@@ -3117,26 +3530,71 @@
 
       const st = sop.starters[idx];
       document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
+      resetGraphZoom();
       renderAll();
 
     }
 
     // Creates a new starter, re-renders grid (optional), and returns its index.
     function createNewStarter() {
+      // const starterIdx = 
+      // viewState.selectedStepId = starterIdx;
+      console.log(`viewState.selectedStepId`, viewState.selectedStepId);
       const idx = sop.starters.length;
+      
       const newStarter = {
         id: 'starter_' + (idx + 1),
         label: 'Starter ' + (idx + 1),
-        summary: 'This is a new starter.',
-        steps: [makeStep('instruction')]
       };
+      
+      const step1 = makeStep('instruction', newStarter);
+      const step2 = makeStep('end', newStarter);
+      step1.next = step2.id;
 
-      sop.starters.push(newStarter);
-      if (typeof renderStarters === 'function') {
-        renderStarters(); // if you have a renderer
-      }
+      newStarter.steps = [step1, step2];
+
+      ensurePositions(newStarter);
+      // if (typeof renderStarters === 'function') {
+        // if you have a renderer
+        // }
+        sop.starters.push(newStarter);
       return sop.starters.length - 1;
     }
+
+    function deleteStarter(idx) {
+      const starters = (sop && Array.isArray(sop.starters)) ? sop.starters : null;
+      if (!starters || idx == null || idx < 0 || idx >= starters.length) return;
+
+
+
+      // remove
+      starters.splice(idx, 1);
+
+      // fix selection/index if needed
+      if (typeof viewState === 'object') {
+        const n = starters.length;
+        if (typeof viewState.currentStarterIdx === 'number') {
+          if (viewState.currentStarterIdx === idx) {
+            viewState.currentStarterIdx = Math.min(idx, n - 1);
+          } else if (viewState.currentStarterIdx > idx) {
+            viewState.currentStarterIdx -= 1;
+          }
+        }
+
+        // leave edit mode if it pointed to a deleted starter
+        // if (viewState.mode === 'edit' && (viewState.currentStarterIdx < 0 || viewState.currentStarterIdx >= n)) {
+        //   viewState.mode = 'home';
+        // }
+      }
+
+      // mark dirty and re-render
+      // if (typeof setDirty === 'function') setDirty(true);
+
+      // refresh UI (call whatever you have; fallbacks included)
+      // if (typeof renderLibrary === 'function') renderLibrary();
+      // else if (typeof renderHome === 'function') renderHome();
+    }
+
 
 
     document.addEventListener('click', onCreateStarterClick);
@@ -3199,7 +3657,7 @@
 
         cleanup();
 
-        if (typeof renderStarters === 'function') renderStarters();
+        // if (typeof renderStarters === 'function')
         if (viewState) viewState.starterIdx = idx;
         setDirty(true);
         enterViewOrEditStarter(idx);
@@ -3423,7 +3881,10 @@
       };
     }
 
-    function getStarter() { return sop.starters[viewState.starterIdx]; }
+    function getStarter() {
+      return sop.starters[viewState.starterIdx];
+    }
+
     function makeBlankSOP() {
       return {
         version: "1.3",
@@ -3435,26 +3896,51 @@
           summary: "",
           description: "",
           steps: [
-            { type: "instruction", id: "welcome", title: "Welcome", body: "Start here." },
-            { type: "end", id: "done", title: "Done", body: "All set." }
+            {
+              type: "instruction",
+              id: "welcome",
+              title: "Welcome",
+              body: "Start here.",
+              next: "done",
+              pos: { x: 200, y: 60 }
+            },
+            {
+              type: "end",
+              id: "done",
+              title: "Done",
+              body: "All set.",
+              pos: { x: 200, y: 200 }
+
+            }
           ]
         }]
       };
     }
-    function makeStep(type) {
-      const id = uniqueId(type);
+    function makeStep(type, starter = getStarter()) {
+      const id = uniqueId(type, starter);
+      console.log(`id`, id);
       if (type === 'instruction') return { type, id, title: "Instruction", body: "" };
       if (type === 'input') return { type, id, label: "Input", placeholder: "", required: false };
       if (type === 'select') return { type, id, label: "Choose", display: "cards", mode: "single", required: false, options: [{ value: "opt1", label: "Option 1" }] };
       if (type === 'end') return { type, id, title: "End", body: "" };
       return { type: 'instruction', id, title: "Instruction", body: "" };
     }
-    function uniqueId(base) {
-      const st = getStarter(); const ids = new Set((st.steps || []).map(s => s.id));
+    
+    function uniqueId(base, starter ) {
+      console.log(`st`, starter);
+      const ids = new Set((starter?.steps || []).map(s => s.id));
+      console.log(`ids`, ids);
       let i = 1, v = slugify(base || 'step');
-      let out = v; while (ids.has(out)) { out = v + '_' + (++i); }
+      console.log(`i`, i);
+      console.log(`v`, v);
+
+      let out = v;
+      while (ids.has(out)) {
+        out = v + '_' + (++i);
+      }
       return out;
     }
+
     function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
     function escapeHtml(str) { return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
     function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
@@ -3466,8 +3952,15 @@
       return step.next || '—';
     }
     function nextSelectHtml(steps, cur) {
-      return `<select id="f_next"><option value="">—</option>${steps.map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`).join('')}</select>`;
+      const selfId = viewState?.selectedStepId; // current node being edited
+      const opts = steps
+        .filter(s => s.id !== selfId) // hide itself
+        .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
+        .join('');
+      return `<select id="f_next"><option value="">—</option>${opts}</select>`;
     }
+
+
     function optionRowHtml(o, i, steps) {
       return `
     <tr data-opt-idx="${i}">
@@ -3476,8 +3969,10 @@
       <td><input class="f_opt_hint" type="text" value="${escapeAttr(o.hint || '')}"/></td>
       <td>
         <select class="f_opt_next">
-          <option value="">—</option>
-          ${steps.map(s => `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(s.id)}</option>`).join('')}
+          ${steps.map(s => {
+        const text = s.title || s.label || s.id;
+        return `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(text)}</option>`;
+      }).join('')}
         </select>
       </td>
       
