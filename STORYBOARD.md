@@ -7,6 +7,13 @@
 -  Delete Starter
 - Add, delete, duplicate and delete should be well functioning
 - show actual values insted of variables on view guide
+- we must have start point in our graph, wether it's an indicator or a step
+-  import single starter to this current starter
+-  make the user to choose the start of the starter step (if so we need to update the ensureMandatory function to say if it has already startId, then don't update it)
+-  highlight the add button after clicking on it, on click again it should be cancelled
+-  for multi select it should have onle one next
+-  group right label to have matching fields together
+-  mandate starter label while editing
 
 ---
 
@@ -15,6 +22,7 @@
 -  Setting to combine some header buttons
 -  download button
 -  required is checkbox
+-  after loading, ensure all data are correct like starter and types of steps and all position are correct
 -  remove right panel in the edit starter, and put the add +Before +after Duplicate and delete
 -  ADD Button to Save Changes
 -  only one save button shown in the edit mode, lighted when form is dirty, discard changes when go to preview

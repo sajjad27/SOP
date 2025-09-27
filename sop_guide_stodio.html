@@ -1296,7 +1296,7 @@
       <div class="row">
         <h1 class="grow">OpsPath Studio · SOP Builder</h1>
         <div class="controls">
-          <button id="btnHome" class="vw-home" title="Home" onclick="goHome()">
+          <button id="btnHome" data-hide="guide" class="vw-home" title="Home" onclick="goHome()">
             🏠 Home
           </button>
 
@@ -1371,12 +1371,12 @@
               </defs>
             </svg>
             <div class="graph-fabs graph-fabs--top" id="graphFabsTop">
-              <button id="addAfterBtn" class="graph-action graph-action--accent" title="Add step after">+After</button>
-              <button id="addFreeBtn" class="graph-action" title="Add step (free)">Add</button>
-              <button id="addBeforeBtn" class="graph-action graph-action--accent"
+              <!-- <button id="addAfterBtn" class="graph-action graph-action--accent" title="Add step after">+After</button> -->
+              <button id="addFreeBtn" class="graph-action" title="Add step (free)">+ Add Step</button>
+              <!-- <button id="addBeforeBtn" class="graph-action graph-action--accent"
                 title="Add step before">+Before</button>
-              <button id="dupStepBtn" class="graph-action" title="Delete step">Duplicate</button>
-              <button id="delStepBtn" class="graph-action warn" title="Delete step">Delete</button>
+              <button id="dupStepBtn" class="graph-action" title="Delete step">Duplicate</button> -->
+              <button id="delStepBtn" class="graph-action warn" title="Delete step">- Delete Step</button>
             </div>
           </div>
           <div class="small">
@@ -1530,25 +1530,28 @@
 
     // Any input/change inside header editor or starter editor toggles dirty
     document.addEventListener('input', (e) => {
-      if (isInEditableArea(e.target)) setDirty(true);
+      // console.log('e.target', e.target);
+      if (isInEditableArea(e.target)) setDirty(true); renderViewStep();
     }, true);
 
     // Only mark dirty on change if the value actually differs from SOP
     document.addEventListener('change', (e) => {
+      // console.log('e.target', e.target);
+
       const t = e.target;
       if (!t) return;
       if (!isInEditableArea(t)) return;
 
-      if (t.id === 'vwTitleInput') {
-        const v = (t.value || '').trim();
-        if ((sop.title || '') !== v) { sop.title = v; setDirty(true); }
-        return;
-      }
-      if (t.id === 'vwDescInput') {
-        const v = (t.value || '').trim();
-        if ((sop.description || '') !== v) { sop.description = v; setDirty(true); }
-        return;
-      }
+      // if (t.id === 'vwTitleInput') {
+      //   const v = (t.value || '').trim();
+      //   if ((sop.title || '') !== v) { sop.title = v; setDirty(true); }
+      //   return;
+      // }
+      // if (t.id === 'vwDescInput') {
+      //   const v = (t.value || '').trim();
+      //   if ((sop.description || '') !== v) { sop.description = v; setDirty(true); }
+      //   return;
+      // }
 
       setDirty(true);
     }, true);
@@ -1616,8 +1619,7 @@
       if (hotkeysWired) return; hotkeysWired = true;
 
       document.addEventListener('keydown', async (e) => {
-        console.log(`e.key`, e.key);
-        const currentMode = document.documentElement.getAttribute('data-mode');
+        // const currentMode = document.documentElement.getAttribute('data-mode');
         const activeEl = document.activeElement;
         // if is dirty anywhere in the doc, Ctrl+S / Cmd+S triggers save
         const isSave = (e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S');
@@ -1626,7 +1628,7 @@
         if (
           isSave &&
           isDirty &&
-          currentMode === 'edit') {
+          isEditMode()) {
 
           e.preventDefault();
           // if (isDirty) {
@@ -1637,13 +1639,12 @@
         // if in edit mode and on the graph and a step is selected, Del triggers delete
         if (
           e.key === 'Delete' &&
-          currentMode === 'edit' &&
+          isEditMode() &&
           viewState.selectedStepId &&
           !isInEditableArea(activeEl)
         ) {
           e.preventDefault();
           delStep();
-          console.log('Del key on graph');
         }
       });
     }
@@ -1662,8 +1663,6 @@
       (async () => {
         // 1) Try embedded JSON
         // check run mode studio or guide
-
-        // const embedded = document.getElementById('jsonEmbedded');
         const currentRunMode = document.documentElement.getAttribute('run-mode');
         if (currentRunMode === 'guide') {
           const embedded = document.getElementById('jsonEmbedded');
@@ -1673,35 +1672,39 @@
               if (parsed && Array.isArray(parsed.starters)) {
                 sop = parsed;
                 // savedSop = structuredClone(sop);
-                console.log('Loaded embedded SOP', sop);
               }
             } catch (err) {
               console.warn('Failed to parse embedded SOP JSON', err);
             }
           }
 
-        } else {
+        }
+        // 2) if not found, load it from db
+        else {
           try {
             const restored = await idbGet('opsPathDB', 'sops', 'current');
-            console.log('Restored SOP from IndexedDB', restored);
-
             if (restored) {
               sop = restored;
               // savedSop = structuredClone(sop);
 
             }
-            console.log('Restored SOP from IndexedDB', restored);
           } catch (_) { }
-          console.log(`!sop`, !sop);
         }
+        // 1) if not found load create a new one
         if (!sop || !Array.isArray(sop.starters) || sop.starters.length === 0) {
           sop = makeBlankSOP();
         }
 
+
+
+
         viewState.starterIdx = 0;
         viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
 
-        renderAll();
+        ensureSop();
+        // renderAll();
+        renderViewAndEditLanding();
+
         wireGlobal();
         wireHotkeys();
         savedSop = structuredClone(sop);
@@ -1783,11 +1786,7 @@
             cancelText: 'Stay in Edit',
             variant: 'subtleDanger'   // ← small “danger” cue, not aggressive
           });
-          console.log('world');
-
           if (!ok) return;                 // Stay in Edit
-          console.log('hello');
-          console.log(`savedSop`, savedSop);
           if (savedSop) {
             sop = structuredClone(savedSop);
           }
@@ -1795,7 +1794,10 @@
         }
 
         changeDataMode('view');
-        renderAll();
+
+
+
+        // renderStarterMeta();
       });
 
 
@@ -1812,15 +1814,12 @@
     })();
 
     // function showCurrent() {
-    //   console.log(`viewState.stepIdx`, viewState.stepIdx);
-    //   console.log(`viewState.selectedStepId`, viewState.selectedStepId);
     // }
 
 
     function goHome() {
-      resetStarterValues();
+      // resetStarterValues();
       changeScreen('landing');
-      console.log(`#065f46`, `#d1fae5`);
     }
 
 
@@ -1838,7 +1837,9 @@
       }
       document.documentElement.setAttribute('data-mode', newDataMode);
       localStorage.setItem('data-mode', newDataMode);
-      // renderAll();
+
+      // renderStarters();
+      renderViewAndEditLanding()
     }
 
     function changeScreen(screen) {
@@ -1865,9 +1866,9 @@
     function wireGlobal() {
 
 
-      document.getElementById('addBeforeBtn').addEventListener('click', () => addStepRelative('before'));
-      document.getElementById('addAfterBtn').addEventListener('click', () => addStepRelative('after'));
-      document.getElementById('dupStepBtn').addEventListener('click', dupStep);
+      // document.getElementById('addBeforeBtn').addEventListener('click', () => addStepRelative('before'));
+      // document.getElementById('addAfterBtn').addEventListener('click', () => addStepRelative('after'));
+      // document.getElementById('dupStepBtn').addEventListener('click', dupStep);
       document.getElementById('delStepBtn').addEventListener('click', delStep);
 
       document.getElementById('addFreeBtn').addEventListener('click', () => {
@@ -1879,7 +1880,7 @@
 
 
 
-      document.getElementById('zoomInBtn').addEventListener('click', () => { mapZoom *= 1.2; renderGraph(); console.log('mapZoom'); });
+      document.getElementById('zoomInBtn').addEventListener('click', () => { mapZoom *= 1.2; renderGraph(); });
       document.getElementById('zoomOutBtn').addEventListener('click', () => { mapZoom /= 1.2; renderGraph(); });
       document.getElementById('zoomResetBtn').addEventListener('click', () => { resetGraphZoom(); renderGraph(); });
 
@@ -1896,28 +1897,28 @@
     /*** Renderers ***/
     function renderAll() {
       renderViewAndEditLanding();
-      renderStarterMeta();
+      // renderStarterMeta();
 
-      renderViewStep()
+      renderViewStep();
       // renderSteps();
       renderInspector();
       renderGraph();
     }
 
-    function renderStarters() {
-      if (!Array.isArray(sop.starters)) sop.starters = [];
-      // ensure at least one starter exists
-      if (sop.starters.length === 0) {
-        sop.starters.push({
-          id: 'starter_1',
-          label: 'Starter 1',
-          summary: '',
-          steps: [makeStep('instruction'), makeStep('end')]
-        });
-      }
-      viewState.starterIdx = Math.min(viewState.starterIdx, sop.starters.length - 1);
+    // function renderStarters() {
+    //   if (!Array.isArray(sop.starters)) sop.starters = [];
+    //   // ensure at least one starter exists
+    //   // if (sop.starters.length === 0) {
+    //   //   sop.starters.push({
+    //   //     id: 'starter_1',
+    //   //     label: 'Starter 1',
+    //   //     summary: '',
+    //   //     steps: [makeStep('instruction'), makeStep('end')]
+    //   //   });
+    //   // }
+    //   viewState.starterIdx = Math.min(viewState.starterIdx, sop.starters.length - 1);
 
-    }
+    // }
 
     // ['pointerdown', 'mousedown', 'touchstart'].forEach(evt => {
     //   graphSvg.addEventListener(evt, () => {
@@ -1926,37 +1927,37 @@
     //   }, true);
     // });
 
-    function renderStarterMeta() {
-      const st = getStarter();
-      const box = document.getElementById('starterMetaBox');
-      if (!box) return;
+    //   function renderStarterMeta() {
+    //     const st = getStarter();
+    //     const box = document.getElementById('starterMetaBox');
+    //     if (!box) return;
 
-      if (!st) {
-        box.innerHTML = '<div class="small">No starter selected.</div>';
-        return;
-      }
+    //     if (!st) {
+    //       box.innerHTML = '<div class="small">No starter selected.</div>';
+    //       return;
+    //     }
 
-      box.innerHTML = `
-    <label>Title</label>
-    <input id="st_title" type="text" value="${escapeAttr(st.title || '')}"/>
+    //     box.innerHTML = `
+    //   <label>Title</label>
+    //   <input id="st_title" type="text" value="${escapeAttr(st.title || '')}"/>
 
-    <label>Summary</label>
-    <input id="st_summary" type="text" value="${escapeAttr(st.summary || '')}"/>
+    //   <label>Summary</label>
+    //   <input id="st_summary" type="text" value="${escapeAttr(st.summary || '')}"/>
 
-    <label>Description</label>
-    <input id="st_desc" type="text" value="${escapeAttr(st.description || '')}"/>
+    //   <label>Description</label>
+    //   <input id="st_desc" type="text" value="${escapeAttr(st.description || '')}"/>
 
-   
-  `;
 
-      const t = box.querySelector('#st_title');
-      const s = box.querySelector('#st_summary');
-      const d = box.querySelector('#st_desc');
+    // `;
 
-      t.addEventListener('input', () => { st.title = t.value; });
-      s.addEventListener('input', () => { st.summary = s.value; });
-      d.addEventListener('input', () => { st.description = d.value; });
-    }
+    //     const t = box.querySelector('#st_title');
+    //     const s = box.querySelector('#st_summary');
+    //     const d = box.querySelector('#st_desc');
+
+    //     t.addEventListener('input', () => { st.title = t.value; });
+    //     s.addEventListener('input', () => { st.summary = s.value; });
+    //     d.addEventListener('input', () => { st.description = d.value; });
+    //   }
 
 
 
@@ -1974,7 +1975,7 @@
       <div>
         <label>Type</label>
         <select id="f_type">
-          ${['instruction', 'input', 'select', 'end'].map(t => `<option ${t === step.type ? 'selected' : ''} value="${t}">${t}</option>`).join('')}
+          ${['instruction', 'input', 'select'].map(t => `<option ${t === step.type ? 'selected' : ''} value="${t}">${t}</option>`).join('')}
         </select>
       </div>
       <div>
@@ -1987,14 +1988,14 @@
   `;
 
       // Type-specific
-      if (step.type === 'instruction' || step.type === 'end') {
+      if (step.type === 'instruction') {
         html += `
       <label>Title</label><input id="f_title" type="text" value="${escapeAttr(step.title || '')}"/>
       <label>Body</label><textarea id="f_body" rows="4">${escapeHtml(step.body || '')}</textarea>
-      ${step.type !== 'end' ? `
+      
         <label>Next (step.id)</label>
         ${nextSelectHtml(st.steps, step.next, step.id)}
-      ` : ''}
+      
       <div class="kv">
         <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
         <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
@@ -2092,7 +2093,8 @@
         viewState.selectedStepId = v;
         f_id.value = v;
         f_id_err.style.display = 'none'; f_id_err.textContent = '';
-        renderAll();
+        renderGraph();
+        renderViewStep();
         // if (studioMode === 'view') renderViewAndEditLanding();
 
       }
@@ -2108,9 +2110,14 @@
           // migrate title/label best-effort
           repl.title = step.title || repl.title;
           repl.label = step.label || repl.label;
+          repl.next = step.next || repl.next;
+          repl.pos = step.pos || repl.pos;
           replaceStep(step.id, repl);
           viewState.selectedStepId = repl.id;
-          renderAll();
+          // renderAll();
+          renderGraph();
+          renderInspector();
+
           // if (studioMode === 'view') renderViewAndEditLanding();
 
         }
@@ -2119,7 +2126,7 @@
       f_req?.addEventListener('change', () => { step.required = f_req.checked; setDirty(true); });
 
       // -------- Wire per-type ----------
-      if (step.type === 'instruction' || step.type === 'end') {
+      if (step.type === 'instruction') {
         const f_title = box.querySelector('#f_title');
         const f_body = box.querySelector('#f_body');
         const f_img = box.querySelector('#f_img');
@@ -2141,10 +2148,14 @@
         f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
         f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }));
 
-        if (step.type !== 'end') {
-          const f_next = box.querySelector('#f_next');
-          f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
-        }
+        // if (step.type !== 'end') {
+        const f_next = box.querySelector('#f_next');
+        f_next.addEventListener('change', () => {
+          step.next = f_next.value || undefined;
+          ensureSopMandatory();
+          renderGraph();
+        });
+        // }
       }
       else if (step.type === 'input') {
         const f_label = box.querySelector('#f_label');
@@ -2278,10 +2289,32 @@
     function formatGraph() {
       const st = getStarter(); if (!st) return;
       (st.steps || []).forEach(s => { s.pos = null; }); // drop manual positions
-      // setDirty(true);
-      renderAll(); // layoutVertical will place everything
+      ensureSopPositions();
+
+      // renderAll(); // layoutVertical will place everything
+      renderGraph();
     }
 
+    function getStepPos(id) {
+      const st = getStarter();
+      const step = st?.steps?.find(s => s.id === id);
+      if (step?.pos) return { ...step.pos };            // stored pos
+      if (lastPositions?.[id]) return { ...lastPositions[id] }; // computed pos
+      return null;
+    }
+
+    function persistMissingPositionsFromLayout() {
+      const st = getStarter(); if (!st) return false;
+      let changed = false;
+      (st.steps || []).forEach(s => {
+        if (!s.pos && lastPositions?.[s.id]) {
+          s.pos = { ...lastPositions[s.id] };
+          changed = true;
+        }
+      });
+      if (changed) setDirty(true);
+      return changed;
+    }
 
     // MOUSE DOWN
     // graphSvg.addEventListener('mousedown', (e) => {
@@ -2315,7 +2348,6 @@
     //   viewState.selectedStepId = step.id;
     //   placingFree = false; ghostPos = null;
     //   setDirty(true);
-    //   renderAll();
     // }, true);
 
 
@@ -2373,8 +2405,18 @@
         st.steps.push(step);
         viewState.selectedStepId = step.id;
         placingFree = false; ghostPos = null;
-        // setDirty(true);
-        renderAll();
+        setDirty(true);
+
+        renderGraph();
+        renderInspector();
+
+        // focus the editor instead of leaving focus on the Add button
+        queueMicrotask(() => {
+          document.activeElement?.blur();
+          const first = document.querySelector('#inspector input, #inspector textarea, .inspector input, .inspector textarea');
+          first?.focus();
+        });
+
         e.preventDefault();
         e.stopPropagation();
         return; // don't fall through to drag
@@ -2410,6 +2452,18 @@
       if (!draggingStepId) return;
       draggingStepId = null;
       dragOffset = null;
+      // we have to check here, as if it's already dirty, we should not save it, 
+      // we're only going to save only if it's not dirty which means we are only saving the position when changed
+
+      if (!isDirty) {
+        isDirty = true;
+        performSave();
+      }
+
+      queueMicrotask(() => {
+        const first = document.querySelector('#inspector input, #inspector textarea, .inspector input, .inspector textarea');
+        first?.focus();
+      });
       // setDirty(true); // enable Save button
     }, true);
 
@@ -2422,7 +2476,8 @@
       // vertical wheel → move up/down, horizontal wheel (trackpads) → left/right
       mapPan.x += e.deltaX * k;
       mapPan.y += e.deltaY * k;
-      renderAll();
+      // renderAll();
+      renderGraph();
     }, { passive: false });
 
     graphSvg.addEventListener('click', () => {
@@ -2434,7 +2489,8 @@
       viewState.selectedStepId = step.id;
       placingFree = false; ghostPos = null;
       setDirty(true);
-      renderAll();
+      // renderAll();
+
     }, true);
 
 
@@ -2512,10 +2568,9 @@
 
         grp.addEventListener('click', () => {
           viewState.selectedStepId = n.id;
-          // console.log(`viewState.selectedStepId`, viewState.selectedStepId);
           renderInspector();
           renderGraph();
-          updateAddAfterState(); // disable Add After when 'done' is selected
+          // updateAddAfterState(); // disable Add After when 'done' is selected
         });
 
         g.appendChild(grp);
@@ -2547,20 +2602,20 @@
 
     }
 
-    function updateAddAfterState() {
-      const btn = document.getElementById('addAfterBtn');
-      if (!btn) return;
-      const st = getStarter();
-      const cur = st?.steps?.find(s => s.id === viewState.selectedStepId);
-      // if (!!(cur && cur.type === 'end')) {
-      //   btn.toggleAttribute('disabled', true);
-      //   // btn.classList.add('disabled');
-      //   // return;
-      // }
-      btn.toggleAttribute('disabled', !!(cur && cur.type === 'end'));
-      btn.title = (cur && cur.type === 'end') ? 'Cannot add step after the terminal "end" step' : 'Add step after current';
-      // btn.classList.toggle('disabled', !!(cur && cur.type === 'end'));
-    }
+    // function updateAddAfterState() {
+    //   const btn = document.getElementById('addAfterBtn');
+    //   if (!btn) return;
+    //   const st = getStarter();
+    //   const cur = st?.steps?.find(s => s.id === viewState.selectedStepId);
+    //   // if (!!(cur && cur.type === 'end')) {
+    //   //   btn.toggleAttribute('disabled', true);
+    //   //   // btn.classList.add('disabled');
+    //   //   // return;
+    //   // }
+    //   btn.toggleAttribute('disabled', !!(cur && isEndStep(cur)));
+    //   btn.title = (cur && isEndStep(cur)) ? 'Cannot add step after the terminal "end" step' : 'Add step after current';
+    //   // btn.classList.toggle('disabled', !!(cur && cur.type === 'end'));
+    // }
 
 
     function buildGraph(starter) {
@@ -2686,16 +2741,19 @@
       });
 
       // compute positions (vertical lanes)
-      const colWidth = 200;    // horizontal spacing
-      const rowGap = 140;     // vertical spacing
-      const x0 = 200, y0 = 60; // top-left origin
+      // const colWidth = 200;    // horizontal spacing
+      // const rowGap = 140;     // vertical 
+      // const x0 = 200, y0 = 60; // top-left origin
 
       const pos = {};
       nodes.forEach(n => {
-        const d = depth[n.id] || 0;
-        const i = colIndex[n.id] || 0;
-        pos[n.id] = n.pos ? { x: n.pos.x, y: n.pos.y }
-          : { x: x0 + i * colWidth, y: y0 + d * rowGap };
+        // console.log(`n`, n);
+        // const d = depth[n.id] || 0;
+        // const i = colIndex[n.id] || 0;
+        // pos[n.id] = n.pos ? { x: n.pos.x, y: n.pos.y }
+        //   : { x: x0 + i * colWidth, y: y0 + d * rowGap };
+
+        pos[n.id] = { x: n.pos.x, y: n.pos.y }
       });
 
 
@@ -2704,24 +2762,7 @@
 
 
     /*** Actions ***/
-    // function addStepRelative(where) {
-    //   const st = getStarter();
-    //   if (!st) {
-    //     return;
-    //   }
-    //   const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
-    //   console.log(`viewState.selectedStepId`, viewState.selectedStepId);
-    //   console.log(`idx`, idx);
-    //   const insertAt = (idx < 0 ? st.steps.length : (where === 'before' ? idx : idx + 1));
-    //   const step = makeStep('instruction');
-    //   st.steps.splice(insertAt, 0, step);
-    //   viewState.selectedStepId = step.id;
-    //   renderAll();
-    //   setDirty(true);
-    // }
 
-
-    /////////////////////////////////////
 
 
     // function addStepRelative(where) {
@@ -2730,7 +2771,6 @@
     //   const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
     //   const insertAt = (idx < 0 ? st.steps.length : idx + 1);
     //   const current = idx >= 0 ? st.steps[idx] : null;
-    //   console.log(`current`, current);
 
     //   // create the new step
     //   const step = makeStep('instruction');
@@ -2754,58 +2794,58 @@
     //   if (where === 'before' && current && (current.type === 'instruction' || current.type === 'input')) step.next = current.id;
 
     //   viewState.selectedStepId = step.id;
-    //   renderAll();
     //   setDirty(true);
     // }
 
-    async function addStepRelative(where) {
-      // when done and 'after' is requested, show dialog and abort on confirm
-      if (where === 'after') {
-        const st = getStarter(); if (!st) return;
-        const cur = st.steps.find(s => s.id === viewState.selectedStepId);
-        if (cur && cur.type === 'end') {
-          const ok = await confirmDialog({
-            // title: '??',
-            title: 'Inspector hacks won’t work: adding after the terminal end step is forbidden.',
-            confirmText: 'I am sorry and I won’t do that again 😔',
-            // cancelText: 'Cancel',
-            variant: 'danger',
-            one: true
-          });
-          return;
-          // if (!ok) console.log(`not ok`);
-        }
-      }
-      const st = getStarter(); if (!st) return;
+    // async function addStepRelative(where) {
+    //   // when done and 'after' is requested, show dialog and abort on confirm
+    //   if (where === 'after') {
+    //     const st = getStarter(); if (!st) return;
+    //     const cur = st.steps.find(s => s.id === viewState.selectedStepId);
+    //     if (cur && isEndStep(cur)) {
+    //       const ok = await confirmDialog({
+    //         // title: '??',
+    //         title: 'Inspector hacks won’t work: adding after the terminal end step is forbidden.',
+    //         confirmText: 'I am sorry and I won’t do that again 😔',
+    //         // cancelText: 'Cancel',
+    //         variant: 'danger',
+    //         one: true
+    //       });
+    //       return;
+    //     }
+    //   }
+    //   const st = getStarter(); if (!st) return;
 
-      const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
-      const current = idx >= 0 ? st.steps[idx] : null;
+    //   const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
+    //   const current = idx >= 0 ? st.steps[idx] : null;
 
-      // always create an instruction (your button semantics)
-      const step = makeStep('instruction');
+    //   // always create an instruction (your button semantics)
+    //   const step = makeStep('instruction');
 
-      if (where === 'after') {
-        if (current && (current.type === 'instruction' || current.type === 'input')) {
-          // insert after an instruction/input and splice the flow
-          const prevNext = ('next' in current) ? current.next : null;
-          step.next = (prevNext || 'done');   // new → old next (or done)
-          current.next = step.id;             // current → new
-          st.steps.splice(idx + 1, 0, step);  // place after current
-        } else {
-          // no selection or non-actionable selection: append and point to done if present
-          const done = st.steps.find(s => s.type === 'end') || st.steps.find(s => s.id === 'done');
-          step.next = done ? done.id : null;
-          st.steps.splice(idx < 0 ? st.steps.length : idx + 1, 0, step);
-        }
-      } else {
-        // fallback (if someone calls 'before'): insert before without rewiring
-        st.steps.splice(idx < 0 ? st.steps.length : idx, 0, step);
-      }
+    //   if (where === 'after') {
+    //     if (current && (current.type === 'instruction' || current.type === 'input')) {
+    //       // insert after an instruction/input and splice the flow
+    //       const prevNext = ('next' in current) ? current.next : null;
+    //       step.next = (prevNext || 'done');   // new → old next (or done)
+    //       current.next = step.id;             // current → new
+    //       st.steps.splice(idx + 1, 0, step);  // place after current
+    //     } else {
+    //       // no selection or non-actionable selection: append and point to done if present
+    //       const done = st.steps.find(s => s.type === 'end') || st.steps.find(s => s.id === 'done');
+    //       step.next = done ? done.id : null;
+    //       st.steps.splice(idx < 0 ? st.steps.length : idx + 1, 0, step);
+    //     }
+    //   } else {
+    //     // fallback (if someone calls 'before'): insert before without rewiring
+    //     st.steps.splice(idx < 0 ? st.steps.length : idx, 0, step);
+    //   }
 
-      viewState.selectedStepId = step.id;
-      renderAll();
-      setDirty(true);
-    }
+    //   viewState.selectedStepId = step.id;
+    //   // renderAll();
+    //   renderGraph();
+    //   renderInspector();
+    //   setDirty(true);
+    // }
 
 
 
@@ -2815,7 +2855,9 @@
       c.id = uniqueId(s.id + '_copy');
       st.steps.splice(st.steps.findIndex(x => x.id === s.id) + 1, 0, c);
       viewState.selectedStepId = c.id;
-      renderAll();
+      // renderAll();
+      // renderGraph();
+      // renderInspector();
       setDirty(true);
 
       // if (studioMode === 'view') renderViewAndEditLanding();
@@ -2835,7 +2877,18 @@
       }
       viewState.selectedStepId = st.steps[Math.max(0, i - 1)]?.id || null;
       setDirty(true);
-      renderAll();
+
+      // renderAll();
+      ensureSopMandatory();
+
+      renderGraph();
+      renderInspector();
+      renderViewStep();
+      queueMicrotask(() => {
+        document.activeElement?.blur();
+        const first = document.querySelector('#inspector input, #inspector textarea, .inspector input, .inspector textarea');
+        first?.focus();
+      });
       // if (studioMode === 'view') renderViewAndEditLanding();
 
     }
@@ -2965,9 +3018,32 @@
 
 
 
-    function exportCurrentHTMLAsViewer() {
+    async function exportCurrentHTMLAsViewer() {
       // ensure latest header inputs are reflected
-      if (typeof syncHeaderInputsIntoSop === 'function') syncHeaderInputsIntoSop();
+      // if (typeof syncHeaderInputsIntoSop === 'function') syncHeaderInputsIntoSop();
+
+      //  btnPreview?.addEventListener('click', async () => {
+
+      let loadSopFromSaved = false;
+      if (isDirty) {
+        if (savedSop) {
+          const ok = await confirmDialog({
+            title: 'Export last saved version?',
+            message: 'You have unsaved changes. Export the last saved version and keep your current edits?',
+            confirmText: 'Export Saved Version',
+            cancelText: 'Cancel',
+            // variant: 'neutral'
+          });
+          if (!ok) return;
+          loadSopFromSaved = true;
+          // return;
+        }
+      }
+
+      // changeDataMode('view');
+      // renderAll();
+      // });
+
 
       const slot = document.getElementById('jsonEmbedded');
       if (!slot) { alert('Missing #jsonEmbedded'); return; }
@@ -2975,7 +3051,7 @@
       try {
 
         // embed current sop or replace json in existing html <script id="jsonEmbedded">/script>
-        slot.textContent = JSON.stringify(sop, null, 2) + '\n';
+        slot.textContent = JSON.stringify(loadSopFromSaved ? savedSop : sop, null, 2) + '\n';
         // switch to guide mode (removes editor-only UI)
         changeRunMode('guide');
         // download current html 
@@ -3013,6 +3089,52 @@
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 300);
     }
+
+    // this is useless, i am not gonna use it, it just only one time will be called by browser console only if needed
+    /**
+ * Add step-level "next" pointers within each starter (no cross-starter links).
+ * - Preserves any existing step.next
+ * - Adds step.next to any step missing it (points to the next step's id)
+ * - Never sets next on the final step of a starter (removes it if present)
+ * - Never adds next to steps of type "end"
+ */
+function addNextPointers(sop) {
+  const clone = (obj) =>
+    (typeof structuredClone === "function"
+      ? structuredClone(obj)
+      : JSON.parse(JSON.stringify(obj)));
+
+  const out = clone(sop);
+  if (!out || !Array.isArray(out.starters)) return out;
+
+  out.starters.forEach((starter) => {
+    const steps = Array.isArray(starter.steps) ? starter.steps : [];
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+
+      // Last step: ensure no "next"
+      if (i === steps.length - 1) {
+        if (step && Object.prototype.hasOwnProperty.call(step, "next")) {
+          delete step.next;
+        }
+        continue;
+      }
+
+      // For non-last steps: add "next" only if missing and not an "end" step
+      if (
+        step &&
+        step.type !== "end" &&
+        !Object.prototype.hasOwnProperty.call(step, "next")
+      ) {
+        const nextId = steps[i + 1] && steps[i + 1].id;
+        if (nextId) step.next = nextId;
+      }
+    }
+  });
+
+  return out;
+}
+
 
 
 
@@ -3073,20 +3195,21 @@
 
       // 4) apply, save, refresh UI
       sop = parsed;
+      // console.log('Before SOP Position set', JSON.stringify(sop.starters[0].steps, null, 2));
+      ensureSop();
+      // console.log('After SOP Position set', JSON.stringify(sop.starters[0].steps, null, 2));
       viewState.starterIdx = 0;
       viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
-      console.log(`sop`, sop);
       setDirty(true);
       const saved = await performSave();   // persists + updates savedSop
-      console.log(`saved`, saved);
       if (!saved) return;
 
-      renderAll();
+      // renderAll();
+      renderViewAndEditLanding();
+      // renderStarters();
       changeScreen('landing');
-      changeDataMode('view');
+      changeDataMode('edit');
       if (typeof updateSaveBtn === 'function') updateSaveBtn();
-
-      console.log('[import] done:', file.name);
     }
 
     // tiny file picker (no permanent DOM needed)
@@ -3123,6 +3246,7 @@
 
       // fresh model + clean state
       sop = makeBlankSOP();
+      ensureSopPositions();
       savedSop = structuredClone(sop);
       isDirty = true;
       performSave();
@@ -3272,7 +3396,6 @@
             if (byId.has(n)) out.add(n);
           }
         }
-        // 'end' → no outgoing edges
 
         return Array.from(out);
       }
@@ -3327,7 +3450,7 @@
         <div class="starter-dual" data-idx="${idx}">
           <!-- read-only card (shown in view mode) -->
           <button class="vw-card" data-idx="${idx}" onclick="enterViewOrEditStarter(${idx})">
-            <h3>${escapeHtml(st.label || ('Starter ' + (idx + 1)))}</h3>
+            <h3>${escapeHtml(st.label)}</h3>
             ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ``}
             <div class="vw-pill">
               <span>Steps</span>
@@ -3339,7 +3462,7 @@
           <div class="vw-card vw-card--edit" data-action="starter-edit" data-idx="${idx}">
             <input class="st-label" type="text"
                   placeholder="Label"
-                  value="${escapeAttr(st.label || ('Starter ' + (idx + 1)))}" />
+                  value="${escapeAttr(st.label)}" />
             <input class="st-summary" type="text"
                   placeholder="Summary"
                   value="${escapeAttr(st.summary || '')}" />
@@ -3373,38 +3496,530 @@
     function isEditMode() { return document.documentElement.getAttribute('data-mode') === 'edit'; }
 
     function enterViewOrEditStarter(idx) {
-      if (isEditMode()) {
-        enterEditStarter(idx);
-      }
-      else {
-        enterViewStarter(idx);
-      }
-      ensurePositions(getStarter());
+      // if (isEditMode()) {
+      //   enterEditStarter(idx);
+      // }
+      // else {
+      //   enterViewStarter(idx);
+      // }
+
+      resetStarterValues(idx);
+
+      // viewState.starterIdx = idx;
+      // viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;
+      changeScreen('starter');
+      const st = sop.starters[idx];
+      document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
+      // resetGraphZoom();
+      // ensuremandatory must came before ensurepositions to make starters has starter step
+
+      // renderAll();
+
+
+      renderAll();
+
     }
 
-    // Ensure every step has a pos; keep existing pos untouched.
-    // Vertical-first grid: fills rows top→bottom, then moves to next column.
-    function ensurePositions(starter) {
-      if (!starter) return false;
-      const steps = starter.steps || [];
+    // Run data normalization (ids/types/nexts/startId) for every starter.
+    // Returns true if anything changed.
+    function ensureSopMandatory() {
+      console.log('ensureSopMandatory called');
+      if (!sop || !Array.isArray(sop.starters)) return false;
       let changed = false;
 
-      const x0 = 200, y0 = 60;   // origin
-      const colWidth = 220;      // horizontal gap
-      const rowGap = 140;        // vertical gap
-      const rows = 5;            // how many rows before wrapping to next column
+      for (const st of sop.starters) {
+        if (!st || !Array.isArray(st.steps)) continue;
 
-      steps.forEach((s, idx) => {
-        const hasPos = s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
-        if (hasPos) return;
-        const ry = idx % rows;
-        const cx = Math.floor(idx / rows);
-        s.pos = { x: x0 + cx * colWidth, y: y0 + ry * rowGap };
-        changed = true;
-      });
+        // Legacy field: prefer startId; fall back to rootStepId if present
+        if (typeof st.startId !== 'string' && typeof st.rootStepId === 'string') {
+          st.startId = st.rootStepId;
+          changed = true;
+        }
+
+        if (ensureMandatory(st)) changed = true;
+      }
+      // console.log('Starter after ensuring mandatory: ', JSON.stringify(sop.starters[0], null, 2));
 
       return changed;
     }
+
+    // Ensure positions for every starter (assign only when missing).
+    // Returns true if anything changed.
+    function ensureSopPositions() {
+      if (!sop || !Array.isArray(sop.starters)) return false;
+      let changed = false;
+
+      for (const st of sop.starters) {
+        if (!st || !Array.isArray(st.steps)) continue;
+        if (ensurePositions(st)) changed = true;
+      }
+      return changed;
+    }
+
+    // Convenience wrapper: run both; marks dirty if anything changed.
+    function ensureSop() {
+      const changed = !!(ensureSopMandatory() | ensureSopPositions());
+      // if (changed && typeof setDirty === 'function') setDirty(true);
+      return changed;
+    }
+
+
+    // Ensure every step has a pos; keep existing pos untouched.
+    // Vertical-first grid: fills rows top→bottom, then moves to next column.
+
+    // function ensurePositions(starter) {
+    //   if (!starter) return false;
+    //   const steps = starter.steps || [];
+    //   if (!steps.length) return false;
+
+    //   const x0 = 200, y0 = 60;    // start origin
+    //   const colWidth = 220;       // horizontal gap
+    //   const rowGap = 140;         // vertical gap
+
+    //   const byId = Object.fromEntries(steps.map(s => [s.id, s]));
+    //   const hasPos = s => s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
+
+    //   // pick the start from starter.startId if valid; else first step
+    //   const start = (typeof starter.startId === 'string' && byId[starter.startId])
+    //     ? byId[starter.startId]
+    //     : steps[0];
+
+    //   console.log(`start`, start);
+
+    //   let changed = false;
+    //   const visited = new Set();
+
+    //   // 1) Main chain: follow .next from START downward (only assigns if missing)
+    //   let cur = start;
+    //   let y = y0;
+    //   const x = x0;
+    //   const guardMax = steps.length + 5;
+
+    //   for (let guard = 0; cur && guard < guardMax; guard++) {
+    //     if (!hasPos(cur)) { cur.pos = { x, y }; changed = true; }
+    //     visited.add(cur.id);
+
+    //     const nxt = (cur.next && byId[cur.next]) ? byId[cur.next] : null;
+    //     if (!nxt || visited.has(nxt.id)) break; // end/missing/cycle
+    //     y += rowGap;
+    //     cur = nxt;
+    //   }
+
+    //   // 2) Everything not on the main chain → top row to the right
+    //   let col = 1; // start at next column so we don't overlap the start
+    //   for (const s of steps) {
+    //     if (visited.has(s.id)) continue;
+    //     if (!hasPos(s)) {
+    //       s.pos = { x: x0 + colWidth * col, y: y0 };
+    //       changed = true;
+    //     }
+    //     visited.add(s.id);
+    //     col++;
+    //   }
+
+    //   console.log(`visited`, visited);
+
+    //   return changed;
+    // }
+
+
+
+    // function ensurePositions(starter) {
+    //   if (!starter) return false;
+    //   const steps = starter.steps || [];
+    //   if (!steps.length) return false;
+    //   // debugger;
+
+    //   const x0 = 200, y0 = 60;    // origin
+    //   const colWidth = 220;       // horizontal gap
+    //   const rowGap = 140;         // vertical gap
+
+    //   const byId = Object.fromEntries(steps.map(s => [s.id, s]));
+    //   const hasPos = s => s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
+
+    //   // pick explicit start (supports legacy rootStepId), else first step
+    //   const startId =
+    //     (typeof starter.startId === 'string' && byId[starter.startId]) ? starter.startId :
+    //       (typeof starter.rootStepId === 'string' && byId[starter.rootStepId]) ? starter.rootStepId :
+    //         steps[0].id;
+
+    //   // compute in-degree (count step.next and select option.next)
+    //   const indeg = Object.fromEntries(steps.map(s => [s.id, 0]));
+    //   for (const s of steps) {
+    //     if (s.next && byId[s.next]) indeg[s.next] += 1;
+    //     if (s.type === 'select') {
+    //       for (const o of (s.options || [])) {
+    //         if (o && o.next && byId[o.next]) indeg[o.next] += 1;
+    //       }
+    //     }
+    //   }
+
+    //   // roots: the chosen start first, then other nodes with in-degree 0 (order preserved)
+    //   const roots = [];
+    //   if (byId[startId]) roots.push(byId[startId]);
+    //   for (const s of steps) {
+    //     if (s.id !== startId && indeg[s.id] === 0) roots.push(s);
+    //   }
+
+    //   let changed = false;
+    //   const visited = new Set();
+    //   let col = 0;
+
+    //   // lay a single .next chain vertically in a column (don’t overwrite pos)
+    //   const layChain = (node) => {
+    //     let cur = node;
+    //     let row = 0;
+    //     const guardMax = steps.length + 5;
+    //     for (let g = 0; cur && g < guardMax; g++) {
+    //       if (!visited.has(cur.id)) {
+    //         if (!hasPos(cur)) {
+    //           cur.pos = { x: x0 + colWidth * col, y: y0 + rowGap * row };
+    //           changed = true;
+    //         }
+    //         visited.add(cur.id);
+    //         row++;
+    //       }
+    //       const nxtId = (cur.next && byId[cur.next]) ? cur.next : null;
+    //       if (!nxtId || visited.has(nxtId)) break;
+    //       cur = byId[nxtId];
+    //     }
+    //   };
+
+    //   // 1) place each root’s chain in its own column
+    //   for (const r of roots) {
+    //     if (visited.has(r.id)) continue;
+    //     layChain(r);
+    //     col++;
+    //   }
+
+    //   // 2) any leftover nodes (cycles/broken refs) → top row to the right
+    //   for (const s of steps) {
+    //     if (visited.has(s.id)) continue;
+    //     if (!hasPos(s)) {
+    //       s.pos = { x: x0 + colWidth * col, y: y0 };
+    //       changed = true;
+    //     }
+    //     visited.add(s.id);
+    //     col++;
+    //   }
+
+    //   // normalize to startId for future saves (optional)
+    //   if (starter.startId !== startId) {
+    //     starter.startId = startId;
+    //     changed = true;
+    //   }
+
+    //   return changed;
+    // }
+
+    function ensurePositions(starter) {
+      if (!starter) return false;
+      const steps = starter.steps || [];
+      if (!steps.length) return false;
+
+      const x0 = 200, y0 = 60;    // origin
+      const colWidth = 220;       // horizontal gap
+      const rowGap = 140;         // vertical gap
+
+      const byId = Object.fromEntries(steps.map(s => [s.id, s]));
+      const hasPos = s => s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
+
+      // explicit start (supports legacy), else first step
+      const startId =
+        (typeof starter.startId === 'string' && byId[starter.startId]) ? starter.startId :
+          (typeof starter.rootStepId === 'string' && byId[starter.rootStepId]) ? starter.rootStepId :
+            steps[0].id;
+
+      // in-degree (counts step.next and select option.next)
+      const indeg = Object.fromEntries(steps.map(s => [s.id, 0]));
+      for (const s of steps) {
+        if (s.next && byId[s.next]) indeg[s.next] += 1;
+        if (s.type === 'select') {
+          for (const o of (s.options || [])) {
+            if (o && o.next && byId[o.next]) indeg[o.next] += 1;
+          }
+        }
+      }
+
+      // roots: chosen start first, then other in-degree-0 nodes
+      const roots = [];
+      if (byId[startId]) roots.push(byId[startId]);
+      for (const s of steps) if (s.id !== startId && indeg[s.id] === 0) roots.push(s);
+
+      let changed = false;
+      const visited = new Set();
+
+      const place = (col, row, node) => {
+        if (!hasPos(node)) {
+          node.pos = { x: x0 + colWidth * col, y: y0 + rowGap * row };
+          changed = true;
+        }
+        visited.add(node.id);
+      };
+
+      // Lay a chain with branching:
+      // - primary child (first) continues downward in same column
+      // - additional children start new columns to the right at (row+1)
+      const layFrom = (startNode, baseCol, baseRow) => {
+        let rightmost = baseCol;
+        let node = startNode, col = baseCol, row = baseRow;
+        const guardMax = steps.length * 3;
+        const queue = [];
+
+        for (let g = 0; node && g < guardMax; g++) {
+          if (!visited.has(node.id)) place(col, row, node);
+
+          // gather children
+          const children = [];
+          if (node.type === 'select') {
+            for (const o of (node.options || [])) {
+              if (o && o.next && byId[o.next]) children.push(byId[o.next]);
+            }
+          } else if (node.next && byId[node.next]) {
+            children.push(byId[node.next]);
+          }
+
+          if (!children.length) break;
+
+          // enqueue side branches (each to the right)
+          for (let i = 1; i < children.length; i++) {
+            const branchCol = col + i;
+            rightmost = Math.max(rightmost, branchCol);
+            queue.push({ node: children[i], col: branchCol, row: row + 1 });
+          }
+
+          // continue with primary child downward
+          node = children[0];
+          row += 1;
+        }
+
+        // process queued branches (breadth-first)
+        while (queue.length) {
+          const { node: seedNode, col: seedCol, row: seedRow } = queue.shift();
+          if (visited.has(seedNode.id)) continue;
+          rightmost = Math.max(rightmost, layFrom(seedNode, seedCol, seedRow));
+        }
+
+        return rightmost;
+      };
+
+      // 1) layout each root chain; keep track of rightmost used column
+      let nextRootCol = 0;
+      for (const r of roots) {
+        if (visited.has(r.id)) continue;
+        const right = layFrom(r, nextRootCol, 0);
+        nextRootCol = right + 1;
+      }
+
+      // 2) leftover nodes (cycles/broken links) → top row, continuing columns
+      for (const s of steps) {
+        if (visited.has(s.id)) continue;
+        if (!hasPos(s)) {
+          s.pos = { x: x0 + colWidth * nextRootCol, y: y0 };
+          changed = true;
+        }
+        visited.add(s.id);
+        nextRootCol++;
+      }
+
+      // normalize to startId for future saves
+      if (starter.startId !== startId) {
+        starter.startId = startId;
+        changed = true;
+      }
+
+      return changed;
+    }
+
+
+
+
+
+
+    // Normalize & validate a starter in place.
+    // - Converts legacy `end` steps → `instruction` (implicit ends = no `next`)
+    // - Ensures a single valid `startId` on the starter (defaults to a root or first step)
+    // - Ensures step ids are unique
+    // - Cleans invalid/empty `next` refs
+    // - Normalizes select steps (options array, unique option values)
+    // Returns true if it changed anything.
+    function ensureMandatory(starter) {
+      if (!starter || !Array.isArray(starter.steps)) return false;
+      const steps = starter.steps;
+      if (!steps.length) return false;
+
+      let changed = false;
+
+      // 0) Ensure starter label exists: "starter <idx>"
+      if (typeof starter.label !== 'string' || !starter.label.trim()) {
+        const idx = (Array.isArray(sop?.starters) ? sop.starters.indexOf(starter) : -1);
+        const n = (idx >= 0 ? idx + 1 : 1);
+        starter.label = 'starter ' + n; // as requested: "starter + idx"
+        changed = true;
+      }
+
+      // 1) Make step ids unique (stable rename with suffixes when needed)
+      // const seen = new Set();
+      // for (const s of steps) {
+      //   if (typeof s.id !== 'string' || !s.id.trim()) {
+      //     s.id = 'step'; changed = true;
+      //   }
+      //   let base = s.id.trim();
+      //   let out = base, i = 1;
+      //   while (seen.has(out)) { out = base + '_' + (++i); }
+      //   if (out !== s.id) { s.id = out; changed = true; }
+      //   seen.add(out);
+      // }
+
+      // 2) Legacy type: 'end' → 'instruction' (implicit end = no next)
+      for (const s of steps) {
+        if (s.type !== 'instruction' || s.type !== 'input' || s.type !== 'select') {
+          s.type = 'instruction'; changed = true;
+        }
+      }
+
+      // 3) Build byId and clean `next` (empty or missing target -> remove)
+      const byId = Object.fromEntries(steps.map(s => [s.id, s]));
+      for (const s of steps) {
+        if (s.next == null || s.next === '') continue;
+        if (!byId[s.next]) { delete s.next; changed = true; }
+      }
+
+      // 4) Normalize select steps
+      for (const s of steps) {
+        if (s.type !== 'select') continue;
+        if (!Array.isArray(s.options)) { s.options = []; changed = true; }
+        // Ensure unique option values and non-empty labels
+        const valSeen = new Set();
+        for (let i = 0; i < s.options.length; i++) {
+          const o = s.options[i] || {};
+          if (typeof o.value !== 'string' || !o.value) { o.value = 'opt' + (i + 1); changed = true; }
+          if (typeof o.label !== 'string') { o.label = String(o.value); changed = true; }
+          // Dedup option values by suffixing
+          let v = o.value, k = 1;
+          while (valSeen.has(v)) { v = o.value + '_' + (++k); }
+          if (v !== o.value) { o.value = v; changed = true; }
+          valSeen.add(o.value);
+          // Clean empty next on options
+          if (o.next === '') { delete o.next; changed = true; }
+          s.options[i] = o;
+        }
+        // Mode defaults
+        if (s.mode !== 'multi' && s.mode !== 'single') { s.mode = 'single'; changed = true; }
+      }
+
+      // 5) Ensure single valid startId at starter level
+      //    Prefer a node with in-degree 0; among them prefer one that has an outgoing edge; else first.
+      console.log('hello');
+      // if (!(typeof starter.startId === 'string' && byId[starter.startId])) {
+
+      //   const indeg = Object.fromEntries(steps.map(s => [s.id, 0]));
+      //   for (const s of steps) {
+      //     if (s.next && byId[s.next]) indeg[s.next] += 1;
+      //     if (s.type === 'select') {
+      //       for (const o of (s.options || [])) {
+      //         if (o && o.next && byId[o.next]) indeg[o.next] += 1;
+      //       }
+      //     }
+      //   }
+
+      //   // roots: in-degree = 0, kept in original order
+      //   const roots = steps.filter(s => indeg[s.id] === 0);
+
+      //   // helper: does this step have any outgoing edge?
+      //   const hasOut = (s) =>
+      //     !!s.next ||
+      //     (s.type === 'select' && (s.options || []).some(o => o && o.next));
+
+      //   let candidate = steps[0]; // fallback
+      //   if (roots.length) {
+      //     const prefer = roots.find(hasOut);
+      //     candidate = prefer || roots[0];
+      //   }
+
+      //   if (typeof starter.startId !== 'string' || !byId[starter.startId]) {
+      //     starter.startId = candidate.id;
+      //     changed = true;
+      //   }
+
+
+      // }
+
+
+      // if (!(typeof starter.startId === 'string' && byId[starter.startId])) {
+      // starter.startId = candidate.id;
+
+      const startId = getStarterStartId(starter);
+      if (startId && starter.startId !== startId) {
+        starter.startId = startId;
+        changed = true;
+      }
+      // }
+      return changed;
+    }
+
+    // Decide the best start step id for a single starter and set it.
+    // Rules:
+    // 1) Prefer roots (in-degree 0) that have an outgoing edge (step.next or select option.next).
+    // 2) If multiple, take the first by steps order.
+    // 3) Else fall back to any root.
+    // 4) Else fall back to the first step.
+    function getStarterStartId(starter) {
+      if (!starter || !Array.isArray(starter.steps) || starter.steps.length === 0) return null;
+
+      const steps = starter.steps;
+      const byId = Object.fromEntries(steps.map(s => [s.id, s]));
+
+      // in-degree (count step.next and select option.next)
+      const indeg = Object.fromEntries(steps.map(s => [s.id, 0]));
+      for (const s of steps) {
+        if (s.next && byId[s.next]) indeg[s.next] += 1;
+        if (s.type === 'select') {
+          for (const o of (s.options || [])) {
+            if (o && o.next && byId[o.next]) indeg[o.next] += 1;
+          }
+        }
+      }
+
+      const hasOut = (s) => !!s.next || (s.type === 'select' && (s.options || []).some(o => o && o.next));
+
+      const rootWithOut = steps.filter(s => indeg[s.id] === 0 && hasOut(s));
+      const anyRoot = steps.filter(s => indeg[s.id] === 0);
+
+      const candidate =
+        rootWithOut[0] ||   // best: root that leads somewhere
+        anyRoot[0] ||     // otherwise: any root
+        steps.find(hasOut) || // otherwise: any node that leads somewhere
+        steps[0];           // absolute fallback
+
+      const startId = candidate?.id || null;
+
+      return startId;
+    }
+
+
+    // Wire live editing of title/description (landing, edit mode)
+    (function wireTitleDesc() {
+      if (window.titleDescWired) return; window.titleDescWired = true;
+
+      document.addEventListener('input', (e) => {
+        if (!isEditMode()) return;
+        const t = e.target;
+        if (t.id !== 'vwTitleInput' && t.id !== 'vwDescInput') return;
+
+        const v = (t.value || '').trim();
+
+        if (t.id === 'vwTitleInput') {
+          if ((sop.title || '') !== v) { sop.title = v; setDirty?.(true); }
+          return;
+        }
+        if (t.id === 'vwDescInput') {
+          if ((sop.description || '') !== v) { sop.description = v; setDirty?.(true); }
+          return;
+        }
+      }, true);
+    })();
+
 
 
     // Inline edit for starter cards (landing, edit mode)
@@ -3415,7 +4030,7 @@
       // Update label/summary live
       document.addEventListener('input', (e) => {
 
-        if (document.documentElement.getAttribute('data-mode') !== 'edit') return;
+        if (!isEditMode()) return;
         const inp = e.target;
         if (!inp.classList?.contains('st-label') && !inp.classList?.contains('st-summary')) return;
         const card = inp.closest('.vw-card--edit');
@@ -3434,20 +4049,15 @@
       //   if (!btn) return;
       //   const idx = parseInt(btn.dataset.idx, 10);
 
-      //   if (btn.dataset.action === 'starter-edit') {
-      //     enterEditStarter(idx);          // as-is
-      //   } else {
-      //     console.log('[starter delete]', idx); // placeholder only
-      //   }
-      // });
+
       document.addEventListener('click', async (e) => {
+        if (!isEditMode()) return;
         // delete button inside the card
         const del = e.target.closest('[data-action="starter-delete"]');
         if (del) {
           const card = del.closest('.vw-card[data-idx]');
           if (!card) return;
           const idx = parseInt(card.dataset.idx, 10);
-          // console.log('[starter delete]', idx); // your delete logic here
           const label = sop.starters[idx]?.label || `Starter ${idx + 1}`;
 
           let haveOneStarterOnly = false;
@@ -3463,7 +4073,6 @@
 
             // return false;
           }
-          console.log(`haveOneStarterOnly`, haveOneStarterOnly);
           if (haveOneStarterOnly) return;
 
 
@@ -3494,70 +4103,105 @@
         const card = e.target.closest('.vw-card[data-idx]');
         if (!card) return;
         const idx = parseInt(card.dataset.idx, 10);
-        enterEditStarter(idx);
+        // check if edit mode
+        enterViewOrEditStarter(idx);
       });
 
     })();
 
 
-    function enterEditStarter(idx) {
-      resetStarterValues();
-      resetGraphZoom();
-      viewState.starterIdx = idx;
-      viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;;
-      renderAll();
+    // function enterEditStarter(idx) {
+    //   resetStarterValues();
+    //   resetGraphZoom();
+    //   viewState.starterIdx = idx;
+    //   viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;;
+    //   changeScreen('starter');
+    //   renderAll();
 
-      changeScreen('starter');
 
 
-      // optional crumbs
-      const crumbs = document.getElementById('breadcrumbs');
-      if (crumbs) crumbs.textContent = `Home · ${st.label || `Starter ${idx + 1}`} (Edit)`;
+    //   // optional crumbs
+    //   // const crumbs = document.getElementById('breadcrumbs');
+    //   // if (crumbs) crumbs.textContent = `Home · ${st.label || `Starter ${idx + 1}`} (Edit)`;
+    // }
+
+    // function resetStarterValues(idx) {
+    //   viewState.starterIdx = 0;
+    //   viewState.stepIdx = 0;
+    //   viewState.answers = {};
+    // }
+
+    function getStepIndexById(steps, id) {
+      if (!Array.isArray(steps) || steps.length === 0) return 0;
+      if (typeof id !== 'string') return 0;
+      const i = steps.findIndex(s => s && s.id === id);
+      return (i >= 0) ? i : 0;
     }
 
-    function resetStarterValues() {
-      viewState.starterIdx = 0;
-      viewState.stepIdx = 0;
+    // Reset viewState for a given starter index (or 0 if invalid).
+    // Sets stepIdx to the starter's startId (or 0 if invalid).
+    function resetStarterValues(starterIdx) {
+      const starters = sop?.starters || [];
+      const si = (Number.isInteger(starterIdx) && starterIdx >= 0 && starterIdx < starters.length) ? starterIdx : 0;
+
+      viewState.starterIdx = si;
       viewState.answers = {};
+
+      const st = starters[si];
+      const steps = st?.steps || [];
+      const startId = (typeof st?.startId === 'string') ? st.startId : steps[0]?.id;
+      // const startId = 2;
+
+      viewState.stepIdx = getStepIndexById(steps, startId);
+      viewState.selectedStepId = startId || null;
     }
 
-    function enterViewStarter(idx) {
 
-      resetStarterValues();
-      viewState.starterIdx = idx;
-      viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;
-      changeScreen('starter');
 
-      const st = sop.starters[idx];
-      document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
-      resetGraphZoom();
-      renderAll();
 
-    }
+
+    // function enterViewStarter(idx) {
+    //   resetStarterValues();
+    //   viewState.starterIdx = idx;
+    //   viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;
+    //   changeScreen('starter');
+
+    //   const st = sop.starters[idx];
+    //   document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
+    //   resetGraphZoom();
+    //   renderAll();
+
+    // }
 
     // Creates a new starter, re-renders grid (optional), and returns its index.
     function createNewStarter() {
       // const starterIdx = 
       // viewState.selectedStepId = starterIdx;
-      console.log(`viewState.selectedStepId`, viewState.selectedStepId);
       const idx = sop.starters.length;
-      
+
       const newStarter = {
         id: 'starter_' + (idx + 1),
         label: 'Starter ' + (idx + 1),
+        steps: []
       };
-      
+
       const step1 = makeStep('instruction', newStarter);
-      const step2 = makeStep('end', newStarter);
+      step1.id = "welcome_step";
+      step1.label = "Welcome";
+      newStarter.steps.push(step1);
+
+      const step2 = makeStep('instruction', newStarter);
+      step2.id = "end_step";
+      step2.label = "The End";
+      newStarter.steps.push(step2);
+
       step1.next = step2.id;
 
-      newStarter.steps = [step1, step2];
-
+      sop.starters.push(newStarter);
+      ensureMandatory(newStarter);
       ensurePositions(newStarter);
-      // if (typeof renderStarters === 'function') {
-        // if you have a renderer
-        // }
-        sop.starters.push(newStarter);
+
+      console.log(`newStarter`, newStarter);
       return sop.starters.length - 1;
     }
 
@@ -3692,7 +4336,6 @@
 
     // put this *after* setNextEnabled(...)
     function validateValueForStep(step, value) {
-      console.log({ step, value });
       if (step.required) {
         if (step.type === 'input') {
           if (!String(value || '').trim()) return { ok: false, msg: step.requiredMessage || 'This field is required' };
@@ -3718,8 +4361,14 @@
       return { ok: true, msg: '' };
     }
 
+    // has no next step implicitly (no indicator)
+    const isEndStep = (s) => !s?.next;
+
+
 
     function renderViewStep() {
+      // console.trace('called here'); // shows who called foo (and the chain)
+
       const st = sop.starters[viewState.starterIdx];
       const steps = st.steps || [];
       let i = viewState.stepIdx;
@@ -3730,6 +4379,7 @@
       box.innerHTML = '';
       const step = steps[i];
       if (!step) { setNextEnabled(false); return; }
+      // const isDoneStep = step.type === 'end';
 
       let node;
       if (step.type === 'instruction') {
@@ -3751,11 +4401,14 @@
     `;
         box.appendChild(node);
         const inp = node.querySelector('#vw_inp');
+        const img = node.querySelector('.thumb');              // ← add this
         inp.value = viewState.answers[step.id] || '';
         const err = document.createElement('div');
         err.className = 'error';
         err.style.display = 'none';
-        box.appendChild(err);
+        // node.appendChild(err);                               // ← remove this
+        img ? img.before(err) : inp.insertAdjacentElement('afterend', err);  // ← insert here
+
 
         function refreshInput() {
           const res = validateValueForStep(step, inp.value);
@@ -3816,9 +4469,6 @@
         node.appendChild(err);
 
         function refreshSelect() {
-          console.log('validating select', { sel, value: viewState.answers[step.id], step });
-
-
           const res = validateValueForStep(step, viewState.answers[step.id]);
           err.textContent = res.ok ? '' : res.msg;
           err.style.display = res.ok ? 'none' : '';
@@ -3831,7 +4481,7 @@
         const hasSel = mode === 'multi' ? (Array.isArray(sel) && sel.length > 0) : Boolean(sel);
         setNextEnabled(hasSel || !step.required);
       }
-      else if (step.type === 'end') {
+      else if (isEndStep(step)) {
         node = document.createElement('div');
         node.innerHTML = `
       ${step.title ? `<h3>${viewEscape(step.title)}</h3>` : '<h3>Completed</h3>'}
@@ -3846,19 +4496,19 @@
       // nav buttons
       document.getElementById('vwPrev').disabled = i === 0;
       const nextBtn = document.getElementById('vwNext');
-      nextBtn.textContent = i >= stepCnt - 1 ? 'Finish' : 'Next';
+      nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
 
       // document.getElementById('vwBackHome').onclick = renderViewAndEditLanding;
 
       document.getElementById('vwPrev').onclick = () => {
-        if (viewState.stepIdx > 0) { viewState.stepIdx--; renderViewStep(); }
+        if (viewState.stepIdx > 0) { viewState.stepIdx--; }
       };
       nextBtn.onclick = () => {
-        if (viewState.stepIdx < stepCnt - 1) {
+        if (!isEndStep(step)) {
           // branch support
-          const s = steps[viewState.stepIdx];
-          if (s && s.type === 'select' && s.mode !== 'multi') {
-            const choice = viewState.answers[s.id];
+          const currentStep = steps[viewState.stepIdx];
+          if (currentStep && currentStep.type === 'select' && currentStep.mode !== 'multi') {
+            const choice = viewState.answers[currentStep.id];
             if (choice && choice.next) {
               // jump to label
               const to = steps.findIndex(x => x.id === choice.next);
@@ -3871,12 +4521,17 @@
             }
           }
           // step-level next
-          if (s && s.next) {
-            const to = steps.findIndex(x => x.id === s.next);
-            if (to >= 0) { viewState.stepIdx = to; renderViewStep(); return; }
+          if (currentStep && currentStep.next) {
+            const to = steps.findIndex(x => x.id === currentStep.next);
+            if (to >= 0) {
+              viewState.stepIdx = to;
+              renderViewStep();
+              return;
+            }
           }
           // default: linear
-          viewState.stepIdx++; renderViewStep();
+          // viewState.stepIdx++; 
+          renderViewStep();
         }
       };
     }
@@ -3902,14 +4557,14 @@
               title: "Welcome",
               body: "Start here.",
               next: "done",
-              pos: { x: 200, y: 60 }
+              // pos: { x: 200, y: 60 }
             },
             {
-              type: "end",
+              type: "instruction",
               id: "done",
               title: "Done",
               body: "All set.",
-              pos: { x: 200, y: 200 }
+              // pos: { x: 200, y: 200 }
 
             }
           ]
@@ -3918,21 +4573,16 @@
     }
     function makeStep(type, starter = getStarter()) {
       const id = uniqueId(type, starter);
-      console.log(`id`, id);
       if (type === 'instruction') return { type, id, title: "Instruction", body: "" };
       if (type === 'input') return { type, id, label: "Input", placeholder: "", required: false };
       if (type === 'select') return { type, id, label: "Choose", display: "cards", mode: "single", required: false, options: [{ value: "opt1", label: "Option 1" }] };
-      if (type === 'end') return { type, id, title: "End", body: "" };
+      // if (type === 'end') return { type, id, title: "End", body: "" };
       return { type: 'instruction', id, title: "Instruction", body: "" };
     }
-    
-    function uniqueId(base, starter ) {
-      console.log(`st`, starter);
+
+    function uniqueId(base, starter) {
       const ids = new Set((starter?.steps || []).map(s => s.id));
-      console.log(`ids`, ids);
       let i = 1, v = slugify(base || 'step');
-      console.log(`i`, i);
-      console.log(`v`, v);
 
       let out = v;
       while (ids.has(out)) {
