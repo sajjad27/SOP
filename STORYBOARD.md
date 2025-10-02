@@ -60,6 +60,7 @@
 - move starters around to make them ordered as i need
 - View picture (small, then maximize)  
 - Scroll up and down in the graph
+- ability to morge two files
 - have map link in the preview 
 - Interactive steps on the map
 - delete starter
