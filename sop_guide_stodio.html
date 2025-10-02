@@ -1435,11 +1435,6 @@
 
 
 
-    function flashSaved(btn) {
-      const old = btn.textContent;
-      btn.textContent = 'Saved ✓';
-      setTimeout(() => (btn.textContent = old), 1200);
-    }
 
 
 
@@ -1610,7 +1605,7 @@
       if (!ok) return;
       const btnSave = document.getElementById('globalSaveBtn');
       const old = btnSave.textContent; btnSave.textContent = 'Saved ✓';
-      setTimeout(() => btnSave.textContent = old, 1200);
+      setTimeout(() => btnSave.textContent = old, 800);
     }
 
 
@@ -1787,8 +1782,10 @@
             variant: 'subtleDanger'   // ← small “danger” cue, not aggressive
           });
           if (!ok) return;                 // Stay in Edit
-          if (savedSop) {
+          else if (savedSop) {
+            // if discarding, restore last saved and re-render
             sop = structuredClone(savedSop);
+            renderAll();
           }
           clearDirty();
         }
@@ -1961,16 +1958,318 @@
 
 
 
+    //   function renderInspector() {
+    //     const box = document.getElementById('propBox');
+    //     const st = getStarter();
+    //     const step = st.steps.find(x => x.id === viewState.selectedStepId);
+    //     if (!step) { box.innerHTML = '<span class="small">Select a step.</span>'; return; }
+
+    //     const isInstr = step.type === 'instruction';
+    //     const isInput = step.type === 'input';
+    //     const isSelect = step.type === 'select';
+    //     const isMulti = isSelect && step.mode === 'multi';
+    //     const isSingle = isSelect && step.mode !== 'multi';
+
+
+    //     // Common fields
+    //     let html = `
+    //   <label>ID</label><input id="f_id" type="text" value="${escapeAttr(step.id)}"/>
+    //   <div id="f_id_err" class="error" style="display:none"></div>
+    //   <div class="kv">
+    //     <div>
+    //       <label>Type</label>
+    //       <select id="f_type">
+    //         ${['instruction', 'input', 'select'].map(t => `<option ${t === step.type ? 'selected' : ''} value="${t}">${t}</option>`).join('')}
+    //       </select>
+    //     </div>
+    //     <div>
+    //       <div>
+    //         <input id="f_req" type="checkbox" ${step.required ? 'checked' : ''} />
+    //       </div>
+    //       <label>Required</label>
+    //     </div>
+    //   </div>
+    // `;
+
+    //     if (step.type === 'instruction') {
+    //       html += `
+    //     <label>Title</label><input id="f_title" type="text" value="${escapeAttr(step.title || '')}"/>
+    //     <label>Body</label><textarea id="f_body" rows="4">${escapeHtml(step.body || '')}</textarea>
+
+    //       <label>Next (step.id)</label>
+    //       ${nextSelectHtml(st.steps, step.next, step.id)}
+
+    //     <div class="kv">
+    //       <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
+    //       <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
+    //     </div>
+    //   `;
+    //     }
+    //     else if (step.type === 'input') {
+    //       html += `
+    //     <label>Label</label><input id="f_label" type="text" value="${escapeAttr(step.label || '')}"/>
+    //     <label>Placeholder</label><input id="f_ph" type="text" value="${escapeAttr(step.placeholder || '')}"/>
+    //     <div class="kv">
+    //       <div><label>Regex</label><input id="f_regex" type="text" value="${escapeAttr(step.regex || '')}" placeholder="e.g. ^[1-9][0-9]{5}$"/></div>
+    //       <div><label>Error message</label><input id="f_err" type="text" value="${escapeAttr(step.error || '')}"/></div>
+    //     </div>
+    //     <div class="kv">
+    //       <div><label>Required message</label><input id="f_reqmsg" type="text" value="${escapeAttr(step.requiredMessage || '')}"/></div>
+    //       <div></div>
+    //       </div>
+    //       <label>Next (step.id)</label>
+    //       ${nextSelectHtml(st.steps, step.next, step.id)}
+    //     <div class="kv">
+    //       <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
+    //       <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
+    //     </div>
+    //   `;
+    //     }
+    //     else if (step.type === 'select') {
+    //       html += `
+    //     <label>Label</label><input id="f_label" type="text" value="${escapeAttr(step.label || '')}"/>
+    //     <div class="kv">
+    //       <div>
+    //         <label>Mode</label>
+    //         <select id="f_mode">
+    //           <option ${step.mode === 'single' ? 'selected' : ''} value="single">single</option>
+    //           <option ${step.mode === 'multi' ? 'selected' : ''} value="multi">multi</option>
+    //         </select>
+
+    //       </div>
+    //     </div>
+    //     <div class="kv">
+    //       <div><label>Minimum Selection</label><input id="f_min" type="number" value="${escapeAttr(step.min ?? '')}"/></div>
+    //       <div><label>Maximum Selection</label><input id="f_max" type="number" value="${escapeAttr(step.max ?? '')}"/></div>
+    //     </div>
+    //     <div class="kv">
+    //       <div><label>Min message</label><input id="f_minmsg" type="text" value="${escapeAttr(step.minMessage || '')}"/></div>
+    //       <div><label>Max message</label><input id="f_maxmsg" type="text" value="${escapeAttr(step.maxMessage || '')}"/></div>
+    //     </div>
+    //     <label>Options</label>
+    //     <table class="table" id="optTable">
+    //       <thead><tr><th style="width:18%">value</th><th style="width:18%">label</th><th>hint</th><th style="width:20%">next</th><th class="center">del</th></tr></thead>
+    //       <tbody>
+    //         ${(step.options || []).map((o, i) => optionRowHtml(o, i, st.steps)).join('')}
+    //       </tbody>
+    //     </table>
+    //     <div class="rowflex">
+    //       <button id="addOptBtn" class="iconbtn">+ Option</button>
+    //     </div>
+    //     <label>After (step.next, used esp. for multi)</label>
+    //     ${nextSelectHtml(st.steps, step.next, step.id)}
+    //   `;
+    //     }
+
+    //     box.innerHTML = html;
+
+    //     // -------- Wire common ----------
+    //     const f_type = box.querySelector('#f_type');
+    //     const f_req = box.querySelector('#f_req');
+
+    //     // --- ID commit on Enter/blur + duplicate guard
+    //     const f_id = box.querySelector('#f_id');
+    //     const f_id_err = box.querySelector('#f_id_err');
+
+    //     function commitId() {
+    //       const st = getStarter();
+    //       const oldId = step.id;
+    //       let v = slugify(f_id.value.trim()) || oldId;
+
+    //       if (v === oldId) { f_id_err.style.display = 'none'; f_id_err.textContent = ''; return; }
+
+    //       const dup = (st.steps || []).some(s => s.id === v && s !== step);
+    //       if (dup) {
+    //         f_id_err.textContent = `ID "${v}" already exists`;
+    //         f_id_err.style.display = '';
+    //         return;
+    //       }
+
+    //       rewriteRefs(oldId, v);
+    //       step.id = v;
+    //       viewState.selectedStepId = v;
+    //       f_id.value = v;
+    //       f_id_err.style.display = 'none'; f_id_err.textContent = '';
+    //       renderGraph();
+    //       renderViewStep();
+    //       // if (studioMode === 'view') renderViewAndEditLanding();
+
+    //     }
+    //     f_id.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitId(); f_id.blur(); } });
+    //     f_id.addEventListener('blur', commitId);
+
+    //     f_type.addEventListener('change', () => {
+    //       const t = f_type.value;
+    //       if (t !== step.type) {
+    //         const repl = makeStep(t);
+    //         // keep same id & required
+    //         repl.id = step.id; repl.required = step.required;
+    //         // migrate title/label best-effort
+    //         repl.title = step.title || repl.title;
+    //         repl.label = step.label || repl.label;
+    //         repl.next = step.next || repl.next;
+    //         repl.pos = step.pos || repl.pos;
+    //         replaceStep(step.id, repl);
+    //         viewState.selectedStepId = repl.id;
+    //         // renderAll();
+    //         renderGraph();
+    //         renderInspector();
+
+    //         // if (studioMode === 'view') renderViewAndEditLanding();
+
+    //       }
+    //     });
+    //     // f_req.addEventListener('change', () => { step.required = Boolean(f_req.value); });
+    //     f_req?.addEventListener('change', () => { step.required = f_req.checked; setDirty(true); });
+
+    //     // -------- Wire per-type ----------
+    //     if (step.type === 'instruction') {
+    //       const f_title = box.querySelector('#f_title');
+    //       const f_body = box.querySelector('#f_body');
+    //       const f_img = box.querySelector('#f_img');
+    //       const f_img_file = box.querySelector('#f_img_file');
+
+    //       // Title: commit on Enter/blur (no live render while typing)
+    //       function commitTitle() {
+    //         const v = f_title.value.trim();
+    //         if ((step.title || '') === v) return;
+    //         step.title = v;
+    //         // renderSteps(); 
+    //         renderGraph();
+    //       }
+    //       f_title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitTitle(); f_title.blur(); } });
+    //       f_title.addEventListener('blur', commitTitle);
+
+    //       // Others can be live-updated
+    //       f_body.addEventListener('input', () => { step.body = f_body.value; });
+    //       f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
+    //       f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }));
+
+    //       // if (step.type !== 'end') {
+
+    //       const f_next = box.querySelector('#f_next');
+    //       f_next.addEventListener('change', () => {
+    //         step.next = f_next.value || undefined;
+    //         ensureSopMandatory();
+    //         renderGraph();
+    //       });
+    //       // }
+    //     }
+    //     else if (step.type === 'input') {
+    //       const f_label = box.querySelector('#f_label');
+    //       const f_ph = box.querySelector('#f_ph');
+    //       const f_regex = box.querySelector('#f_regex');
+    //       const f_err = box.querySelector('#f_err');
+    //       const f_reqmsg = box.querySelector('#f_reqmsg');
+    //       const f_img = box.querySelector('#f_img');
+    //       const f_img_file = box.querySelector('#f_img_file');
+    //       const f_next = box.querySelector('#f_next');
+
+    //       // Label: commit on Enter/blur
+    //       function commitLabel() {
+    //         const v = f_label.value.trim();
+    //         if ((step.label || '') === v) return;
+    //         step.label = v;
+    //         // renderSteps(); // map not required
+    //       }
+    //       f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
+    //       f_label.addEventListener('blur', commitLabel);
+
+    //       // Others live
+    //       f_ph.addEventListener('input', () => { step.placeholder = f_ph.value; });
+    //       f_regex.addEventListener('input', () => { step.regex = f_regex.value || undefined; });
+    //       f_err.addEventListener('input', () => { step.error = f_err.value || undefined; });
+    //       f_reqmsg.addEventListener('input', () => { step.requiredMessage = f_reqmsg.value || undefined; });
+    //       f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
+    //       f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }));
+    //       f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
+    //     }
+    //     else if (step.type === 'select') {
+    //       const f_label = box.querySelector('#f_label');
+    //       // const f_display = box.querySelector('#f_display');
+    //       const f_mode = box.querySelector('#f_mode');
+    //       const f_min = box.querySelector('#f_min');
+    //       const f_max = box.querySelector('#f_max');
+    //       const f_minmsg = box.querySelector('#f_minmsg');
+    //       const f_maxmsg = box.querySelector('#f_maxmsg');
+    //       const addOptBtn = box.querySelector('#addOptBtn');
+    //       const f_next = box.querySelector('#f_next');
+
+    //       // Label: commit on Enter/blur
+    //       function commitLabel() {
+    //         const v = f_label.value.trim();
+    //         if ((step.label || '') === v) return;
+    //         step.label = v;
+    //         // renderSteps();
+    //       }
+    //       f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
+    //       f_label.addEventListener('blur', commitLabel);
+
+    //       // Others live
+    //       // f_display.addEventListener('change', () => { step.display = f_display.value; });
+    //       f_mode.addEventListener('change', () => { step.mode = f_mode.value; });
+    //       f_min.addEventListener('input', () => { step.min = f_min.value === '' ? undefined : Number(f_min.value); });
+    //       f_max.addEventListener('input', () => { step.max = f_max.value === '' ? undefined : Number(f_max.value); });
+    //       f_minmsg.addEventListener('input', () => { step.minMessage = f_minmsg.value || undefined; });
+    //       f_maxmsg.addEventListener('input', () => { step.maxMessage = f_maxmsg.value || undefined; });
+    //       f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
+
+    //       addOptBtn.addEventListener('click', () => {
+    //         step.options = step.options || [];
+    //         step.options.push({ value: 'opt_' + (step.options.length + 1), label: 'Option ' + (step.options.length + 1) });
+    //         renderInspector();
+    //         renderGraph();
+    //       });
+
+    //       // Options table row wiring
+    //       box.querySelectorAll('[data-opt-idx]').forEach(row => {
+    //         const i = Number(row.dataset.optIdx);
+    //         const o = step.options[i];
+    //         const fv = row.querySelector('.f_opt_value');
+    //         const fl = row.querySelector('.f_opt_label');
+    //         const fh = row.querySelector('.f_opt_hint');
+    //         const fn = row.querySelector('.f_opt_next');
+    //         // const fi = row.querySelector('.f_opt_img');
+    //         const ff = row.querySelector('.f_opt_file');
+    //         const fd = row.querySelector('.f_opt_del');
+
+    //         fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph(); });
+    //         fl.addEventListener('input', () => { o.label = fl.value; });
+    //         fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
+    //         fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
+    //         // fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
+    //         // ff.addEventListener('change', ev => handleImageToBase64(ev, uri => { o.img_b64 = uri; fi.value = uri; }));
+    //         fd.addEventListener('click', () => { step.options.splice(i, 1); renderInspector(); renderGraph(); });
+    //       });
+    //     }
+    //   }
+
     function renderInspector() {
       const box = document.getElementById('propBox');
       const st = getStarter();
+      if (!st) { box.innerHTML = '<span class="small">No starter.</span>'; return; }
+
       const step = st.steps.find(x => x.id === viewState.selectedStepId);
       if (!step) { box.innerHTML = '<span class="small">Select a step.</span>'; return; }
 
-      // Common fields
+      const isInstr = step.type === 'instruction';
+      const isInput = step.type === 'input';
+      const isSelect = step.type === 'select';
+      const isMulti = isSelect && step.mode === 'multi';
+      const isSingle = isSelect && !isMulti;
+
+      // normalize missing fields we depend on
+      if (typeof step.title !== 'string') step.title = '';
+      if (isSelect && !Array.isArray(step.options)) step.options = [];
+
       let html = `
-    <label>ID</label><input id="f_id" type="text" value="${escapeAttr(step.id)}"/>
+    <label>ID</label>
+    <input id="f_id" type="text" value="${escapeAttr(step.id)}"/>
     <div id="f_id_err" class="error" style="display:none"></div>
+
+    <label>Title</label>
+    <input id="f_title" type="text" value="${escapeAttr(step.title)}"/>
+
     <div class="kv">
       <div>
         <label>Type</label>
@@ -1979,272 +2278,292 @@
         </select>
       </div>
       <div>
-        <div>
-          <input id="f_req" type="checkbox" ${step.required ? 'checked' : ''} />
-        </div>
+        <div><input id="f_req" type="checkbox" ${step.required ? 'checked' : ''} /></div>
         <label>Required</label>
       </div>
     </div>
+
+    
   `;
 
-      // Type-specific
-      if (step.type === 'instruction') {
+      if (isInstr) {
         html += `
-      <label>Title</label><input id="f_title" type="text" value="${escapeAttr(step.title || '')}"/>
-      <label>Body</label><textarea id="f_body" rows="4">${escapeHtml(step.body || '')}</textarea>
-      
-        <label>Next (step.id)</label>
-        ${nextSelectHtml(st.steps, step.next, step.id)}
-      
-      <div class="kv">
-        <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
-        <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
-      </div>
+      <label>Body</label>
+      <textarea id="f_body" rows="4">${escapeHtml(step.body || '')}</textarea>
     `;
       }
-      else if (step.type === 'input') {
+
+      if (isInput) {
         html += `
-      <label>Label</label><input id="f_label" type="text" value="${escapeAttr(step.label || '')}"/>
-      <label>Placeholder</label><input id="f_ph" type="text" value="${escapeAttr(step.placeholder || '')}"/>
-      <div class="kv">
-        <div><label>Regex</label><input id="f_regex" type="text" value="${escapeAttr(step.regex || '')}" placeholder="e.g. ^[1-9][0-9]{5}$"/></div>
-        <div><label>Error message</label><input id="f_err" type="text" value="${escapeAttr(step.error || '')}"/></div>
-      </div>
-      <div class="kv">
-        <div><label>Required message</label><input id="f_reqmsg" type="text" value="${escapeAttr(step.requiredMessage || '')}"/></div>
-        <div></div>
-        </div>
-        <label>Next (step.id)</label>
-        ${nextSelectHtml(st.steps, step.next, step.id)}
-      <div class="kv">
-        <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
-        <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
-      </div>
-    `;
-      }
-      else if (step.type === 'select') {
-        html += `
-      <label>Label</label><input id="f_label" type="text" value="${escapeAttr(step.label || '')}"/>
+      <label>Placeholder</label>
+      <input id="f_ph" type="text" value="${escapeAttr(step.placeholder || '')}"/>
+
       <div class="kv">
         <div>
-          <label>Display</label>
-          <select id="f_display">
-            <option ${step.display === 'cards' ? 'selected' : ''} value="cards">cards</option>
-            <option ${step.display === 'list' ? 'selected' : ''} value="list">list</option>
-          </select>
+          <label>Regex</label>
+          <input id="f_regex" type="text" value="${escapeAttr(step.regex || '')}" placeholder="e.g. ^[1-9][0-9]{5}$"/>
         </div>
+        <div>
+          <label>Error message</label>
+          <input id="f_err" type="text" value="${escapeAttr(step.error || '')}"/>
+        </div>
+      </div>
+
+      <div class="kv">
+        <div>
+          <label>Required message</label>
+          <input id="f_reqmsg" type="text" value="${escapeAttr(step.requiredMessage || '')}"/>
+        </div>
+        <div></div>
+      </div>
+    `;
+      }
+
+      // Select specifics
+      if (isSelect) {
+        html += `
+      <div class="kv">
         <div>
           <label>Mode</label>
           <select id="f_mode">
-            <option ${step.mode === 'single' ? 'selected' : ''} value="single">single</option>
-            <option ${step.mode === 'multi' ? 'selected' : ''} value="multi">multi</option>
+            <option ${isSingle ? 'selected' : ''} value="single">single</option>
+            <option ${isMulti ? 'selected' : ''} value="multi">multi</option>
           </select>
         </div>
       </div>
-      <div class="kv">
-        <div><label>Min (multi)</label><input id="f_min" type="number" value="${escapeAttr(step.min ?? '')}"/></div>
-        <div><label>Max (multi)</label><input id="f_max" type="number" value="${escapeAttr(step.max ?? '')}"/></div>
-      </div>
-      <div class="kv">
-        <div><label>Min message</label><input id="f_minmsg" type="text" value="${escapeAttr(step.minMessage || '')}"/></div>
-        <div><label>Max message</label><input id="f_maxmsg" type="text" value="${escapeAttr(step.maxMessage || '')}"/></div>
-      </div>
+
       <label>Options</label>
       <table class="table" id="optTable">
-        <thead><tr><th style="width:18%">value</th><th style="width:18%">label</th><th>hint</th><th style="width:20%">next</th><th class="center">del</th></tr></thead>
+        <thead>
+          <tr>
+            <th style="width:18%">value</th>
+            <th style="width:18%">label</th>
+            <th>hint</th>
+            ${isSingle ? '<th style="width:20%">next</th>' : ''}
+            <th class="center">del</th>
+          </tr>
+        </thead>
         <tbody>
-          ${(step.options || []).map((o, i) => optionRowHtml(o, i, st.steps)).join('')}
+          ${(step.options || []).map((o, i) => optionRowHtml(o, i, st.steps, isSingle, step.id)).join('')}
         </tbody>
       </table>
       <div class="rowflex">
         <button id="addOptBtn" class="iconbtn">+ Option</button>
       </div>
-      <label>After (step.next, used esp. for multi)</label>
-      ${nextSelectHtml(st.steps, step.next, step.id)}
     `;
       }
 
+      // Step-level Next (instruction, input, select+multi)
+      //   if (isInstr || isInput || isMulti) {
+      //     html += `
+      //   <label>${isMulti ? 'After (step.next, used for multi)' : 'Next (step.id)'}</label>
+      //   ${nextSelectHtml(st.steps, step.next, step.id)}
+      // `;
+      //   }
+
+      // Step-level Next (instruction, input, select+multi)
+      if (isInstr || isInput || isMulti) {
+        html += `
+    <label>${isMulti ? 'After (step.next, used for multi)' : 'Next (step.id)'}</label>
+    ${nextSelectHtml(st.steps, step.next, step.id, /*withId=*/true)}
+  `;
+      }
+
+
+      // Image (kept for instruction & input & select if you want it global)
+      html += `
+    <div class="kv">
+      <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
+      <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
+    </div>
+  `;
+
       box.innerHTML = html;
 
-      // -------- Wire common ----------
-      const f_type = box.querySelector('#f_type');
-      const f_req = box.querySelector('#f_req');
+      // === Listeners ===
 
-      // --- ID commit on Enter/blur + duplicate guard
-      const f_id = box.querySelector('#f_id');
-      const f_id_err = box.querySelector('#f_id_err');
+      // ID
+      const fId = document.getElementById('f_id');
+      const fIdErr = document.getElementById('f_id_err');
+      fId?.addEventListener('input', () => {
+        const nv = (fId.value || '').trim();
+        const ok = nv && !st.steps.some(s => s !== step && s.id === nv);
+        fIdErr.style.display = ok ? 'none' : '';
+        fIdErr.textContent = ok ? '' : (nv ? 'ID already exists.' : 'ID is required.');
+        if (ok) { step.id = nv; viewState.selectedStepId = nv; setDirty?.(true); }
+      });
 
-      function commitId() {
-        const st = getStarter();
-        const oldId = step.id;
-        let v = slugify(f_id.value.trim()) || oldId;
-
-        if (v === oldId) { f_id_err.style.display = 'none'; f_id_err.textContent = ''; return; }
-
-        const dup = (st.steps || []).some(s => s.id === v && s !== step);
-        if (dup) {
-          f_id_err.textContent = `ID "${v}" already exists`;
-          f_id_err.style.display = '';
-          return;
-        }
-
-        rewriteRefs(oldId, v);
-        step.id = v;
-        viewState.selectedStepId = v;
-        f_id.value = v;
-        f_id_err.style.display = 'none'; f_id_err.textContent = '';
-        renderGraph();
-        renderViewStep();
-        // if (studioMode === 'view') renderViewAndEditLanding();
-
-      }
-      f_id.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitId(); f_id.blur(); } });
-      f_id.addEventListener('blur', commitId);
-
-      f_type.addEventListener('change', () => {
-        const t = f_type.value;
+      // Type
+      const fType = document.getElementById('f_type');
+      fType?.addEventListener('change', () => {
+        const t = fType.value;
         if (t !== step.type) {
-          const repl = makeStep(t);
-          // keep same id & required
-          repl.id = step.id; repl.required = step.required;
-          // migrate title/label best-effort
-          repl.title = step.title || repl.title;
-          repl.label = step.label || repl.label;
-          repl.next = step.next || repl.next;
-          repl.pos = step.pos || repl.pos;
-          replaceStep(step.id, repl);
-          viewState.selectedStepId = repl.id;
-          // renderAll();
+          step.type = t;
+          if (t === 'select' && !Array.isArray(step.options))
+            step.options = [
+              getDefaultOption(step)
+            ];
+          // normalize fields when switching types
+          if (t !== 'instruction') { delete step.body; }
+          setDirty?.(true);
+          renderInspector(); // re-render to show correct controls
           renderGraph();
-          renderInspector();
-
-          // if (studioMode === 'view') renderViewAndEditLanding();
-
         }
       });
-      // f_req.addEventListener('change', () => { step.required = Boolean(f_req.value); });
-      f_req?.addEventListener('change', () => { step.required = f_req.checked; setDirty(true); });
 
-      // -------- Wire per-type ----------
-      if (step.type === 'instruction') {
-        const f_title = box.querySelector('#f_title');
-        const f_body = box.querySelector('#f_body');
-        const f_img = box.querySelector('#f_img');
-        const f_img_file = box.querySelector('#f_img_file');
+      // Required
+      const fReq = document.getElementById('f_req');
+      fReq?.addEventListener('change', () => {
+        step.required = !!fReq.checked;
+        setDirty?.(true);
+      });
 
-        // Title: commit on Enter/blur (no live render while typing)
-        function commitTitle() {
-          const v = f_title.value.trim();
-          if ((step.title || '') === v) return;
-          step.title = v;
-          // renderSteps(); 
-          renderGraph();
-        }
-        f_title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitTitle(); f_title.blur(); } });
-        f_title.addEventListener('blur', commitTitle);
+      // Title (unified)
+      const fTitle = document.getElementById('f_title');
+      fTitle?.addEventListener('input', () => {
+        step.title = fTitle.value || '';
+        setDirty?.(true);
+      });
 
-        // Others can be live-updated
-        f_body.addEventListener('input', () => { step.body = f_body.value; });
-        f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
-        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }));
+      // Body (instruction)
+      const fBody = document.getElementById('f_body');
+      fBody?.addEventListener('input', () => {
+        step.body = fBody.value || '';
+        setDirty?.(true);
+      });
 
-        // if (step.type !== 'end') {
-        const f_next = box.querySelector('#f_next');
-        f_next.addEventListener('change', () => {
-          step.next = f_next.value || undefined;
-          ensureSopMandatory();
-          renderGraph();
-        });
+      // Input specifics
+      const fPh = document.getElementById('f_ph');
+      fPh?.addEventListener('input', () => { step.placeholder = fPh.value || ''; setDirty?.(true); });
+      const fRegex = document.getElementById('f_regex');
+      fRegex?.addEventListener('input', () => { step.regex = fRegex.value || ''; setDirty?.(true); });
+      const fErr = document.getElementById('f_err');
+      fErr?.addEventListener('input', () => { step.error = fErr.value || ''; setDirty?.(true); });
+      const fReqMsg = document.getElementById('f_reqmsg');
+      fReqMsg?.addEventListener('input', () => { step.requiredMessage = fReqMsg.value || ''; setDirty?.(true); });
+
+      // Select mode
+
+      // const fMode = document.getElementById('f_mode');
+      // fMode?.addEventListener('change', () => {
+      //   step.mode = fMode.value === 'multi' ? 'multi' : 'single';
+      //   setDirty?.(true);
+      //   renderInspector(); // re-render to flip option-next vs step-next
+      // });
+
+      const fMode = document.getElementById('f_mode');
+      fMode?.addEventListener('change', () => {
+        const newMode = (fMode.value === 'multi') ? 'multi' : 'single';
+        if (step.mode === newMode) return;
+
+        step.mode = newMode;
+        // let dirty = true;
+
+        // if (newMode === 'multi') {
+        //   if (stripOptionNexts(step)) dirty = true; // removed option.next that don't make sense in multi
         // }
-      }
-      else if (step.type === 'input') {
-        const f_label = box.querySelector('#f_label');
-        const f_ph = box.querySelector('#f_ph');
-        const f_regex = box.querySelector('#f_regex');
-        const f_err = box.querySelector('#f_err');
-        const f_reqmsg = box.querySelector('#f_reqmsg');
-        const f_img = box.querySelector('#f_img');
-        const f_img_file = box.querySelector('#f_img_file');
-        const f_next = box.querySelector('#f_next');
 
-        // Label: commit on Enter/blur
-        function commitLabel() {
-          const v = f_label.value.trim();
-          if ((step.label || '') === v) return;
-          step.label = v;
-          // renderSteps(); // map not required
-        }
-        f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
-        f_label.addEventListener('blur', commitLabel);
+        // if (dirty) 
+        setDirty?.(true);
 
-        // Others live
-        f_ph.addEventListener('input', () => { step.placeholder = f_ph.value; });
-        f_regex.addEventListener('input', () => { step.regex = f_regex.value || undefined; });
-        f_err.addEventListener('input', () => { step.error = f_err.value || undefined; });
-        f_reqmsg.addEventListener('input', () => { step.requiredMessage = f_reqmsg.value || undefined; });
-        f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
-        f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }));
-        f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
-      }
-      else if (step.type === 'select') {
-        const f_label = box.querySelector('#f_label');
-        const f_display = box.querySelector('#f_display');
-        const f_mode = box.querySelector('#f_mode');
-        const f_min = box.querySelector('#f_min');
-        const f_max = box.querySelector('#f_max');
-        const f_minmsg = box.querySelector('#f_minmsg');
-        const f_maxmsg = box.querySelector('#f_maxmsg');
-        const addOptBtn = box.querySelector('#addOptBtn');
-        const f_next = box.querySelector('#f_next');
+        renderInspector();
+        renderGraph();
+      });
 
-        // Label: commit on Enter/blur
-        function commitLabel() {
-          const v = f_label.value.trim();
-          if ((step.label || '') === v) return;
-          step.label = v;
-          // renderSteps();
-        }
-        f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
-        f_label.addEventListener('blur', commitLabel);
 
-        // Others live
-        f_display.addEventListener('change', () => { step.display = f_display.value; });
-        f_mode.addEventListener('change', () => { step.mode = f_mode.value; });
-        f_min.addEventListener('input', () => { step.min = f_min.value === '' ? undefined : Number(f_min.value); });
-        f_max.addEventListener('input', () => { step.max = f_max.value === '' ? undefined : Number(f_max.value); });
-        f_minmsg.addEventListener('input', () => { step.minMessage = f_minmsg.value || undefined; });
-        f_maxmsg.addEventListener('input', () => { step.maxMessage = f_maxmsg.value || undefined; });
-        f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
+      // Image text
+      const fImg = document.getElementById('f_img');
+      fImg?.addEventListener('input', () => { step.img_b64 = fImg.value || ''; setDirty?.(true); });
 
-        addOptBtn.addEventListener('click', () => {
-          step.options = step.options || [];
-          step.options.push({ value: 'opt_' + (step.options.length + 1), label: 'Option ' + (step.options.length + 1) });
-          renderInspector();
+      // Image file
+      const fImgFile = document.getElementById('f_img_file');
+      fImgFile?.addEventListener('change', async () => {
+        const file = fImgFile.files?.[0];
+        if (!file) return;
+        const b64 = await fileToBase64(file); // assume you have this helper
+        step.img_b64 = b64;
+        setDirty?.(true);
+        renderInspector();
+      });
+
+      // Options: add row
+      const addOptBtn = document.getElementById('addOptBtn');
+      addOptBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!Array.isArray(step.options)) step.options = [];
+        // const idx = step.options.length + 1;
+        step.options.push(getDefaultOption(step));
+        setDirty?.(true);
+        renderInspector();
+      });
+
+      // box.querySelectorAll('[data-opt-idx]').forEach(row => {
+      //   console.log(`row`, row);
+
+      //   const i = Number(row.dataset.optIdx);
+      //   const o = step.options[i];
+      //   const fv = row.querySelector('.opt-value');
+      //   const fl = row.querySelector('.opt-label');
+      //   const fh = row.querySelector('.opt-hint');
+      //   const fn = row.querySelector('.opt-next');
+      //   // const fi = row.querySelector('.opt-img');
+      //   // const ff = row.querySelector('.opt-file');
+      //   const fd = row.querySelector('.opt-del');
+
+      //   fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph(); });
+      //   fl.addEventListener('input', () => { o.label = fl.value; });
+      //   fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
+      //   fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
+      //   // fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
+      //   // ff.addEventListener('change', ev => handleImageToBase64(ev, uri => { o.img_b64 = uri; fi.value = uri; }));
+      //   fd.addEventListener('click', () => { step.options.splice(i, 1); renderInspector(); renderGraph(); });
+      // });
+
+
+      // maybe not present in case select-single 
+      const f_next = document.getElementById('f_next');
+      f_next?.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
+
+
+      // Delegate option row events
+      const optTable = document.getElementById('optTable');
+      optTable?.addEventListener('input', (e) => {
+        const tr = e.target.closest('tr[data-opt-idx]');
+        console.log(`tr`, tr);
+        if (!tr) return;
+        const i = parseInt(tr.dataset.optIdx, 10);
+        console.log(`i`, i);
+        console.log(`e.target`, e.target);
+        const opt = step.options[i];
+        console.log('opt before edit', opt);
+        if (!opt) return;
+
+
+        if (e.target.classList.contains('opt-value')) opt.value = e.target.value;
+        if (e.target.classList.contains('opt-label')) opt.label = e.target.value;
+        if (e.target.classList.contains('opt-hint')) opt.hint = e.target.value;
+        if (e.target.classList.contains('opt-next')) {
+          opt.next = e.target.value || '';
           renderGraph();
-        });
+        }
 
-        // Options table row wiring
-        box.querySelectorAll('[data-opt-idx]').forEach(row => {
-          const i = Number(row.dataset.optIdx);
-          const o = step.options[i];
-          const fv = row.querySelector('.f_opt_value');
-          const fl = row.querySelector('.f_opt_label');
-          const fh = row.querySelector('.f_opt_hint');
-          const fn = row.querySelector('.f_opt_next');
-          // const fi = row.querySelector('.f_opt_img');
-          const ff = row.querySelector('.f_opt_file');
-          const fd = row.querySelector('.f_opt_del');
+        setDirty?.(true);
 
-          fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph(); });
-          fl.addEventListener('input', () => { o.label = fl.value; });
-          fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
-          fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
-          // fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
-          // ff.addEventListener('change', ev => handleImageToBase64(ev, uri => { o.img_b64 = uri; fi.value = uri; }));
-          fd.addEventListener('click', () => { step.options.splice(i, 1); renderInspector(); renderGraph(); });
-        });
-      }
+      });
+      optTable?.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('opt-del')) return;
+        e.preventDefault();
+        const tr = e.target.closest('tr[data-opt-idx]');
+        if (!tr) return;
+        const i = parseInt(tr.dataset.idx, 10);
+        step.options.splice(i, 1);
+        setDirty?.(true);
+        renderInspector();
+      });
     }
+
+
+
 
     /*** Graph ***/
     let mapZoom = 0;
@@ -2618,67 +2937,109 @@
     // }
 
 
+    // function buildGraph(starter) {
+    //   const steps = starter.steps || [];
+    //   const nodes = steps.map(s => ({
+    //     id: s.id,
+    //     label: s.id || s.title || s.label,
+    //     pos: s.pos || null
+    //   }));
+    //   const edges = [];
+
+    //   for (let i = 0; i < steps.length; i++) {
+    //     const s = steps[i];
+
+
+
+    //     if (s.type === 'instruction' || s.type === 'input') {
+    //       const target = s.next || null;
+    //       if (target) edges.push({ from: s.id, to: target });
+
+    //       (s.options || []).forEach(o => {
+    //         if (o && o.next) edges.push({ from: s.id, to: o.next, label: o.label || '' });
+    //       });
+
+    //     }
+    //     else if (s.type === 'select') {
+    //       if (Array.isArray(s.options)) {
+    //         for (const o of s.options) {
+    //           if (o?.next) {
+    //             edges.push({ from: s.id, to: o.next, label: (o.label || o.value || '') });
+    //           }
+    //         }
+    //       }
+
+    //       if (s.mode === 'multi') {
+    //         const target = s.next || null;
+    //         if (target) edges.push({ from: s.id, to: target, label: 'after' });
+
+    //       } else {
+    //         const hasOptNext = (s.options || []).some(o => o?.next);
+    //         const target = s.next || null;
+    //         if (target) edges.push({ from: s.id, to: target });
+    //       }
+    //     }
+    //   }
+
+    //   return { nodes, edges };
+    // }
+
+
+
     function buildGraph(starter) {
-      const steps = starter.steps || [];
-      // const nodes = steps.map(s => ({ id: s.id, label: s.title || s.label || s.id }));
+      const steps = starter?.steps || [];
+
+      // nodes = all steps with their stored pos (renderer will use pos as-is)
       const nodes = steps.map(s => ({
         id: s.id,
         label: s.id || s.title || s.label,
         pos: s.pos || null
       }));
+
+      // edges = connections based on rule:
+      // - instruction/input: one edge from step.next (if set)
+      // - select (multi):   one edge from step.next (if set) → "after"
+      // - select (single):  edges from each option.next (ignore step.next)
       const edges = [];
+      const seen = new Set(); // avoid duplicates
 
-      for (let i = 0; i < steps.length; i++) {
-        const s = steps[i];
-        // const defaultNext = steps[i + 1]?.id || null; // ← fall back to sequential order
-        // const defaultNext = null;
+      const pushEdge = (from, to, label) => {
+        if (!from || !to) return;
+        const k = `${from}→${to}#${label || ''}`;
+        if (seen.has(k)) return;
+        seen.add(k);
+        edges.push({ from, to, ...(label ? { label } : {}) });
+      };
 
-
-
+      for (const s of steps) {
         if (s.type === 'instruction' || s.type === 'input') {
-          // const target = s.next || defaultNext;
-          // if (target) edges.push({ from: s.id, to: target });
-          const target = s.next || null;
-          if (target) edges.push({ from: s.id, to: target });
-
-          (s.options || []).forEach(o => {
-            if (o && o.next) edges.push({ from: s.id, to: o.next, label: o.label || '' });
-          });
-
+          // single next
+          if (s.next) pushEdge(s.id, s.next);
+          continue;
         }
-        else if (s.type === 'select') {
-          // option-level branches (single-select)
-          if (Array.isArray(s.options)) {
-            for (const o of s.options) {
-              if (o?.next) {
-                edges.push({ from: s.id, to: o.next, label: (o.label || o.value || '') });
+
+        if (s.type === 'select') {
+          if (s.mode === 'multi') {
+            // multi-select → use step.next only (after all selections)
+            if (s.next) pushEdge(s.id, s.next, 'after');
+          } else {
+            // single-select → use per-option next only
+            if (Array.isArray(s.options)) {
+              for (const o of s.options) {
+                if (o?.next) pushEdge(s.id, o.next, (o.label || o.value || ''));
               }
             }
           }
-
-          if (s.mode === 'multi') {
-            // multi-select: go to step.next or next step after selection phase
-            // const target = s.next || defaultNext;
-            // if (target) edges.push({ from: s.id, to: target, label: 'after' });
-            // multi-select → only if step.next is set
-            const target = s.next || null;
-            if (target) edges.push({ from: s.id, to: target, label: 'after' });
-
-          } else {
-            // single-select: if no option.next and no step.next, fall back to sequential
-            // const hasOptNext = (s.options || []).some(o => o?.next);
-            // const target = s.next || (!hasOptNext ? defaultNext : null);
-            // if (target) edges.push({ from: s.id, to: target });
-            const hasOptNext = (s.options || []).some(o => o?.next);
-            const target = s.next || null;
-            if (target) edges.push({ from: s.id, to: target });
-          }
+          continue;
         }
-        // 'end' has no outgoing edges
+
+        // any other/unknown types: be conservative, only step.next if present
+        if (s.next) pushEdge(s.id, s.next);
       }
 
       return { nodes, edges };
     }
+
 
 
 
@@ -2693,6 +3054,7 @@
       const adj = {};
       nodes.forEach(n => adj[n.id] = []);
       edges.forEach(e => { (adj[e.from] ||= []).push(e.to); });
+      console.log(`edges`, edges);
 
       // start from the first node (treat as root)
       const depth = {};
@@ -3851,8 +4213,10 @@
       const nodes = steps.map(s => ({ id: s.id, pos: s.pos }));
       const edges = [];
       for (const s of steps) {
-        if (s.next) edges.push({ from: s.id, to: s.next });
-        if (s.type === 'select') {
+        // if instruction/input/multi-select, always follow step.next if present
+        const ifSingleSelect = (s.type === 'select' && s.mode === 'single');
+        if (!ifSingleSelect && s.next) edges.push({ from: s.id, to: s.next });
+        else if (ifSingleSelect) {
           for (const o of (s.options || [])) if (o && o.next) edges.push({ from: s.id, to: o.next });
         }
       }
@@ -4476,7 +4840,26 @@
     }
 
     // has no next step implicitly (no indicator)
-    const isEndStep = (s) => !s?.next;
+    // const isEndStep = (s) => !s?.next;
+
+    const isEndStep = (s) => {
+      if (!s || typeof s !== 'object') return true;
+
+      if (s.type === 'select') {
+        if (s.mode === 'multi') {
+          // select + multi: NOT end if step.next exists
+          return !s.next;
+        }
+        // select + single: NOT end if at least one option has next
+        const opts = Array.isArray(s.options) ? s.options : [];
+        const anyOptHasNext = opts.some(o => o && o.next);
+        return !anyOptHasNext;
+      }
+
+      // all other types: NOT end if step.next exists
+      return !s.next;
+    };
+
 
 
 
@@ -4521,7 +4904,7 @@
         err.className = 'error';
         err.style.display = 'none';
         // node.appendChild(err);                               // ← remove this
-        img ? img.before(err) : inp.insertAdjacentElement('afterend', err);  // ← insert here
+        // img ? img.before(err) : inp.insertAdjacentElement('afterend', err);  // ← insert here
 
 
         function refreshInput() {
@@ -4621,7 +5004,11 @@
         if (!isEndStep(step)) {
           // branch support
           const currentStep = steps[viewState.stepIdx];
-          if (currentStep && currentStep.type === 'select' && currentStep.mode !== 'multi') {
+          console.log(`currentStep`, currentStep);
+          if (currentStep &&
+            currentStep.type === 'select' &&
+            currentStep.mode === 'single') {
+              console.log(`viewState.answers`, viewState.answers);
             const choice = viewState.answers[currentStep.id];
             if (choice && choice.next) {
               // jump to label
@@ -4635,14 +5022,14 @@
             }
           }
           // step-level next
-          if (currentStep && currentStep.next) {
+          else if (currentStep && currentStep.next) {
             const to = steps.findIndex(x => x.id === currentStep.next);
             if (to >= 0) {
               viewState.stepIdx = to;
               renderViewStep();
               return;
             }
-          }
+          } 
           // default: linear
           // viewState.stepIdx++; 
           renderViewStep();
@@ -4685,6 +5072,32 @@
         }]
       };
     }
+
+    function getDefaultOption(step) {
+      if (!step || step.type !== 'select') return null;
+
+      const len = Array.isArray(step.options) ? step.options.length : 0;
+      const idx = len + 1;
+
+      return {
+        value: 'opt' + idx,
+        label: 'Option ' + idx,
+        hint: '',
+        next: step.next ?? null
+      };
+    }
+
+
+    // Reusable: remove per-option next links (safe on non-selects / missing arrays)
+    function stripOptionNexts(step) {
+      if (!step || step.type !== 'select' || !Array.isArray(step.options)) return false;
+      let touched = false;
+      step.options.forEach(o => {
+        if (o && 'next' in o) { delete o.next; touched = true; }
+      });
+      return touched;
+    }
+
     function makeStep(type, starter = getStarter()) {
       const id = uniqueId(type, starter);
       if (type === 'instruction') return { type, id, title: "Instruction", body: "" };
@@ -4708,42 +5121,79 @@
     function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
     function escapeHtml(str) { return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
     function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
-    function nextSummary(step) {
-      if (step.type === 'select') {
-        const optEdges = (step.options || []).filter(o => o.next).length;
-        return (optEdges > 0 ? (optEdges + ' paths') : '') + (step.next ? (optEdges > 0 ? ' + ' : '') + 'after→' + step.next : (optEdges > 0 ? '' : '—'));
-      }
-      return step.next || '—';
-    }
-    function nextSelectHtml(steps, cur) {
-      const selfId = viewState?.selectedStepId; // current node being edited
-      const opts = steps
-        .filter(s => s.id !== selfId) // hide itself
+    // function nextSummary(step) {
+    //   if (step.type === 'select') {
+    //     const optEdges = (step.options || []).filter(o => o.next).length;
+    //     return (optEdges > 0 ? (optEdges + ' paths') : '') + (step.next ? (optEdges > 0 ? ' + ' : '') + 'after→' + step.next : (optEdges > 0 ? '' : '—'));
+    //   }
+    //   return step.next || '—';
+    // }
+
+    // function nextSelectHtml(steps, cur) {
+    //   const selfId = viewState?.selectedStepId; // current node being edited
+    //   const opts = steps
+    //     .filter(s => s.id !== selfId) // hide itself
+    //     .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
+    //     .join('');
+    //   return `<select id="f_next"><option value="">—</option>${opts}</select>`;
+    // }
+
+    function nextSelectHtml(steps, cur, selfId, withId = true) {
+      const hideId = (typeof selfId === 'string' && selfId) || (viewState?.selectedStepId || null);
+      const opts = (steps || [])
+        .filter(s => s && s.id !== hideId) // hide itself
         .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
         .join('');
-      return `<select id="f_next"><option value="">—</option>${opts}</select>`;
+      const idAttr = withId ? ' id="f_next"' : ''; // avoid duplicate ids in lists
+      const classAttr = ' class="opt-next"'; // always class for event delegation
+      return `<select${idAttr}${classAttr}>` +
+        `<option value="">—</option>${opts}</select>`;
     }
 
 
-    function optionRowHtml(o, i, steps) {
+
+    //   function optionRowHtml(o, i, steps) {
+    //     return `
+    //   <tr data-opt-idx="${i}">
+    //     <td><input class="f_opt_value" type="text" value="${escapeAttr(o.value || '')}"/></td>
+    //     <td><input class="f_opt_label" type="text" value="${escapeAttr(o.label || '')}"/></td>
+    //     <td><input class="f_opt_hint" type="text" value="${escapeAttr(o.hint || '')}"/></td>
+    //     <td>
+    //       <select class="f_opt_next">
+    //         ${steps.map(s => {
+    //       const text = s.id || s.title || s.label;
+    //       return `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(text)}</option>`;
+    //     }).join('')}
+    //       </select>
+    //     </td>
+
+    //     <td class="center"><button class="f_opt_del">🗑️</button></td>
+    //   </tr>
+    // `;
+    //   }
+
+    function optionRowHtml(o, i, steps, includeNext, curStepId) {
+      const v = escapeAttr(o?.value || '');
+      const lbl = escapeAttr(o?.label || '');
+      const hint = escapeAttr(o?.hint || '');
+      // const nextCell = includeNext
+      //   ? `<td>${nextSelectHtml(steps, o?.next, curStepId)}</td>`
+      //   : '';
+      const nextCell = includeNext
+        ? `<td>${nextSelectHtml(steps, o?.next, curStepId, /*withId=*/false)}</td>`
+        : '';
+
       return `
     <tr data-opt-idx="${i}">
-      <td><input class="f_opt_value" type="text" value="${escapeAttr(o.value || '')}"/></td>
-      <td><input class="f_opt_label" type="text" value="${escapeAttr(o.label || '')}"/></td>
-      <td><input class="f_opt_hint" type="text" value="${escapeAttr(o.hint || '')}"/></td>
-      <td>
-        <select class="f_opt_next">
-          ${steps.map(s => {
-        const text = s.title || s.label || s.id;
-        return `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(text)}</option>`;
-      }).join('')}
-        </select>
-      </td>
-      
-      <td class="center"><button class="f_opt_del">🗑</button></td>
+      <td><input class="opt-value" type="text" value="${v}"></td>
+      <td><input class="opt-label" type="text" value="${lbl}"></td>
+      <td><input class="opt-hint"  type="text" value="${hint}"></td>
+      ${nextCell}
+      <td class="center"><button class="iconbtn opt-del">✕</button></td>
     </tr>
   `;
     }
+
     function handleImageToBase64(ev, cb) {
       const f = ev.target.files?.[0]; if (!f) return;
       const r = new FileReader();
