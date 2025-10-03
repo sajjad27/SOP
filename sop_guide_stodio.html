@@ -22,6 +22,28 @@
       --text: #0f172a;
       --line: #cfd6dd;
       --input-bg: #f6f8fa;
+      --hl-bg: #F7B733;
+            --hl-fg: #0f172a;
+
+    }
+
+    html[data-theme="dark"] {
+      --fg: #e5e7eb;
+      --bg: #0b1220;
+      --muted: #9aa4b2;
+      --card: #0f172a;
+      --line: #334155;
+      /* was #233044: too low-contrast */
+      --accent: #3b82f6;
+      --accent-weak: rgba(59, 130, 246, .16);
+      --ok: #22c55e;
+      --warn: #ef4444;
+      --shadow: none;
+      --surface: #0f172a;
+      --text: #e5ecf4;
+      --input-bg: rgba(255, 255, 255, .06);
+      --hl-bg: #F7B733;
+      --hl-fg: #0f172a;
     }
 
     * {
@@ -511,24 +533,6 @@
       border-bottom-color: var(--line);
     }
 
-    html[data-theme="dark"] {
-      --fg: #e5e7eb;
-      --bg: #0b1220;
-      --muted: #9aa4b2;
-      --card: #0f172a;
-      --line: #334155;
-      /* was #233044: too low-contrast */
-      --accent: #3b82f6;
-      --accent-weak: rgba(59, 130, 246, .16);
-      --ok: #22c55e;
-      --warn: #ef4444;
-      --shadow: none;
-      --surface: #0f172a;
-      --text: #e5ecf4;
-      --line: #2a3442;
-      --input-bg: rgba(255, 255, 255, .06);
-    }
-
     /* Ensure all controls actually use the vars */
     button,
     .btn,
@@ -779,7 +783,8 @@
       cursor: pointer;
       text-align: left;
       background: var(--card);
-      border: 2px solid var(--line);
+      /* border: 2px solid var(--line); */
+      outline: 2px solid var(--line);
       border-radius: 16px;
       padding: 16px;
       box-shadow: var(--shadow);
@@ -799,7 +804,8 @@
     .vw-card:hover,
     .vw-card:focus-visible {
       background: rgba(0, 0, 0, .04);
-      border: 3px solid var(--line);
+      /* border: 3px solid var(--line); */
+      outline: 3px solid var(--line);
       /* border-color: var(--line-hover, #dbe3ea); */
       transition: background-color .2s ease, border-color .2s ease;
     }
@@ -807,9 +813,10 @@
     /* HOVER ONLY — “+ New” card, and only when in Edit mode */
     .vw-card--add:hover,
     .vw-card--add:focus-visible {
-      border-style: dashed;
+      /* border-style: dashed; */
       /* fewer cuts than dotted */
-      border-width: 3px;
+      /* border-width: 3px; */
+      outline: 3px solid var(--line);
       /* bolder */
       /* border-color: var(--line-hover, #dbe3ea); */
       /* background: rgba(0, 0, 0, .03); */
@@ -860,8 +867,9 @@
       margin: 8px 0 0 20px;
     }
 
-    #vwStep p {
-      margin: 8px 0 0;
+    #vwStep p,
+    #f_body p {
+      margin: 0px 0 0;
     }
 
     .vw-nav {
@@ -947,14 +955,15 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      border: 2px dashed var(--line, #3a4353);
+      /* border: 2px dashed var(--line, #3a4353); */
+      outline: 2px dashed var(--line, #3a4353);
       background: transparent;
       color: var(--muted, #9aa4b2);
     }
 
-    .vw-card--add:hover {
+    /* .vw-card--add:hover {
       border-style: solid;
-    }
+    } */
 
     .vw-card--add-icon {
       font-size: 2.2rem;
@@ -1011,6 +1020,124 @@
 
     #dlgNewStarter input::placeholder,
     #dlgNewStarter textarea::placeholder {
+      color: var(--muted);
+    }
+
+    .rt-sep {
+      width: 1px;
+      height: 22px;
+      background: var(--line);
+      margin: 0 4px;
+      align-self: center;
+    }
+
+
+    /* Wrapper with shared border/radius; toolbar on top, editor below */
+    .rt-wrap {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--fg);
+    }
+
+    /* Toolbar */
+    .rt-toolbar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 6px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .push-right {
+      margin-left: auto;
+    }
+
+
+    .rt-toolbar .rt-fs {
+      width: auto;
+      min-width: 64px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--fg);
+      font: inherit;
+      padding: 4px 6px;
+    }
+
+
+
+
+    /* Buttons */
+    .rt-btn {
+      padding: 4px 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--fg);
+      font: inherit;
+      font-size: larger;
+      cursor: pointer;
+    }
+
+    .rt-btn:hover {
+      background: rgba(0, 0, 0, .1);
+    }
+
+    /* Editor (same look/feel as your fields) */
+    .rt-editor {
+      display: block;
+      width: 100%;
+      min-height: 110px;
+      padding: 10px;
+      border: 0;
+      /* border comes from .rt-wrap */
+      border-radius: 0 0 10px 10px;
+      /* rounded bottom only */
+      background: var(--card);
+      color: var(--fg);
+      font: inherit;
+      line-height: 1.5;
+      overflow: auto;
+    }
+
+    .rt-editor:focus {
+      outline: none;
+      border-color: var(--line-strong, var(--line));
+      box-shadow: 0 0 0 2px var(--focus-ring, transparent);
+    }
+
+    .rt-editor img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* .rt-editor p {
+      margin: 0 0 .5rem;
+    } */
+
+
+
+
+    /* Focus state consistent with your fields */
+    .rt-editor:focus {
+      outline: none;
+      border-color: var(--line-strong, var(--line));
+      box-shadow: 0 0 0 2px var(--focus-ring, transparent);
+    }
+
+    /* Make pasted images/text behave nicely */
+    .rt-editor img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* .rt-editor p {
+      margin: 0 0 .5rem;
+    } */
+
+    .rt-editor:empty:before {
+      content: attr(data-placeholder);
       color: var(--muted);
     }
 
@@ -1300,11 +1427,7 @@
             🏠 Home
           </button>
 
-          <!-- <div class="upload">
-            <input id="importHtmlInput" type="file" accept=".html,text/html" hidden>
-            <button id="importHtmlBtn" class="btn">Import Viewer HTML…</button>
-            <span id="importHtmlNote" class="small"></span>
-          </div> -->
+
 
           <input id="importHtmlInput" type="file" accept=".html,text/html" hidden>
           <span id="importHtmlNote" class="small"></span>
@@ -1313,16 +1436,12 @@
 
           <button id="globalSaveBtn" disabled>Save</button>
 
-          <!-- <button id="resetSopBtn" class="btn">Reset</button> -->
 
 
           <div class="seg" id="modeSeg" data-hide="guide">
             <button id="modeView" class="seg-btn">Preview</button>
             <button id="modeEdit" class="seg-btn">Edit</button>
           </div>
-
-          <!-- <button id="themeToggle" class="btn">🌙 Dark</button> -->
-          <!-- <button id="exportViewerBtn" class="btn-accent">Export Viewer HTML</button> -->
           <button id="settingsBtn" class="btn">⚙️</button>
 
         </div>
@@ -1464,40 +1583,6 @@
       });
     }
 
-    // async function idbPut(dbName, storeName, value) {
-    //   // 1) open without forcing a version, see what's there
-    //   let db = await new Promise((res, rej) => {
-    //     const req = indexedDB.open(dbName);
-    //     req.onsuccess = () => res(req.result);
-    //     req.onerror = () => rej(req.error);
-    //   });
-
-    //   // 2) if the store is missing, reopen with version+1 and create it in upgrade
-    //   if (!db.objectStoreNames.contains(storeName)) {
-    //     const newVersion = (db.version || 1) + 1;
-    //     db.close();
-    //     db = await new Promise((res, rej) => {
-    //       const req = indexedDB.open(dbName, newVersion);
-    //       req.onupgradeneeded = () => {
-    //         const udb = req.result;
-    //         if (!udb.objectStoreNames.contains(storeName)) {
-    //           udb.createObjectStore(storeName, { keyPath: 'id' });
-    //         }
-    //       };
-    //       req.onsuccess = () => res(req.result);
-    //       req.onerror = () => rej(req.error);
-    //     });
-    //   }
-
-    //   // 3) put
-    //   return new Promise((resolve, reject) => {
-    //     const tx = db.transaction(storeName, 'readwrite');
-    //     tx.oncomplete = () => resolve(true);
-    //     tx.onerror = () => reject(tx.error);
-    //     tx.objectStore(storeName).put(value);
-    //   });
-    // }
-
 
     async function idbGet(dbName, storeName, key) {
       const db = await openDB(dbName, 1, (db) => {
@@ -1525,8 +1610,12 @@
 
     // Any input/change inside header editor or starter editor toggles dirty
     document.addEventListener('input', (e) => {
-      // console.log('e.target', e.target);
-      if (isInEditableArea(e.target)) setDirty(true); renderViewStep();
+      if (isInEditableArea(e.target)) {
+        console.log('e.target', e.target);
+
+        setDirty(true);
+        renderViewStep();
+      }
     }, true);
 
     // Only mark dirty on change if the value actually differs from SOP
@@ -1555,7 +1644,7 @@
     let sop = makeBlankSOP();
     let savedSop = null; // last saved snapshot
 
-    const viewState = { starterIdx: 0, answers: {}, selectedStepId: 0 };
+    const viewState = { starterIdx: 0, answers: {}, selectedStepId: 0, stepIdx: 0, history: [] };
 
 
     // ---- Save button state ----
@@ -1575,6 +1664,12 @@
       const hdr = document.getElementById('vwHeaderEditor');
       const edt = document.getElementById('editStarter');
       return (hdr && hdr.contains(el)) || (edt && edt.contains(el));
+    }
+
+    // is inside the graph area (to avoid trapping Del key when typing in inputs)
+    function isInGraphArea(el) {
+      const gp = document.getElementById('graphSvg');
+      return (gp && gp.contains(el));
     }
 
     async function performSave() {
@@ -1635,8 +1730,8 @@
         if (
           e.key === 'Delete' &&
           isEditMode() &&
-          viewState.selectedStepId &&
-          !isInEditableArea(activeEl)
+          viewState.selectedStepId
+          && !isInEditableArea(activeEl)
         ) {
           e.preventDefault();
           delStep();
@@ -1697,7 +1792,6 @@
         viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
 
         ensureSop();
-        // renderAll();
         renderViewAndEditLanding();
 
         wireGlobal();
@@ -1785,7 +1879,9 @@
           else if (savedSop) {
             // if discarding, restore last saved and re-render
             sop = structuredClone(savedSop);
-            renderAll();
+            renderInspector();
+            renderGraph();
+            // renderAll();
           }
           clearDirty();
         }
@@ -1801,11 +1897,7 @@
 
 
       btnEdit?.addEventListener('click', () => {
-        // renderAll();
         changeDataMode('edit');
-        // formDirty = false;
-        // renderAll();
-        // wireLandingPageEdit();
       });
 
     })();
@@ -1871,6 +1963,7 @@
       document.getElementById('addFreeBtn').addEventListener('click', () => {
         placingFree = true;
         ghostPos = null;
+        ensureStarterStartId(getStarter());
         renderGraph();
       });
 
@@ -1894,355 +1987,11 @@
     /*** Renderers ***/
     function renderAll() {
       renderViewAndEditLanding();
-      // renderStarterMeta();
-
       renderViewStep();
-      // renderSteps();
       renderInspector();
       renderGraph();
     }
 
-    // function renderStarters() {
-    //   if (!Array.isArray(sop.starters)) sop.starters = [];
-    //   // ensure at least one starter exists
-    //   // if (sop.starters.length === 0) {
-    //   //   sop.starters.push({
-    //   //     id: 'starter_1',
-    //   //     label: 'Starter 1',
-    //   //     summary: '',
-    //   //     steps: [makeStep('instruction'), makeStep('end')]
-    //   //   });
-    //   // }
-    //   viewState.starterIdx = Math.min(viewState.starterIdx, sop.starters.length - 1);
-
-    // }
-
-    // ['pointerdown', 'mousedown', 'touchstart'].forEach(evt => {
-    //   graphSvg.addEventListener(evt, () => {
-    //     const a = document.activeElement;
-    //     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) a.blur();
-    //   }, true);
-    // });
-
-    //   function renderStarterMeta() {
-    //     const st = getStarter();
-    //     const box = document.getElementById('starterMetaBox');
-    //     if (!box) return;
-
-    //     if (!st) {
-    //       box.innerHTML = '<div class="small">No starter selected.</div>';
-    //       return;
-    //     }
-
-    //     box.innerHTML = `
-    //   <label>Title</label>
-    //   <input id="st_title" type="text" value="${escapeAttr(st.title || '')}"/>
-
-    //   <label>Summary</label>
-    //   <input id="st_summary" type="text" value="${escapeAttr(st.summary || '')}"/>
-
-    //   <label>Description</label>
-    //   <input id="st_desc" type="text" value="${escapeAttr(st.description || '')}"/>
-
-
-    // `;
-
-    //     const t = box.querySelector('#st_title');
-    //     const s = box.querySelector('#st_summary');
-    //     const d = box.querySelector('#st_desc');
-
-    //     t.addEventListener('input', () => { st.title = t.value; });
-    //     s.addEventListener('input', () => { st.summary = s.value; });
-    //     d.addEventListener('input', () => { st.description = d.value; });
-    //   }
-
-
-
-    //   function renderInspector() {
-    //     const box = document.getElementById('propBox');
-    //     const st = getStarter();
-    //     const step = st.steps.find(x => x.id === viewState.selectedStepId);
-    //     if (!step) { box.innerHTML = '<span class="small">Select a step.</span>'; return; }
-
-    //     const isInstr = step.type === 'instruction';
-    //     const isInput = step.type === 'input';
-    //     const isSelect = step.type === 'select';
-    //     const isMulti = isSelect && step.mode === 'multi';
-    //     const isSingle = isSelect && step.mode !== 'multi';
-
-
-    //     // Common fields
-    //     let html = `
-    //   <label>ID</label><input id="f_id" type="text" value="${escapeAttr(step.id)}"/>
-    //   <div id="f_id_err" class="error" style="display:none"></div>
-    //   <div class="kv">
-    //     <div>
-    //       <label>Type</label>
-    //       <select id="f_type">
-    //         ${['instruction', 'input', 'select'].map(t => `<option ${t === step.type ? 'selected' : ''} value="${t}">${t}</option>`).join('')}
-    //       </select>
-    //     </div>
-    //     <div>
-    //       <div>
-    //         <input id="f_req" type="checkbox" ${step.required ? 'checked' : ''} />
-    //       </div>
-    //       <label>Required</label>
-    //     </div>
-    //   </div>
-    // `;
-
-    //     if (step.type === 'instruction') {
-    //       html += `
-    //     <label>Title</label><input id="f_title" type="text" value="${escapeAttr(step.title || '')}"/>
-    //     <label>Body</label><textarea id="f_body" rows="4">${escapeHtml(step.body || '')}</textarea>
-
-    //       <label>Next (step.id)</label>
-    //       ${nextSelectHtml(st.steps, step.next, step.id)}
-
-    //     <div class="kv">
-    //       <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
-    //       <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
-    //     </div>
-    //   `;
-    //     }
-    //     else if (step.type === 'input') {
-    //       html += `
-    //     <label>Label</label><input id="f_label" type="text" value="${escapeAttr(step.label || '')}"/>
-    //     <label>Placeholder</label><input id="f_ph" type="text" value="${escapeAttr(step.placeholder || '')}"/>
-    //     <div class="kv">
-    //       <div><label>Regex</label><input id="f_regex" type="text" value="${escapeAttr(step.regex || '')}" placeholder="e.g. ^[1-9][0-9]{5}$"/></div>
-    //       <div><label>Error message</label><input id="f_err" type="text" value="${escapeAttr(step.error || '')}"/></div>
-    //     </div>
-    //     <div class="kv">
-    //       <div><label>Required message</label><input id="f_reqmsg" type="text" value="${escapeAttr(step.requiredMessage || '')}"/></div>
-    //       <div></div>
-    //       </div>
-    //       <label>Next (step.id)</label>
-    //       ${nextSelectHtml(st.steps, step.next, step.id)}
-    //     <div class="kv">
-    //       <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
-    //       <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
-    //     </div>
-    //   `;
-    //     }
-    //     else if (step.type === 'select') {
-    //       html += `
-    //     <label>Label</label><input id="f_label" type="text" value="${escapeAttr(step.label || '')}"/>
-    //     <div class="kv">
-    //       <div>
-    //         <label>Mode</label>
-    //         <select id="f_mode">
-    //           <option ${step.mode === 'single' ? 'selected' : ''} value="single">single</option>
-    //           <option ${step.mode === 'multi' ? 'selected' : ''} value="multi">multi</option>
-    //         </select>
-
-    //       </div>
-    //     </div>
-    //     <div class="kv">
-    //       <div><label>Minimum Selection</label><input id="f_min" type="number" value="${escapeAttr(step.min ?? '')}"/></div>
-    //       <div><label>Maximum Selection</label><input id="f_max" type="number" value="${escapeAttr(step.max ?? '')}"/></div>
-    //     </div>
-    //     <div class="kv">
-    //       <div><label>Min message</label><input id="f_minmsg" type="text" value="${escapeAttr(step.minMessage || '')}"/></div>
-    //       <div><label>Max message</label><input id="f_maxmsg" type="text" value="${escapeAttr(step.maxMessage || '')}"/></div>
-    //     </div>
-    //     <label>Options</label>
-    //     <table class="table" id="optTable">
-    //       <thead><tr><th style="width:18%">value</th><th style="width:18%">label</th><th>hint</th><th style="width:20%">next</th><th class="center">del</th></tr></thead>
-    //       <tbody>
-    //         ${(step.options || []).map((o, i) => optionRowHtml(o, i, st.steps)).join('')}
-    //       </tbody>
-    //     </table>
-    //     <div class="rowflex">
-    //       <button id="addOptBtn" class="iconbtn">+ Option</button>
-    //     </div>
-    //     <label>After (step.next, used esp. for multi)</label>
-    //     ${nextSelectHtml(st.steps, step.next, step.id)}
-    //   `;
-    //     }
-
-    //     box.innerHTML = html;
-
-    //     // -------- Wire common ----------
-    //     const f_type = box.querySelector('#f_type');
-    //     const f_req = box.querySelector('#f_req');
-
-    //     // --- ID commit on Enter/blur + duplicate guard
-    //     const f_id = box.querySelector('#f_id');
-    //     const f_id_err = box.querySelector('#f_id_err');
-
-    //     function commitId() {
-    //       const st = getStarter();
-    //       const oldId = step.id;
-    //       let v = slugify(f_id.value.trim()) || oldId;
-
-    //       if (v === oldId) { f_id_err.style.display = 'none'; f_id_err.textContent = ''; return; }
-
-    //       const dup = (st.steps || []).some(s => s.id === v && s !== step);
-    //       if (dup) {
-    //         f_id_err.textContent = `ID "${v}" already exists`;
-    //         f_id_err.style.display = '';
-    //         return;
-    //       }
-
-    //       rewriteRefs(oldId, v);
-    //       step.id = v;
-    //       viewState.selectedStepId = v;
-    //       f_id.value = v;
-    //       f_id_err.style.display = 'none'; f_id_err.textContent = '';
-    //       renderGraph();
-    //       renderViewStep();
-    //       // if (studioMode === 'view') renderViewAndEditLanding();
-
-    //     }
-    //     f_id.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitId(); f_id.blur(); } });
-    //     f_id.addEventListener('blur', commitId);
-
-    //     f_type.addEventListener('change', () => {
-    //       const t = f_type.value;
-    //       if (t !== step.type) {
-    //         const repl = makeStep(t);
-    //         // keep same id & required
-    //         repl.id = step.id; repl.required = step.required;
-    //         // migrate title/label best-effort
-    //         repl.title = step.title || repl.title;
-    //         repl.label = step.label || repl.label;
-    //         repl.next = step.next || repl.next;
-    //         repl.pos = step.pos || repl.pos;
-    //         replaceStep(step.id, repl);
-    //         viewState.selectedStepId = repl.id;
-    //         // renderAll();
-    //         renderGraph();
-    //         renderInspector();
-
-    //         // if (studioMode === 'view') renderViewAndEditLanding();
-
-    //       }
-    //     });
-    //     // f_req.addEventListener('change', () => { step.required = Boolean(f_req.value); });
-    //     f_req?.addEventListener('change', () => { step.required = f_req.checked; setDirty(true); });
-
-    //     // -------- Wire per-type ----------
-    //     if (step.type === 'instruction') {
-    //       const f_title = box.querySelector('#f_title');
-    //       const f_body = box.querySelector('#f_body');
-    //       const f_img = box.querySelector('#f_img');
-    //       const f_img_file = box.querySelector('#f_img_file');
-
-    //       // Title: commit on Enter/blur (no live render while typing)
-    //       function commitTitle() {
-    //         const v = f_title.value.trim();
-    //         if ((step.title || '') === v) return;
-    //         step.title = v;
-    //         // renderSteps(); 
-    //         renderGraph();
-    //       }
-    //       f_title.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitTitle(); f_title.blur(); } });
-    //       f_title.addEventListener('blur', commitTitle);
-
-    //       // Others can be live-updated
-    //       f_body.addEventListener('input', () => { step.body = f_body.value; });
-    //       f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
-    //       f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }));
-
-    //       // if (step.type !== 'end') {
-
-    //       const f_next = box.querySelector('#f_next');
-    //       f_next.addEventListener('change', () => {
-    //         step.next = f_next.value || undefined;
-    //         ensureSopMandatory();
-    //         renderGraph();
-    //       });
-    //       // }
-    //     }
-    //     else if (step.type === 'input') {
-    //       const f_label = box.querySelector('#f_label');
-    //       const f_ph = box.querySelector('#f_ph');
-    //       const f_regex = box.querySelector('#f_regex');
-    //       const f_err = box.querySelector('#f_err');
-    //       const f_reqmsg = box.querySelector('#f_reqmsg');
-    //       const f_img = box.querySelector('#f_img');
-    //       const f_img_file = box.querySelector('#f_img_file');
-    //       const f_next = box.querySelector('#f_next');
-
-    //       // Label: commit on Enter/blur
-    //       function commitLabel() {
-    //         const v = f_label.value.trim();
-    //         if ((step.label || '') === v) return;
-    //         step.label = v;
-    //         // renderSteps(); // map not required
-    //       }
-    //       f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
-    //       f_label.addEventListener('blur', commitLabel);
-
-    //       // Others live
-    //       f_ph.addEventListener('input', () => { step.placeholder = f_ph.value; });
-    //       f_regex.addEventListener('input', () => { step.regex = f_regex.value || undefined; });
-    //       f_err.addEventListener('input', () => { step.error = f_err.value || undefined; });
-    //       f_reqmsg.addEventListener('input', () => { step.requiredMessage = f_reqmsg.value || undefined; });
-    //       f_img.addEventListener('input', () => { step.img_b64 = f_img.value || undefined; });
-    //       f_img_file.addEventListener('change', ev => handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }));
-    //       f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
-    //     }
-    //     else if (step.type === 'select') {
-    //       const f_label = box.querySelector('#f_label');
-    //       // const f_display = box.querySelector('#f_display');
-    //       const f_mode = box.querySelector('#f_mode');
-    //       const f_min = box.querySelector('#f_min');
-    //       const f_max = box.querySelector('#f_max');
-    //       const f_minmsg = box.querySelector('#f_minmsg');
-    //       const f_maxmsg = box.querySelector('#f_maxmsg');
-    //       const addOptBtn = box.querySelector('#addOptBtn');
-    //       const f_next = box.querySelector('#f_next');
-
-    //       // Label: commit on Enter/blur
-    //       function commitLabel() {
-    //         const v = f_label.value.trim();
-    //         if ((step.label || '') === v) return;
-    //         step.label = v;
-    //         // renderSteps();
-    //       }
-    //       f_label.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commitLabel(); f_label.blur(); } });
-    //       f_label.addEventListener('blur', commitLabel);
-
-    //       // Others live
-    //       // f_display.addEventListener('change', () => { step.display = f_display.value; });
-    //       f_mode.addEventListener('change', () => { step.mode = f_mode.value; });
-    //       f_min.addEventListener('input', () => { step.min = f_min.value === '' ? undefined : Number(f_min.value); });
-    //       f_max.addEventListener('input', () => { step.max = f_max.value === '' ? undefined : Number(f_max.value); });
-    //       f_minmsg.addEventListener('input', () => { step.minMessage = f_minmsg.value || undefined; });
-    //       f_maxmsg.addEventListener('input', () => { step.maxMessage = f_maxmsg.value || undefined; });
-    //       f_next.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
-
-    //       addOptBtn.addEventListener('click', () => {
-    //         step.options = step.options || [];
-    //         step.options.push({ value: 'opt_' + (step.options.length + 1), label: 'Option ' + (step.options.length + 1) });
-    //         renderInspector();
-    //         renderGraph();
-    //       });
-
-    //       // Options table row wiring
-    //       box.querySelectorAll('[data-opt-idx]').forEach(row => {
-    //         const i = Number(row.dataset.optIdx);
-    //         const o = step.options[i];
-    //         const fv = row.querySelector('.f_opt_value');
-    //         const fl = row.querySelector('.f_opt_label');
-    //         const fh = row.querySelector('.f_opt_hint');
-    //         const fn = row.querySelector('.f_opt_next');
-    //         // const fi = row.querySelector('.f_opt_img');
-    //         const ff = row.querySelector('.f_opt_file');
-    //         const fd = row.querySelector('.f_opt_del');
-
-    //         fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph(); });
-    //         fl.addEventListener('input', () => { o.label = fl.value; });
-    //         fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
-    //         fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
-    //         // fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
-    //         // ff.addEventListener('change', ev => handleImageToBase64(ev, uri => { o.img_b64 = uri; fi.value = uri; }));
-    //         fd.addEventListener('click', () => { step.options.splice(i, 1); renderInspector(); renderGraph(); });
-    //       });
-    //     }
-    //   }
 
     function renderInspector() {
       const box = document.getElementById('propBox');
@@ -2287,10 +2036,39 @@
   `;
 
       if (isInstr) {
+
+
         html += `
-      <label>Body</label>
-      <textarea id="f_body" rows="4">${escapeHtml(step.body || '')}</textarea>
-    `;
+          <label>Body</label>
+          <div class="rt-wrap">
+            <div class="rt-toolbar">
+                <button type="button" class="rt-btn" data-cmd="bold"   title="Bold"><strong>B</strong></button>
+                <button type="button" class="rt-btn" data-cmd="italic" title="Italic"><em>I</em></button>
+                <select id="fontSizeSelect" class="rt-fs" title="Font size (pt)">
+                  <option value="12" default>12 pt</option>
+                  <option value="14">14 pt</option>
+                  <option value="16">16 pt</option>
+                  <option value="20">20 pt</option>
+                  <option value="24">24 pt</option>
+                  <option value="32">32 pt</option>
+                </select>
+                <button type="button" class="rt-btn" data-cmd="indent" title="Indent">↦</button>
+                <button type="button" class="rt-btn" data-cmd="outdent" title="Outdent">↤</button>
+
+              <button type="button" class="rt-btn" data-cmd="insertUnorderedList" title="Bulleted list">• • •</button>
+              <button type="button" class="rt-btn" data-cmd="insertOrderedList" title="Numbered list">1.</button>
+              <button type="button" class="rt-btn" data-cmd="highlight" title="Highlight">HL</button>
+
+              
+              <button type="button" id="clearFmt" class="push-right rt-btn" title="Clear formatting">✖︎</button>
+              </div>
+              <div id="f_body" class="rt-editor" contenteditable="true">${step.body || ''}</div>
+              </div>
+          </div>
+
+          `;
+
+
       }
 
       if (isInput) {
@@ -2390,7 +2168,11 @@
         const ok = nv && !st.steps.some(s => s !== step && s.id === nv);
         fIdErr.style.display = ok ? 'none' : '';
         fIdErr.textContent = ok ? '' : (nv ? 'ID already exists.' : 'ID is required.');
-        if (ok) { step.id = nv; viewState.selectedStepId = nv; setDirty?.(true); }
+        if (ok) {
+          step.id = nv; viewState.selectedStepId = nv;
+          setDirty?.(true);
+          renderGraph();
+        }
       });
 
       // Type
@@ -2415,7 +2197,9 @@
       const fReq = document.getElementById('f_req');
       fReq?.addEventListener('change', () => {
         step.required = !!fReq.checked;
+
         setDirty?.(true);
+        renderViewStep();
       });
 
       // Title (unified)
@@ -2423,33 +2207,361 @@
       fTitle?.addEventListener('input', () => {
         step.title = fTitle.value || '';
         setDirty?.(true);
+        renderViewStep();
       });
 
-      // Body (instruction)
-      const fBody = document.getElementById('f_body');
-      fBody?.addEventListener('input', () => {
-        step.body = fBody.value || '';
-        setDirty?.(true);
+
+
+      const bodyEl = document.getElementById('f_body');
+      bodyEl?.addEventListener('input', () => {
+        console.log('body input', bodyEl.innerHTML);
+        step.body = bodyEl.innerHTML; // save only; no re-render here
+        setDirty(true);
+        renderViewStep();
       });
+
+      document.execCommand('defaultParagraphSeparator', false, 'p');
+
+      console.log(`bodyEl`, bodyEl);
+      const wrap = bodyEl?.closest('.rt-wrap');
+      console.log(`wrap`, wrap);
+      const toolbar = wrap ? wrap.querySelector('.rt-toolbar') : null;
+      console.log(`toolbar`, toolbar);
+
+      document.getElementById('clearFmt')?.addEventListener('click', () => {
+        bodyEl.focus();
+
+        // 1) strip inline formatting
+        document.execCommand('selectAll');
+        document.execCommand('removeFormat');
+
+        // 2) unwrap links
+        bodyEl.querySelectorAll('a').forEach(a => a.replaceWith(document.createTextNode(a.textContent)));
+
+        // 3) remove lists → turn each <li> into a <p>
+        bodyEl.querySelectorAll('ul,ol').forEach(list => {
+          const frag = document.createDocumentFragment();
+          list.querySelectorAll('li').forEach(li => {
+            const p = document.createElement('p');
+            p.textContent = li.textContent; // plain text
+            frag.appendChild(p);
+          });
+          list.replaceWith(frag);
+        });
+
+        // 4) convert blockquote to plain paragraphs (blockquote adds indent)
+        bodyEl.querySelectorAll('blockquote').forEach(bq => {
+          const p = document.createElement('p');
+          p.innerHTML = bq.innerHTML;
+          bq.replaceWith(p);
+        });
+
+        // 5) clear block-level indent/alignment
+        bodyEl.querySelectorAll('p, div, li, blockquote').forEach(el => {
+          el.style.marginLeft = '';
+          el.style.paddingLeft = '';
+          el.style.textIndent = '';
+          el.style.textAlign = '';
+        });
+
+        // 6) normalize root (ensures only <p> at root + default size)
+        normalizeEditorRoot(); // uses your existing function
+        const defaultPx = (typeof getDefaultPx === 'function') ? getDefaultPx() : 16;
+        bodyEl.querySelectorAll('p').forEach(p => p.style.fontSize = defaultPx + 'px');
+
+        // 7) persist
+        step.body = bodyEl.innerHTML;
+        setDirty(true);
+        renderViewStep();
+      });
+
+      // Font size dropdown: applies inline <span style="font-size:...">
+      document.getElementById('fontSizeSelect')?.addEventListener('change', (e) => {
+        bodyEl.focus();
+
+        const pt = e.target.value;
+        if (!pt) return;
+        const px = Math.round(pt * 96 / 72); // pt to px
+
+        const blocks = getBlocksInSelection();
+        console.log(`blocks`, blocks);
+        blocks.forEach(el => {
+          el.style.fontSize = px + 'px';                 // apply to the whole line
+          el.querySelectorAll('[style*="font-size"]').forEach(n => n.style.fontSize = ''); // clear inline leftovers
+        });
+        step.body = bodyEl.innerHTML;
+        renderViewStep();
+        // hello 
+
+      });
+
+
+      function getBlocksInSelection() {
+        const BLOCKS = 'p, div, blockquote, li';
+        const sel = window.getSelection();
+
+        // If no selection/range OR selection is outside the editor → stay in f_body
+        if (!sel || !sel.rangeCount || !bodyEl.contains(sel.anchorNode)) {
+          // pick the nearest block inside the editor (first block), ensure one exists
+          const firstBlock = bodyEl.querySelector(BLOCKS) || ensureOneParagraph();
+          return [firstBlock];
+        }
+
+        const range = sel.getRangeAt(0);
+
+        // Collect only blocks INSIDE the editor that intersect the range
+        const found = [];
+        const walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_ELEMENT, {
+          acceptNode: node => node.matches(BLOCKS) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+        });
+        while (walker.nextNode()) {
+          if (range.intersectsNode(walker.currentNode)) found.push(walker.currentNode);
+        }
+
+        // If nothing matched, return the closest block **inside the editor**, not global
+        if (found.length === 0) {
+          return [closestBlockInEditor(sel.anchorNode)];
+        }
+        return found;
+
+        function closestBlockInEditor(node) {
+          const el = (node && node.nodeType === 1 ? node : node && node.parentElement) || bodyEl;
+          const within = el.closest(BLOCKS);
+          if (within && bodyEl.contains(within)) return within;
+          const fb = bodyEl.querySelector(BLOCKS) || ensureOneParagraph();
+          return fb;
+        }
+
+        function ensureOneParagraph() {
+          const p = document.createElement('p');
+          p.innerHTML = '<br>';
+          bodyEl.appendChild(p);
+          return p;
+        }
+
+
+        // ensure the select shows the default
+        (() => {
+          const sel = document.getElementById('fontSizeSelect');
+          const def = sel.querySelector('option[default]') || sel.options[0];
+          if (def) sel.value = def.value;
+        })();
+
+      }
+
+
+      function closestBlock(node) {
+        return (node.nodeType === 1 ? node : node.parentElement).closest(BLOCKS) || editor;
+      }
+
+
+      // Bold / italic / lists still via execCommand (inline semantics are fine)
+      // toolbar?.addEventListener('click', (e) => {
+      //   const btn = e.target.closest('.rt-btn');
+      //   if (!btn) return;
+      //   const cmd = btn.dataset.cmd;
+      //   bodyEl.focus();
+
+      //   if (cmd === 'bold' || cmd === 'italic') {
+      //     document.execCommand(cmd);
+      //     step.body = bodyEl.innerHTML;
+      //     setDirty(true);
+      //     renderViewStep();
+      //     return;
+      //   }
+      //   if (cmd === 'ul') { document.execCommand('insertUnorderedList'); step.body = bodyEl.innerHTML; setDirty(true); renderViewStep(); return; }
+      //   if (cmd === 'ol') { document.execCommand('insertOrderedList'); step.body = bodyEl.innerHTML; setDirty(true); renderViewStep(); return; }
+
+      // });
+
+      // const HL_COLOR = '#ff8d00'; // readable in light/dark
+      const HL_CMD = document.queryCommandSupported('hiliteColor') ? 'hiliteColor' : 'backColor';
+
+      document.querySelector('.rt-toolbar [data-cmd="highlight"]')?.addEventListener('mousedown', e => e.preventDefault());
+      document.querySelector('.rt-toolbar [data-cmd="highlight"]')?.addEventListener('click', () => {
+        bodyEl.focus();
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed) return; // nothing selected
+
+        // naive toggle: if start is highlighted, clear; else apply our color
+        const current = (document.queryCommandValue(HL_CMD) || '').toLowerCase();
+        const isOn = current.includes('rgb') || current.includes('#'); // any bg set at caret
+        // const HL_COLOR = "#F7B733";
+        // if (isOn) {
+        //   document.execCommand(HL_CMD, false, 'transparent');  // clear at caret
+        //   scrubBgInSelection();                                // clear spans in the selected range
+        // } else {
+        //   // document.execCommand(HL_CMD, false, HL_COLOR);       // apply our highlight to the selection
+        //   document.execCommand(HL_CMD, false, 'var(--hl-bg)');
+        // }
+
+        if (isOn) {
+          document.execCommand(HL_CMD, false, 'transparent'); // remove bg
+          scrubBgInSelection();                                // you already have this
+          // scrubFgInSelection();                                // NEW: clear inline color in range
+        } else {
+          const hlBg = getComputedStyle(document.documentElement)
+            .getPropertyValue('--hl-bg')
+            .trim() || '#000000';
+
+          const hlFg = getComputedStyle(document.documentElement)
+            .getPropertyValue('--hl-fg')
+            .trim() || '#000000';
+
+
+          document.execCommand(HL_CMD, false, hlBg);       // keep your bg
+          document.execCommand('styleWithCSS', false, true);
+          document.execCommand('foreColor', false, hlFg);        // set opposite text color
+        }
+
+
+        step.body = bodyEl.innerHTML;
+        setDirty(true);
+        renderViewStep();
+      });
+
+      function scrubFgInSelection() {
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+
+        const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_ELEMENT, {
+          acceptNode: (el) => (bodyEl.contains(el) && range.intersectsNode(el)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+        });
+
+        const toClear = [];
+        while (walker.nextNode()) {
+          const el = walker.currentNode;
+          if (el.style && el.style.color) toClear.push(el);
+        }
+        toClear.forEach(el => el.style.color = '');
+      }
+
+
+      // remove background-color only within the current selection (keeps links/bold/etc.)
+      function scrubBgInSelection() {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0);
+
+        const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_ELEMENT, {
+          acceptNode: (el) => (bodyEl.contains(el) && range.intersectsNode(el)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+        });
+
+        while (walker.nextNode()) {
+          const el = walker.currentNode;
+          if (el.style && el.style.backgroundColor) el.style.backgroundColor = '';
+        }
+      }
+
+
+      toolbar?.querySelectorAll('[data-cmd]').forEach(btn => {
+        btn.addEventListener('mousedown', e => e.preventDefault());
+        btn.addEventListener('click', () => {
+          bodyEl.focus();
+
+          // map custom cmds to execCommand names
+          const cmd = btn.dataset.cmd;
+          console.log(`cmd`, cmd);
+          // const cmd = raw === 'ul' ? 'insertUnorderedList'
+          //   : raw === 'ol' ? 'insertOrderedList'
+          //     : raw; // bold, italic, indent, outdent
+
+          document.execCommand(cmd, false, null);
+
+          // persist + re-render
+          step.body = bodyEl.innerHTML;
+          setDirty(true);
+          renderViewStep();
+        });
+      });
+
+
+      // function normalizeEditorRoot() {
+      //   if (!bodyEl) return;
+      //   const defaultPx = getDefaultPx();
+
+      //   [...bodyEl.childNodes].forEach(n => {
+      //     console.log('normalizeEditorRoot');
+      //     if (n.nodeType === 3 && n.nodeValue.trim() !== '') {
+      //       const p = document.createElement('p');
+      //       p.textContent = n.nodeValue;
+      //       p.style.fontSize = defaultPx + 'px';
+      //       n.replaceWith(p);
+      //     } else if (n.nodeType === 1 && n.tagName === 'DIV') {
+      //       const p = document.createElement('p');
+      //       p.innerHTML = n.innerHTML;
+      //       p.style.fontSize = defaultPx + 'px';
+      //       n.replaceWith(p);
+      //     }
+      //   });
+
+      //   if (!bodyEl.firstElementChild) {
+      //     const p = document.createElement('p');
+      //     p.innerHTML = '<br>';
+      //     p.style.fontSize = defaultPx + 'px';
+      //     bodyEl.appendChild(p);
+      //   }
+      // }
+
+      function normalizeEditorRoot() {
+        if (!bodyEl) return;
+        const defaultPx = getDefaultPx(); // from earlier helper
+
+        // 1) Convert stray nodes to <p> and size them
+        [...bodyEl.childNodes].forEach(n => {
+          if (n.nodeType === 3 && n.nodeValue.trim() !== '') {
+            const p = document.createElement('p');
+            p.textContent = n.nodeValue;
+            p.style.fontSize = defaultPx + 'px';
+            n.replaceWith(p);
+          } else if (n.nodeType === 1 && n.tagName === 'DIV') {
+            const p = document.createElement('p');
+            p.innerHTML = n.innerHTML;
+            p.style.fontSize = defaultPx + 'px';
+            n.replaceWith(p);
+          }
+        });
+
+        // 2) Ensure at least one paragraph exists
+        if (!bodyEl.firstElementChild) {
+          const p = document.createElement('p');
+          p.innerHTML = '<br>';
+          p.style.fontSize = defaultPx + 'px';
+          bodyEl.appendChild(p);
+        }
+
+        // 3) Apply default size to any existing/new blocks missing it
+        bodyEl.querySelectorAll('p, blockquote, li').forEach(el => {
+          if (!el.style.fontSize) el.style.fontSize = defaultPx + 'px';
+        });
+      }
+
+
+      function getDefaultPx() {
+        const sel = document.getElementById('fontSizeSelect');
+        const def = sel.querySelector('option[default]') || sel.options[0];
+        const pt = parseInt(def.value, 10) || 12;
+        // pt -> px @96dpi
+        return Math.round(pt * 96 / 72);
+      }
+
+
+      bodyEl?.addEventListener('input', normalizeEditorRoot);
+      bodyEl?.addEventListener('paste', () => setTimeout(normalizeEditorRoot, 0));
+      normalizeEditorRoot(); // once on load
+
 
       // Input specifics
       const fPh = document.getElementById('f_ph');
-      fPh?.addEventListener('input', () => { step.placeholder = fPh.value || ''; setDirty?.(true); });
+      fPh?.addEventListener('input', () => { step.placeholder = fPh.value || ''; setDirty?.(true); renderViewStep(); });
       const fRegex = document.getElementById('f_regex');
-      fRegex?.addEventListener('input', () => { step.regex = fRegex.value || ''; setDirty?.(true); });
+      fRegex?.addEventListener('input', () => { step.regex = fRegex.value || ''; setDirty?.(true); renderViewStep(); });
       const fErr = document.getElementById('f_err');
-      fErr?.addEventListener('input', () => { step.error = fErr.value || ''; setDirty?.(true); });
+      fErr?.addEventListener('input', () => { step.error = fErr.value || ''; setDirty?.(true); renderViewStep(); });
       const fReqMsg = document.getElementById('f_reqmsg');
-      fReqMsg?.addEventListener('input', () => { step.requiredMessage = fReqMsg.value || ''; setDirty?.(true); });
+      fReqMsg?.addEventListener('input', () => { step.requiredMessage = fReqMsg.value || ''; setDirty?.(true); renderViewStep(); });
 
-      // Select mode
-
-      // const fMode = document.getElementById('f_mode');
-      // fMode?.addEventListener('change', () => {
-      //   step.mode = fMode.value === 'multi' ? 'multi' : 'single';
-      //   setDirty?.(true);
-      //   renderInspector(); // re-render to flip option-next vs step-next
-      // });
 
       const fMode = document.getElementById('f_mode');
       fMode?.addEventListener('change', () => {
@@ -2477,14 +2589,31 @@
 
       // Image file
       const fImgFile = document.getElementById('f_img_file');
-      fImgFile?.addEventListener('change', async () => {
-        const file = fImgFile.files?.[0];
-        if (!file) return;
-        const b64 = await fileToBase64(file); // assume you have this helper
-        step.img_b64 = b64;
-        setDirty?.(true);
-        renderInspector();
+      // fImgFile?.addEventListener('change', ev => { 
+      //   handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }); 
+      //   setDirty?.(true); 
+      //   renderViewStep(); 
+      // });
+
+      fImgFile?.addEventListener('change', (ev) => {
+        handleImageToBase64(ev, (uri) => {
+          step.img_b64 = uri;
+          const fImg = document.getElementById('f_img');
+          if (fImg) fImg.value = uri;
+
+          setDirty?.(true);
+          // let DOM settle, then render
+          requestAnimationFrame(() => {
+            // renderInspector?.();     // if your UI shows the image field
+            renderViewStep();
+          });
+
+          // allow picking the same file again
+          ev.target.value = '';
+        });
       });
+
+
 
       // Options: add row
       const addOptBtn = document.getElementById('addOptBtn');
@@ -2495,47 +2624,25 @@
         step.options.push(getDefaultOption(step));
         setDirty?.(true);
         renderInspector();
+        renderViewStep();
       });
-
-      // box.querySelectorAll('[data-opt-idx]').forEach(row => {
-      //   console.log(`row`, row);
-
-      //   const i = Number(row.dataset.optIdx);
-      //   const o = step.options[i];
-      //   const fv = row.querySelector('.opt-value');
-      //   const fl = row.querySelector('.opt-label');
-      //   const fh = row.querySelector('.opt-hint');
-      //   const fn = row.querySelector('.opt-next');
-      //   // const fi = row.querySelector('.opt-img');
-      //   // const ff = row.querySelector('.opt-file');
-      //   const fd = row.querySelector('.opt-del');
-
-      //   fv.addEventListener('input', () => { o.value = slugify(fv.value) || 'opt'; renderGraph(); });
-      //   fl.addEventListener('input', () => { o.label = fl.value; });
-      //   fh.addEventListener('input', () => { o.hint = fh.value || undefined; });
-      //   fn.addEventListener('change', () => { o.next = fn.value || undefined; renderGraph(); });
-      //   // fi.addEventListener('input', () => { o.img_b64 = fi.value || undefined; });
-      //   // ff.addEventListener('change', ev => handleImageToBase64(ev, uri => { o.img_b64 = uri; fi.value = uri; }));
-      //   fd.addEventListener('click', () => { step.options.splice(i, 1); renderInspector(); renderGraph(); });
-      // });
-
 
       // maybe not present in case select-single 
       const f_next = document.getElementById('f_next');
-      f_next?.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); });
+      f_next?.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); ensureStarterStartId(getStarter()); });
 
 
       // Delegate option row events
       const optTable = document.getElementById('optTable');
       optTable?.addEventListener('input', (e) => {
         const tr = e.target.closest('tr[data-opt-idx]');
-        console.log(`tr`, tr);
+        // console.log(`tr`, tr);
         if (!tr) return;
         const i = parseInt(tr.dataset.optIdx, 10);
-        console.log(`i`, i);
-        console.log(`e.target`, e.target);
+        // console.log(`i`, i);
+        // console.log(`e.target`, e.target);
         const opt = step.options[i];
-        console.log('opt before edit', opt);
+        // console.log('opt before edit', opt);
         if (!opt) return;
 
 
@@ -2549,6 +2656,8 @@
 
         setDirty?.(true);
 
+        renderViewStep();
+
       });
       optTable?.addEventListener('click', (e) => {
         if (!e.target.classList.contains('opt-del')) return;
@@ -2559,6 +2668,8 @@
         step.options.splice(i, 1);
         setDirty?.(true);
         renderInspector();
+
+        renderViewStep();
       });
     }
 
@@ -2578,14 +2689,6 @@
     let dragOffset = null;
     let lastPositions = {}; // stepId -> {x,y} snapshot from last render
 
-
-
-
-
-    // (function initGraphZoom() {
-    //   mapZoom = 2.4;
-    //   mapPan = { x: 0, y: -20 }
-    // })
 
     (function initGraphZoom() {
       resetGraphZoom();
@@ -2635,84 +2738,12 @@
       return changed;
     }
 
-    // MOUSE DOWN
-    // graphSvg.addEventListener('mousedown', (e) => {
-    //   e.preventDefault();
-    //   drag.active = true;
-    //   drag.start = { x: e.clientX, y: e.clientY };
-    //   drag.pan0 = { ...mapPan };
-
-    //   const bb = graphSvg.getBoundingClientRect();
-    //   lastGraphSize.width = bb.width;
-    //   lastGraphSize.height = bb.height;
-
-    //   // These MUST match the viewBox setup in renderGraph()
-    //   const worldW = 1000 / mapZoom;
-    //   const worldH = 1000 / mapZoom;
-
-    //   // world-units per pixel on each axis
-    //   drag.wppX = worldW / bb.width;
-    //   drag.wppY = worldH / bb.height;
-
-    //   graphSvg.classList.add('dragging');
-    //   graphPanel.classList.add('dragging');
-    // });
-
-    // graphSvg.addEventListener('mousedown', (e) => {
-    //   if (!placingFree || !ghostPos) return;
-    //   const st = getStarter(); if (!st) return;
-    //   const step = makeStep('instruction');
-    //   step.pos = { x: ghostPos.x, y: ghostPos.y };
-    //   st.steps.push(step);
-    //   viewState.selectedStepId = step.id;
-    //   placingFree = false; ghostPos = null;
-    //   setDirty(true);
-    // }, true);
-
-
-    // addEventListener('mousemove', (e) => {
-    //   if (!placingFree) return;
-    //   const bb = graphSvg.getBoundingClientRect();
-    //   // convert client → world
-    //   const vw = 1000, vh = 1000;
-    //   const wx = mapPan.x + (e.clientX - bb.left) * (vw / mapZoom) / bb.width;
-    //   const wy = mapPan.y + (e.clientY - bb.top) * (vh / mapZoom) / bb.height;
-    //   ghostPos = { x: wx, y: wy };
-    //   renderGraph();
-    // }, true);
-
-    //   ]
-
     graphSvg.addEventListener('mousemove', (e) => {
       if (!placingFree) return;
       ghostPos = clientToWorld(e);
       renderGraph();
     }, true);
 
-
-    // graphSvg.addEventListener('mousemove', (e) => {
-    //   if (!placingFree) return;
-    //   const bb = graphSvg.getBoundingClientRect();
-    //   const vw = 1000, vh = 1000; // same virtual canvas you render with
-    //   const wx = mapPan.x + (e.clientX - bb.left) * (vw / mapZoom) / bb.width;
-    //   const wy = mapPan.y + (e.clientY - bb.top) * (vh / mapZoom) / bb.height;
-    //   ghostPos = { x: wx, y: wy };
-    //   renderGraph();
-    // }, true);
-
-    // graphSvg.addEventListener('mousedown', (e) => {
-    //   const rect = e.target.closest('rect');
-    //   if (!rect) return;
-    //   const id = rect.getAttribute('step-id');
-    //   if (!id || !lastPositions[id]) return;
-
-    //   const p0 = clientToWorld(e);
-    //   const p = lastPositions[id];
-    //   draggingStepId = id;
-    //   dragOffset = { dx: p.x - p0.x, dy: p.y - p0.y };
-    //   e.preventDefault();
-    //   e.stopPropagation();
-    // }, true);
 
     graphSvg.addEventListener('mousedown', (e) => {
       // A) PLACE NEW STEP if we're in Add (ghost) mode
@@ -2921,69 +2952,6 @@
 
     }
 
-    // function updateAddAfterState() {
-    //   const btn = document.getElementById('addAfterBtn');
-    //   if (!btn) return;
-    //   const st = getStarter();
-    //   const cur = st?.steps?.find(s => s.id === viewState.selectedStepId);
-    //   // if (!!(cur && cur.type === 'end')) {
-    //   //   btn.toggleAttribute('disabled', true);
-    //   //   // btn.classList.add('disabled');
-    //   //   // return;
-    //   // }
-    //   btn.toggleAttribute('disabled', !!(cur && isEndStep(cur)));
-    //   btn.title = (cur && isEndStep(cur)) ? 'Cannot add step after the terminal "end" step' : 'Add step after current';
-    //   // btn.classList.toggle('disabled', !!(cur && cur.type === 'end'));
-    // }
-
-
-    // function buildGraph(starter) {
-    //   const steps = starter.steps || [];
-    //   const nodes = steps.map(s => ({
-    //     id: s.id,
-    //     label: s.id || s.title || s.label,
-    //     pos: s.pos || null
-    //   }));
-    //   const edges = [];
-
-    //   for (let i = 0; i < steps.length; i++) {
-    //     const s = steps[i];
-
-
-
-    //     if (s.type === 'instruction' || s.type === 'input') {
-    //       const target = s.next || null;
-    //       if (target) edges.push({ from: s.id, to: target });
-
-    //       (s.options || []).forEach(o => {
-    //         if (o && o.next) edges.push({ from: s.id, to: o.next, label: o.label || '' });
-    //       });
-
-    //     }
-    //     else if (s.type === 'select') {
-    //       if (Array.isArray(s.options)) {
-    //         for (const o of s.options) {
-    //           if (o?.next) {
-    //             edges.push({ from: s.id, to: o.next, label: (o.label || o.value || '') });
-    //           }
-    //         }
-    //       }
-
-    //       if (s.mode === 'multi') {
-    //         const target = s.next || null;
-    //         if (target) edges.push({ from: s.id, to: target, label: 'after' });
-
-    //       } else {
-    //         const hasOptNext = (s.options || []).some(o => o?.next);
-    //         const target = s.next || null;
-    //         if (target) edges.push({ from: s.id, to: target });
-    //       }
-    //     }
-    //   }
-
-    //   return { nodes, edges };
-    // }
-
 
 
     function buildGraph(starter) {
@@ -3054,7 +3022,7 @@
       const adj = {};
       nodes.forEach(n => adj[n.id] = []);
       edges.forEach(e => { (adj[e.from] ||= []).push(e.to); });
-      console.log(`edges`, edges);
+      // console.log(`edges`, edges);
 
       // start from the first node (treat as root)
       const depth = {};
@@ -3102,24 +3070,6 @@
         rows[d].forEach((id, i) => colIndex[id] = i);
       });
 
-      // compute positions (vertical lanes)
-      // const colWidth = 200;    // horizontal spacing
-      // const rowGap = 140;     // vertical 
-      // const x0 = 200, y0 = 60; // top-left origin
-
-      // const pos = {};
-      // nodes.forEach(n => {
-      //   // console.log(`n`, n);
-      //   // const d = depth[n.id] || 0;
-      //   // const i = colIndex[n.id] || 0;
-
-      //   pos[n.id] = n.pos ? { x: n.pos.x, y: n.pos.y }
-      //     : { x: x0 + i * colWidth, y: y0 + d * rowGap };
-
-      //   // pos[n.id] = { x: n.pos.x, y: n.pos.y }
-
-      //   pos[n.id] = { x: x0 + i * colWidth, y: y0 + d * rowGap };
-      // });
 
       const pos = {};
       nodes.forEach(n => {
@@ -3132,124 +3082,49 @@
     }
 
 
-    /*** Actions ***/
 
 
-
-    // function addStepRelative(where) {
-    //   const st = getStarter(); if (!st) return;
-
-    //   const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
-    //   const insertAt = (idx < 0 ? st.steps.length : idx + 1);
-    //   const current = idx >= 0 ? st.steps[idx] : null;
-
-    //   // create the new step
-    //   const step = makeStep('instruction');
-
-    //   // only when adding AFTER an instruction/input: rewire "next"
-    //   if (where === 'after' && current && (current.type === 'instruction' || current.type === 'input')) {
-    //     const prevNext = (typeof current.next !== 'undefined') ? current.next : null;
-    //     step.next = prevNext || null;      // new step points to what current used to point to
-    //     current.next = step.id;            // current now points to the new step
-    //   } 
-    //   // else if (where === 'before' && current && (current.type === 'instruction' || current.type === 'input')) {
-    //   //   // place new step before current in the flow
-    //   //   step.next = current.id; // new → current
-    //   //   // redirect predecessor (if any) to point to the new step
-    //   //   const pred = st.steps.find(s => s.next === current.id);
-    //   //   if (pred) pred.next = step.id;
-    //   // }
-
-
-    //   st.steps.splice(insertAt, 0, step);
-    //   if (where === 'before' && current && (current.type === 'instruction' || current.type === 'input')) step.next = current.id;
-
-    //   viewState.selectedStepId = step.id;
-    //   setDirty(true);
-    // }
-
-    // async function addStepRelative(where) {
-    //   // when done and 'after' is requested, show dialog and abort on confirm
-    //   if (where === 'after') {
-    //     const st = getStarter(); if (!st) return;
-    //     const cur = st.steps.find(s => s.id === viewState.selectedStepId);
-    //     if (cur && isEndStep(cur)) {
-    //       const ok = await confirmDialog({
-    //         // title: '??',
-    //         title: 'Inspector hacks won’t work: adding after the terminal end step is forbidden.',
-    //         confirmText: 'I am sorry and I won’t do that again 😔',
-    //         // cancelText: 'Cancel',
-    //         variant: 'danger',
-    //         one: true
-    //       });
-    //       return;
-    //     }
-    //   }
-    //   const st = getStarter(); if (!st) return;
-
-    //   const idx = st.steps.findIndex(s => s.id === viewState.selectedStepId);
-    //   const current = idx >= 0 ? st.steps[idx] : null;
-
-    //   // always create an instruction (your button semantics)
-    //   const step = makeStep('instruction');
-
-    //   if (where === 'after') {
-    //     if (current && (current.type === 'instruction' || current.type === 'input')) {
-    //       // insert after an instruction/input and splice the flow
-    //       const prevNext = ('next' in current) ? current.next : null;
-    //       step.next = (prevNext || 'done');   // new → old next (or done)
-    //       current.next = step.id;             // current → new
-    //       st.steps.splice(idx + 1, 0, step);  // place after current
-    //     } else {
-    //       // no selection or non-actionable selection: append and point to done if present
-    //       const done = st.steps.find(s => s.type === 'end') || st.steps.find(s => s.id === 'done');
-    //       step.next = done ? done.id : null;
-    //       st.steps.splice(idx < 0 ? st.steps.length : idx + 1, 0, step);
-    //     }
-    //   } else {
-    //     // fallback (if someone calls 'before'): insert before without rewiring
-    //     st.steps.splice(idx < 0 ? st.steps.length : idx, 0, step);
-    //   }
-
-    //   viewState.selectedStepId = step.id;
+    // function dupStep() {
+    //   const st = getStarter(); const s = st.steps.find(x => x.id === viewState.selectedStepId); if (!s) return;
+    //   const c = JSON.parse(JSON.stringify(s));
+    //   c.id = uniqueId(s.id + '_copy');
+    //   st.steps.splice(st.steps.findIndex(x => x.id === s.id) + 1, 0, c);
+    //   viewState.selectedStepId = c.id;
     //   // renderAll();
-    //   renderGraph();
-    //   renderInspector();
+    //   // renderGraph();
+    //   // renderInspector();
     //   setDirty(true);
+
+    //   // if (studioMode === 'view') renderViewAndEditLanding();
+
     // }
-
-
-
-    function dupStep() {
-      const st = getStarter(); const s = st.steps.find(x => x.id === viewState.selectedStepId); if (!s) return;
-      const c = JSON.parse(JSON.stringify(s));
-      c.id = uniqueId(s.id + '_copy');
-      st.steps.splice(st.steps.findIndex(x => x.id === s.id) + 1, 0, c);
-      viewState.selectedStepId = c.id;
-      // renderAll();
-      // renderGraph();
-      // renderInspector();
-      setDirty(true);
-
-      // if (studioMode === 'view') renderViewAndEditLanding();
-
-    }
     function delStep() {
-      const st = getStarter(); const i = st.steps.findIndex(x => x.id === viewState.selectedStepId); if (i < 0) return;
+      const st = getStarter();
+      const i = st.steps.findIndex(x => x.id === viewState.selectedStepId); if (i < 0) return;
       const delId = st.steps[i].id;
       st.steps.splice(i, 1);
       // remove refs
       for (const step of st.steps) {
-        if ((step.type === 'instruction' || step.type === 'input') && step.next === delId) delete step.next;
+        if ((step.type === 'instruction' || step.type === 'input') && step.next === delId) {
+          delete step.next;
+          ensureStarterStartId(st);
+        }
         if (step.type === 'select') {
-          (step.options || []).forEach(o => { if (o.next === delId) delete o.next; });
-          if (step.next === delId) delete step.next;
+          (step.options || []).forEach(o => {
+            if (o.next === delId) {
+              delete o.next;
+              ensureStarterStartId(st);
+            }
+          });
+          if (step.next === delId) {
+            delete step.next;
+            ensureStarterStartId(st);
+          }
         }
       }
       viewState.selectedStepId = st.steps[Math.max(0, i - 1)]?.id || null;
       setDirty(true);
 
-      // renderAll();
       ensureSopMandatory();
 
       renderGraph();
@@ -3260,8 +3135,6 @@
         const first = document.querySelector('#inspector input, #inspector textarea, .inspector input, .inspector textarea');
         first?.focus();
       });
-      // if (studioMode === 'view') renderViewAndEditLanding();
-
     }
     function replaceStep(id, repl) {
       const st = getStarter();
@@ -3354,6 +3227,14 @@
       return `<p>${viewSafeInterpolate(String(body))}</p>`;
     }
 
+    function renderBody(body) {
+      if (!body) return '';
+      // interpolate {{vars}} but preserve HTML if present
+      const html = viewSafeInterpolate(String(body));
+      // if it already contains tags, inject as-is; else wrap as a paragraph
+      return /<[a-z][\s\S]*>/i.test(html) ? html : `<p>${html}</p>`;
+    }
+
     // --- helpers for {{var}} interpolation in Studio Preview ---
     function viewSafeInterpolate(str) {
       // supports {{var}}, {{var.label}}, and multi-select join
@@ -3411,11 +3292,6 @@
         }
       }
 
-      // changeDataMode('view');
-      // renderAll();
-      // });
-
-
       const slot = document.getElementById('jsonEmbedded');
       if (!slot) { alert('Missing #jsonEmbedded'); return; }
 
@@ -3469,6 +3345,11 @@
  * - Never sets next on the final step of a starter (removes it if present)
  * - Never adds next to steps of type "end"
  */
+
+
+
+    //  browser console only if needed
+
     function addNextPointers(sop) {
       const clone = (obj) =>
       (typeof structuredClone === "function"
@@ -3566,18 +3447,14 @@
 
       // 4) apply, save, refresh UI
       sop = parsed;
-      // console.log('Before SOP Position set', JSON.stringify(sop.starters[0].steps, null, 2));
       ensureSop();
-      // console.log('After SOP Position set', JSON.stringify(sop.starters[0].steps, null, 2));
       viewState.starterIdx = 0;
       viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
       setDirty(true);
       const saved = await performSave();   // persists + updates savedSop
       if (!saved) return;
 
-      // renderAll();
       renderViewAndEditLanding();
-      // renderStarters();
       changeScreen('landing');
       changeDataMode('edit');
       if (typeof updateSaveBtn === 'function') updateSaveBtn();
@@ -3600,6 +3477,11 @@
       document.documentElement.setAttribute('data-theme', mode);
       localStorage.setItem('theme', mode);
       // if (btn) btn.textContent = (mode === 'dark') ? '🌞 Light' : '🌙 Dark';
+    }
+
+    function isDarkMode() {
+      const stored = localStorage.getItem('theme');
+      return stored === 'dark';
     }
 
 
@@ -3875,18 +3757,9 @@
       // }
 
       resetStarterValues(idx);
-
-      // viewState.starterIdx = idx;
-      // viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;
       changeScreen('starter');
       const st = sop.starters[idx];
       document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
-      // resetGraphZoom();
-      // ensuremandatory must came before ensurepositions to make starters has starter step
-
-      // renderAll();
-
-
       renderAll();
 
     }
@@ -3894,7 +3767,7 @@
     // Run data normalization (ids/types/nexts/startId) for every starter.
     // Returns true if anything changed.
     function ensureSopMandatory() {
-      console.log('ensureSopMandatory called');
+      // console.log('ensureSopMandatory called');
       if (!sop || !Array.isArray(sop.starters)) return false;
       let changed = false;
 
@@ -4427,15 +4300,21 @@
       // if (!(typeof starter.startId === 'string' && byId[starter.startId])) {
       // starter.startId = candidate.id;
 
-      const startId = getStarterStartId(starter);
-      if (startId && starter.startId !== startId) {
-        starter.startId = startId;
+      if (ensureStarterStartId(starter)) {
         changed = true;
       }
       // }
       return changed;
     }
 
+    function ensureStarterStartId(starter) {
+      const startId = getStarterStartId(starter);
+      console.log(`startId`, startId);
+      if (startId && starter.startId !== startId) {
+        starter.startId = startId;
+        changed = true;
+      }
+    }
     // Decide the best start step id for a single starter and set it.
     // Rules:
     // 1) Prefer roots (in-degree 0) that have an outgoing edge (step.next or select option.next).
@@ -4587,28 +4466,6 @@
 
     })();
 
-
-    // function enterEditStarter(idx) {
-    //   resetStarterValues();
-    //   resetGraphZoom();
-    //   viewState.starterIdx = idx;
-    //   viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;;
-    //   changeScreen('starter');
-    //   renderAll();
-
-
-
-    //   // optional crumbs
-    //   // const crumbs = document.getElementById('breadcrumbs');
-    //   // if (crumbs) crumbs.textContent = `Home · ${st.label || `Starter ${idx + 1}`} (Edit)`;
-    // }
-
-    // function resetStarterValues(idx) {
-    //   viewState.starterIdx = 0;
-    //   viewState.stepIdx = 0;
-    //   viewState.answers = {};
-    // }
-
     function getStepIndexById(steps, id) {
       if (!Array.isArray(steps) || steps.length === 0) return 0;
       if (typeof id !== 'string') return 0;
@@ -4632,25 +4489,8 @@
 
       viewState.stepIdx = getStepIndexById(steps, startId);
       viewState.selectedStepId = startId || null;
+      viewState.history = [];
     }
-
-
-
-
-
-    // function enterViewStarter(idx) {
-    //   resetStarterValues();
-    //   viewState.starterIdx = idx;
-    //   viewState.selectedStepId = sop.starters[idx]?.steps?.[0]?.id || null;
-    //   changeScreen('starter');
-
-    //   const st = sop.starters[idx];
-    //   document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
-    //   resetGraphZoom();
-    //   renderAll();
-
-    // }
-
     // Creates a new starter, re-renders grid (optional), and returns its index.
     function createNewStarter() {
       // const starterIdx = 
@@ -4679,7 +4519,7 @@
       ensureMandatory(newStarter);
       ensurePositions(newStarter);
 
-      console.log(`newStarter`, newStarter);
+      // console.log(`newStarter`, newStarter);
       return sop.starters.length - 1;
     }
 
@@ -4826,9 +4666,12 @@
         }
       }
       if (step.type === 'input' && step.regex) {
+        // console.log(`validating regex`, step.regex, value);
         try {
           const re = new RegExp(step.regex);
+          // console.log(`regex`, re, re.test(String(value || '')));
           if (!re.test(String(value || ''))) return { ok: false, msg: step.error || 'Invalid format' };
+          // console.log(`passed`);
         } catch (e) { /* ignore invalid regex */ }
       }
       if (step.type === 'select' && step.mode === 'multi') {
@@ -4864,7 +4707,6 @@
 
 
     function renderViewStep() {
-      // console.trace('called here'); // shows who called foo (and the chain)
 
       const st = sop.starters[viewState.starterIdx];
       const steps = st.steps || [];
@@ -4881,9 +4723,11 @@
       let node;
       if (step.type === 'instruction') {
         node = document.createElement('div');
+
+
         node.innerHTML = `
       ${step.title ? `<h3>${viewEscape(step.title)}</h3>` : ''}
-      ${viewBodyHtml(step.body)}
+      ${renderBody(step.body)}
       ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ''}
     `;
         box.appendChild(node);
@@ -4892,7 +4736,7 @@
       else if (step.type === 'input') {
         node = document.createElement('div');
         node.innerHTML = `
-      ${step.label ? `<label for="vw_inp">${viewEscape(step.label)}</label>` : ''}
+      ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
       <input id="vw_inp" type="text" class="text-input" placeholder="${viewEscape(step.placeholder || '')}">
       ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ''}
     `;
@@ -4904,7 +4748,7 @@
         err.className = 'error';
         err.style.display = 'none';
         // node.appendChild(err);                               // ← remove this
-        // img ? img.before(err) : inp.insertAdjacentElement('afterend', err);  // ← insert here
+        img ? img.before(err) : inp.insertAdjacentElement('afterend', err);  // ← insert here
 
 
         function refreshInput() {
@@ -4915,6 +4759,7 @@
         }
         inp.addEventListener('input', () => {
           viewState.answers[step.id] = inp.value;
+          // console.log(`answers`, viewState.answers);
           refreshInput();
         });
         refreshInput();  // initial
@@ -4922,7 +4767,7 @@
       }
       else if (step.type === 'select') {
         node = document.createElement('div');
-        if (step.label) node.innerHTML = `<h3>${viewEscape(step.label)}</h3>`;
+        if (step.title) node.innerHTML = `<h3>${viewEscape(step.title)}</h3>`;
         const wrap = document.createElement('div');
         wrap.className = 'vw-grid-sel';
         const mode = step.mode === 'multi' ? 'multi' : 'single';
@@ -4991,29 +4836,41 @@
       }
 
       // nav buttons
-      document.getElementById('vwPrev').disabled = i === 0;
+      document.getElementById('vwPrev').disabled = viewState.history.length <= 0;
       const nextBtn = document.getElementById('vwNext');
       nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
 
       // document.getElementById('vwBackHome').onclick = renderViewAndEditLanding;
 
       document.getElementById('vwPrev').onclick = () => {
-        if (viewState.stepIdx > 0) { viewState.stepIdx--; }
+        // debugger;
+        if (viewState.history.length > 0) {
+          // pop last position; fallback to clamp at 0
+          const prevIdx = viewState.history.pop();
+          if (typeof prevIdx === 'number') {
+            viewState.stepIdx = prevIdx;
+          } else {
+            viewState.stepIdx = Math.max(0, viewState.stepIdx - 1);
+          }
+          viewState.selectedStepId = steps[viewState.stepIdx]?.id;  // keep selection in sync
+          renderViewStep();
+        }
       };
       nextBtn.onclick = () => {
         if (!isEndStep(step)) {
           // branch support
           const currentStep = steps[viewState.stepIdx];
-          console.log(`currentStep`, currentStep);
+          // console.log(`currentStep`, currentStep);
           if (currentStep &&
             currentStep.type === 'select' &&
             currentStep.mode === 'single') {
-              console.log(`viewState.answers`, viewState.answers);
+            // console.log(`viewState.answers`, viewState.answers);
             const choice = viewState.answers[currentStep.id];
             if (choice && choice.next) {
               // jump to label
               const to = steps.findIndex(x => x.id === choice.next);
               if (to >= 0) {
+                viewState.history.push(viewState.stepIdx);
                 viewState.stepIdx = to;
                 viewState.selectedStepId = to;
                 renderViewStep();
@@ -5025,17 +4882,54 @@
           else if (currentStep && currentStep.next) {
             const to = steps.findIndex(x => x.id === currentStep.next);
             if (to >= 0) {
+              viewState.history.push(viewState.stepIdx);
               viewState.stepIdx = to;
               renderViewStep();
               return;
             }
-          } 
-          // default: linear
-          // viewState.stepIdx++; 
+          }
           renderViewStep();
         }
       };
     }
+
+    // function pushToHistory() {
+    //   // save current position before moving forward
+    //   viewState.history.push(viewState.stepIdx);
+
+    //   // branch via single-select option
+    //   if (currentStep && currentStep.type === 'select' && currentStep.mode === 'single') {
+    //     const choice = viewState.answers[currentStep.id];
+    //     if (choice && choice.next) {
+    //       const to = steps.findIndex(x => x.id === choice.next);
+    //       if (to >= 0) {
+    //         viewState.stepIdx = to;
+    //         viewState.selectedStepId = steps[to]?.id;   // ← id, not index
+    //         renderViewStep();
+    //         return;
+    //       }
+    //     }
+    //   }
+
+    //   // step-level next
+    //   if (currentStep && currentStep.next) {
+    //     const to = steps.findIndex(x => x.id === currentStep.next);
+    //     if (to >= 0) {
+    //       viewState.stepIdx = to;
+    //       viewState.selectedStepId = steps[to]?.id;     // ← id, not index
+    //       renderViewStep();
+    //       return;
+    //     }
+    //   }
+
+    //   // default: linear advance
+    //   if (viewState.stepIdx < steps.length - 1) {
+    //     viewState.stepIdx++;
+    //     viewState.selectedStepId = steps[viewState.stepIdx]?.id;  // ← id
+    //   }
+    //   renderViewStep();
+
+    // }
 
     function getStarter() {
       return sop.starters[viewState.starterIdx];

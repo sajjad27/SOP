@@ -15,6 +15,17 @@
 -  group right label to have matching fields together
 -  mandate starter label while editing
 -  make selected or active starter and active step on the url instead of variable to be able to share it
+-  when right panel is changed like required checkbox, it should render the preview wizard
+-  required should not exist, probably only in the single select, and maybe in the input but i am not sure
+-    const viewState = { starterIdx: 0, answers: {}, selectedStepId: 0, stepIdx: 0 }; here is should only rely on selectedStepId or stepIdx
+-  selectedIdx or selectedStepId should reflect in both wizard and edit
+-  don't render while typing in title or body, rerender on blur:
+bodyEl.addEventListener('blur', () => {
+  renderViewStep();
+});
+
+
+
 
 ---
 
