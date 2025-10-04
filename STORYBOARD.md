@@ -23,7 +23,8 @@
 bodyEl.addEventListener('blur', () => {
   renderViewStep();
 });
-
+-  select does not render pictures, not sure how will you do it, either remove it from select and input, or keep it in both
+-  make on single select, it automatically jumps to the next one in the wizard
 
 
 
