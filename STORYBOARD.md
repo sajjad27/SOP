@@ -9,6 +9,8 @@
 
 - show actual values insted of variables on view guide
 - make on single select, it automatically jumps to the next one in the wizard
+- change the title name of the browser tab, make it sop - medical
+- fix is editable field, i have thought of making all fields an indicator to check if need to set dirty or not, because when we create a new link in the rich text, while typing the link it will highlight the save button
 - on enter click it should go next
 
 - have map link in the preview 

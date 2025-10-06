@@ -857,7 +857,8 @@
 
     /* Landing + view → header text */
     [screen="landing"][data-mode="view"] #vwHeader {
-      display: block;
+      display: flex;
+      justify-content: space-between;
     }
 
     [screen="landing"][data-mode="view"] #vwHeaderEditor {
@@ -1831,6 +1832,51 @@
       max-height: 50vh;
     }
 
+    /* Visually hidden (for the label) */
+    .vh {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Viewer-only: search bar row */
+    .vw-search {
+      display: flex;
+      justify-content: flex-end;
+      align-items: baseline;
+      gap: .5rem;
+      margin: 8px 0 12px;
+    }
+
+    /* The field */
+    #vwSearchInput {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--fg);
+      font: inherit;
+      width: min(100%, 50vw);
+      outline: none;
+
+    }
+
+    /* Focus ring that works in light/dark */
+    #vwSearchInput:focus-visible {
+      /* box-shadow: 0 0 0 2px var(--accent); */
+      box-shadow: 0 0 0 1px var(--accent-weak);
+      border-color: var(--accent);
+    }
+
+
+
+
     @media (prefers-reduced-motion: reduce) {
       .imglb-overlay {
         transition: none;
@@ -2283,13 +2329,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
     syncArrowColor();
 
-    // function applyMode() {
-    //   const view = document.getElementById('landing');   // viewer section (landing + wizard containers)
-    //   const starterEdit = document.getElementById('starter');   // studio section (left/center/right)
-    //   const wizard = document.getElementById('vwWizard');    // viewer wizard panel (inside landing)
-    //   const landing = document.getElementById('vwLanding');  // viewer landing host
 
-    // }
 
 
     (function themeInit() {
@@ -2583,6 +2623,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         if (document.fullscreenElement === graphPanel) document.exitFullscreen();
         else graphPanel.requestFullscreen?.();
       });
+
+
 
     }
     /*** Renderers ***/
@@ -2939,7 +2981,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       });
 
-      
+
 
 
 
@@ -3340,7 +3382,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         });
       });
 
-      attachInput.addEventListener('change', () => {
+      attachInput?.addEventListener('change', () => {
         const f = attachInput.files?.[0];
         if (!f) return;
 
@@ -3735,7 +3777,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       });
     }
 
-    
+
 
 
 
@@ -4674,67 +4716,68 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-    function countReachable(starter) {
-      const steps = starter?.steps || [];
-      if (!steps.length) return 0;
+    // function countFlowSteps(starter) {
+    //   const steps = starter?.steps || [];
+    //   if (!steps.length) return 0;
 
-      const byId = new Map(steps.map((s, i) => [s.id, i]));
+    //   const byId = new Map(steps.map((s, i) => [s.id, i]));
 
-      function outgoing(s, i) {
-        const out = new Set();
+    //   function outgoing(s, i) {
+    //     const out = new Set();
 
-        if (s.type === 'instruction' || s.type === 'input') {
-          // explicit next OR fallback to the next step in the array
-          let n = s.next;
-          if (!n && i < steps.length - 1) n = steps[i + 1].id;
-          if (n && byId.has(n)) out.add(n);
-        }
-        else if (s.type === 'select') {
-          const mode = (s.mode === 'multi') ? 'multi' : 'single';
+    //     if (s.type === 'instruction' || s.type === 'input') {
+    //       // explicit next OR fallback to the next step in the array
+    //       let n = s.next;
+    //       if (!n && i < steps.length - 1) n = steps[i + 1].id;
+    //       if (n && byId.has(n)) out.add(n);
+    //     }
+    //     else if (s.type === 'select') {
+    //       const mode = (s.mode === 'multi') ? 'multi' : 'single';
 
-          // option-level next
-          if (Array.isArray(s.options)) {
-            for (const o of s.options) {
-              let n = o.next;
-              // for single-select options, fallback to step.next or linear next
-              if (!n && mode === 'single') {
-                n = s.next || (i < steps.length - 1 ? steps[i + 1].id : undefined);
-              }
-              if (n && byId.has(n)) out.add(n);
-            }
-          }
+    //       // option-level next
+    //       if (Array.isArray(s.options)) {
+    //         for (const o of s.options) {
+    //           let n = o.next;
+    //           // for single-select options, fallback to step.next or linear next
+    //           if (!n && mode === 'single') {
+    //             n = s.next || (i < steps.length - 1 ? steps[i + 1].id : undefined);
+    //           }
+    //           if (n && byId.has(n)) out.add(n);
+    //         }
+    //       }
 
-          // step-level next (used esp. for multi-select after)
-          if (s.next && byId.has(s.next)) out.add(s.next);
+    //       // step-level next (used esp. for multi-select after)
+    //       if (s.next && byId.has(s.next)) out.add(s.next);
 
-          // multi-select fallback to linear next when no step.next provided
-          if (mode === 'multi' && !s.next && i < steps.length - 1) {
-            const n = steps[i + 1].id;
-            if (byId.has(n)) out.add(n);
-          }
-        }
+    //       // multi-select fallback to linear next when no step.next provided
+    //       if (mode === 'multi' && !s.next && i < steps.length - 1) {
+    //         const n = steps[i + 1].id;
+    //         if (byId.has(n)) out.add(n);
+    //       }
+    //     }
 
-        return Array.from(out);
-      }
+    //     return Array.from(out);
+    //   }
 
-      const visited = new Set();
-      const stack = [steps[0].id];
-      while (stack.length) {
-        const id = stack.pop();
-        if (visited.has(id)) continue;
-        visited.add(id);
+    //   const visited = new Set();
+    //   const stack = [steps[0].id];
+    //   while (stack.length) {
+    //     const id = stack.pop();
+    //     if (visited.has(id)) continue;
+    //     visited.add(id);
 
-        const i = byId.get(id);
-        if (i == null) continue;
+    //     const i = byId.get(id);
+    //     if (i == null) continue;
 
-        for (const nid of outgoing(steps[i], i)) {
-          if (!visited.has(nid)) stack.push(nid);
-        }
-      }
-      return visited.size;
-    }
+    //     for (const nid of outgoing(steps[i], i)) {
+    //       if (!visited.has(nid)) stack.push(nid);
+    //     }
+    //   }
+    //   return visited.size;
+    // }
 
     function renderViewAndEditLanding() {
+      console.log('renderViewAndEditLanding');
       const landing = document.getElementById('vwLanding');   // preview landing host
       if (!landing) return;
 
@@ -4742,14 +4785,28 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const desc = String(sop?.description || 'Describe your library');
       const starters = Array.isArray(sop?.starters) ? sop.starters : [];
 
+      const q = (viewState.searchQ || '').trim().toLowerCase();
+      const filteredStarters = q
+        ? starters.filter(st => starterSearchText(st).includes(q))
+        : starters;
+
+
+
+
       // Build landing (viewer-like)
       landing.innerHTML = `
       <div class="wrap">
       <!-- VIEW block -->
       <div id="vwHeader" style="margin:16px 0 14px">
-        <h1 style="margin:8px 0 6px">${escapeHtml(title)}</h1>
-        <p class="small" style="margin:0 0 12px">${escapeHtml(desc)}</p>
+        <div>
+          <h1 style="margin:8px 0 6px">${escapeHtml(title)}</h1>
+          <p class="small" style="margin:0 0 12px">${escapeHtml(desc)}</p>
+        </div>
+      <div id="vwSearchBar" class="vw-search">
+        <label for="vwSearchInput" class="vh">Search starters</label>
+        <input id="vwSearchInput" type="search" placeholder="Search ..." autocomplete="off">
       </div>
+        </div>
 
       <!-- EDIT block -->
       <div id="vwHeaderEditor">
@@ -4763,20 +4820,20 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     </div>
 
     <div class="vw-grid">
-      ${starters.map((st, idx) => `
-        <div class="starter-dual" data-idx="${idx}">
+      ${filteredStarters.map((st, idx) => `
+        <div class="starter-dual" data-idx="${st.id}">
           <!-- read-only card (shown in view mode) -->
-          <button class="vw-card" data-idx="${idx}" onclick="enterViewOrEditStarter(${idx})">
+          <button class="vw-card" data-idx="${st.id}" data-action="starter-view">
             <h3>${escapeHtml(st.label)}</h3>
             ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ``}
             <div class="vw-pill">
               <span>Steps</span>
-              <strong>${(typeof countReachable === 'function' ? countReachable(st) : (st.steps || []).length)}</strong>
+              <strong>${(typeof countFlowSteps === 'function' ? countFlowSteps(st) : (st.steps || []).length)}</strong>
             </div>
           </button>
 
           <!-- editable card (shown in edit mode) -->
-          <div class="vw-card vw-card--edit" data-action="starter-edit" data-idx="${idx}">
+          <div class="vw-card vw-card--edit" data-action="starter-edit" data-idx="${st.id}">
             <input class="st-label" type="text"
                   placeholder="Label"
                   value="${escapeAttr(st.label)}" />
@@ -4786,7 +4843,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
             <div class="vw-card__meta">
               <div class="vw-pill">
                 <span>Steps</span>
-                <strong>${(typeof countReachable === 'function' ? countReachable(st) : (st.steps || []).length)}</strong>
+                <strong>${(typeof countFlowSteps === 'function' ? countFlowSteps(st) : (st.steps || []).length)}</strong>
               </div>
             </div>
             <div class="vw-card__actions" >
@@ -4809,24 +4866,68 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
   </div>
 `;
+
+      const sInp = document.getElementById('vwSearchInput');
+      sInp.value = viewState.searchQ || '';
+
+      sInp.oninput = () => {
+        viewState.searchQ = sInp.value;
+
+        // preserve focus + caret before re-render
+        const keepFocus = (document.activeElement === sInp);
+        const selStart = sInp.selectionStart, selEnd = sInp.selectionEnd;
+
+        renderViewAndEditLanding();
+
+        // restore focus + caret after re-render
+        if (keepFocus) {
+          const s2 = document.getElementById('vwSearchInput');
+          if (s2) { s2.focus(); try { s2.setSelectionRange(selStart, selEnd); } catch (_) { } }
+        }
+      };
+
+      sInp.onkeydown = (e) => {
+        if (e.key === 'Escape') {
+          viewState.searchQ = '';
+          // same preserve/restore so Esc doesn’t drop focus
+          const keepFocus = (document.activeElement === sInp);
+          renderViewAndEditLanding();
+          if (keepFocus) {
+            const s2 = document.getElementById('vwSearchInput');
+            if (s2) { s2.focus(); s2.select(); }
+          }
+        }
+      };
+
+
     }
+
+
+
+
     function isEditMode() { return document.documentElement.getAttribute('data-mode') === 'edit'; }
 
-    function enterViewOrEditStarter(idx) {
-      // if (isEditMode()) {
-      //   enterEditStarter(idx);
-      // }
-      // else {
-      //   enterViewStarter(idx);
-      // }
-
+    function enterViewOrEditStarter(starterId) {
+      const idx = starterIdxById(starterId);
       resetStarterValues(idx);
       changeScreen('starter');
       const st = sop.starters[idx];
       document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
       renderAll();
-
     }
+
+    function starterSearchText(st) {
+      const out = [];
+      (function walk(v, key) {
+        if (v == null) return;
+        if (key === 'img_b64') return;                 // skip base64 blobs
+        if (typeof v === 'string') out.push(v);
+        else if (Array.isArray(v)) v.forEach(x => walk(x));
+        else if (typeof v === 'object') for (const k in v) walk(v[k], k);
+      })(st, '');
+      return out.join(' ').toLowerCase();
+    }
+
 
     // Run data normalization (ids/types/nexts/startId) for every starter.
     // Returns true if anything changed.
@@ -5441,7 +5542,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     })();
 
 
-
     // Inline edit for starter cards (landing, edit mode)
     let starterCardWired = false;
     (function wireStarterCards() {
@@ -5451,15 +5551,21 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       document.addEventListener('input', (e) => {
 
         if (!isEditMode()) return;
+
         const inp = e.target;
         if (!inp.classList?.contains('st-label') && !inp.classList?.contains('st-summary')) return;
         const card = inp.closest('.vw-card--edit');
         if (!card) return;
-        const idx = parseInt(card.dataset.idx, 10);
+
+        const starterId = card.dataset.idx;
+        const idx = starterIdxById(starterId);
+
         const st = sop.starters[idx]; if (!st) return;
 
         if (inp.classList.contains('st-label')) st.label = inp.value;
+
         if (inp.classList.contains('st-summary')) st.summary = inp.value;
+
         setDirty?.(true);
       }, true);
 
@@ -5471,14 +5577,22 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
       document.addEventListener('click', async (e) => {
-        if (!isEditMode()) return;
         // delete button inside the card
+        const view = e.target.closest('[data-action="starter-view"]');
+        const edit = e.target.closest('[data-action="starter-edit"]');
+
+        // we must start check delete to prevent conflict with edit and delete button inside the card
         const del = e.target.closest('[data-action="starter-delete"]');
+        // console.log(`view`, view);
+        // console.log(`edit`, edit);
+        // console.log(`del`, del);
         if (del) {
           const card = del.closest('.vw-card[data-idx]');
           if (!card) return;
-          const idx = parseInt(card.dataset.idx, 10);
-          const label = sop.starters[idx]?.label || `Starter ${idx + 1}`;
+          const starterId = card.dataset.idx;
+          const starterIdx = starterIdxById(starterId);
+          const currentStarter = sop.starters[starterIdx];
+          const label = currentStarter?.label || `Starter ${starterId}`;
 
           let haveOneStarterOnly = false;
           if (sop?.starters?.length === 1) {
@@ -5490,13 +5604,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
               variant: 'neutral',
               one: true
             });
-
-            // return false;
           }
           if (haveOneStarterOnly) return;
-
-
-
           const ok = await confirmDialog({
             title: `Delete “${label}”?`,
             message: `Are you sure you want to delete “${label}” and  all its steps? This action cannot be undone.`,
@@ -5507,24 +5616,21 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
           if (!ok) return;
 
-          deleteStarter(idx);
+          deleteStarter(starterIdx);
 
           setDirty?.(true);
           renderViewAndEditLanding();
-
-
+          return;
+        } else if (view || (edit && !e.target.closest('input, textarea, select, [contenteditable="true"]'))) {
+          const card = (view || edit)?.closest('.vw-card[data-idx]');
+          if (!card) return;
+          // const idx = parseInt(card.dataset.idx, 10);
+          const starterId = card.dataset.idx;
+          // const starterIdx = starterIdxById(starterId);
+          enterViewOrEditStarter(starterId);
           return;
         }
 
-        if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
-
-
-        // open on any click inside the card
-        const card = e.target.closest('.vw-card[data-idx]');
-        if (!card) return;
-        const idx = parseInt(card.dataset.idx, 10);
-        // check if edit mode
-        enterViewOrEditStarter(idx);
       });
 
     })();
@@ -5534,6 +5640,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       if (typeof id !== 'string') return 0;
       const i = steps.findIndex(s => s && s.id === id);
       return (i >= 0) ? i : 0;
+    }
+
+    // helper: find starter index by stable id
+    function starterIdxById(id) {
+      return sop?.starters ? sop.starters.findIndex(s => s.id === id) : -1;
     }
 
     // Reset viewState for a given starter index (or 0 if invalid).
@@ -5590,8 +5701,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const starters = (sop && Array.isArray(sop.starters)) ? sop.starters : null;
       if (!starters || idx == null || idx < 0 || idx >= starters.length) return;
 
-
-
       // remove
       starters.splice(idx, 1);
 
@@ -5605,19 +5714,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
             viewState.currentStarterIdx -= 1;
           }
         }
-
-        // leave edit mode if it pointed to a deleted starter
-        // if (viewState.mode === 'edit' && (viewState.currentStarterIdx < 0 || viewState.currentStarterIdx >= n)) {
-        //   viewState.mode = 'home';
-        // }
       }
-
-      // mark dirty and re-render
-      // if (typeof setDirty === 'function') setDirty(true);
-
-      // refresh UI (call whatever you have; fallbacks included)
-      // if (typeof renderLibrary === 'function') renderLibrary();
-      // else if (typeof renderHome === 'function') renderHome();
     }
 
 
@@ -5685,7 +5782,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         // if (typeof renderStarters === 'function')
         if (viewState) viewState.starterIdx = idx;
         setDirty(true);
-        enterViewOrEditStarter(idx);
+        enterViewOrEditStarter(st.id);
       };
 
       function cleanup() {
@@ -5767,6 +5864,36 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     };
 
 
+    function countFlowSteps(starter) {
+      const steps = starter?.steps || [];
+      if (!steps.length) return 0;
+
+      const startId = starter.startId || getStarterStartId(starter);
+      if (!startId) return 0;
+
+      let id = startId;
+      const seen = new Set();
+      let cnt = 0;
+
+      // follow: instruction/input/multi → step.next ; single-select → first option.next
+      while (id && !seen.has(id) && cnt <= steps.length + 5) {
+        seen.add(id);
+        cnt++;
+
+        const idx = getStepIndexById(steps, id);
+        const cur = steps[idx];
+        if (!cur) break;
+
+        if (cur.type === 'select' && cur.mode === 'single') {
+          const opt = (cur.options || []).find(o => o && o.next);
+          id = opt ? opt.next : null;
+        } else {
+          id = cur.next || null;
+        }
+      }
+      return cnt;
+    }
+
 
 
     function renderViewStep() {
@@ -5774,9 +5901,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const st = sop.starters[viewState.starterIdx];
       const steps = st.steps || [];
       let i = viewState.stepIdx;
-      const stepCnt = steps.length;
+      const stepCnt = countFlowSteps(st);
 
-      document.getElementById('vwProgress').textContent = `Step ${Math.min(i + 1, stepCnt)} of ${stepCnt}`;
+      document.getElementById('vwProgress').textContent = `Step ${Math.min(1 + viewState.history?.length)} of ${stepCnt}`;
       const box = document.getElementById('vwStep');
       box.innerHTML = '';
       const step = steps[i];
