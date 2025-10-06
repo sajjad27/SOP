@@ -917,7 +917,9 @@
     }
 
     .vw-card {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       cursor: pointer;
       text-align: left;
       background: var(--card);
@@ -925,6 +927,7 @@
       outline: 2px solid var(--line);
       border-radius: 16px;
       padding: 16px;
+      min-height: 120px;
       box-shadow: var(--shadow);
     }
 
@@ -1459,7 +1462,8 @@
 
     .vw-card__actions {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
       gap: 8px;
       margin-top: 10px;
     }
@@ -1882,6 +1886,10 @@
         transition: none;
       }
     }
+
+     p.search-place {
+      color: var(--hl-bg);
+    }
   </style>
 
 
@@ -1961,7 +1969,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           <div class="graph-header">
             <div class="rowflex">
               <strong>Map</strong>
-              <span class="badge">Top→Bottom</span>
+              <span id="graph-starter-title" class="badge">Top→Bottom</span>
             </div>
             <div class="graph-zoom">
               <button id="zoomOutBtn">−</button>
@@ -2245,6 +2253,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     const stepsList = document.getElementById('stepsList');
     const graphSvg = document.getElementById('graphSvg');
     const graphPanel = document.getElementById('graphPanel');
+    const graphStarterTitle = document.getElementById('graph-starter-title');
 
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -3952,6 +3961,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     function renderGraph() {
       const st = getStarter();
+      graphStarterTitle.textContent = st ? (st.label || '(no title)') : '(no starter)';
+
       const steps = st?.steps || [];
       if (!steps.length) {
         graphSvg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#98a2b3" font-size="14">No steps in this starter</text>';
@@ -4777,7 +4788,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     // }
 
     function renderViewAndEditLanding() {
-      console.log('renderViewAndEditLanding');
       const landing = document.getElementById('vwLanding');   // preview landing host
       if (!landing) return;
 
@@ -4785,12 +4795,25 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const desc = String(sop?.description || 'Describe your library');
       const starters = Array.isArray(sop?.starters) ? sop.starters : [];
 
+      // const q = (viewState.searchQ || '').trim().toLowerCase();
+      // const filteredStarters = q
+      //   ? starters.filter(st => starterSearchText(st).includes(q))
+      //   : starters;
+
       const q = (viewState.searchQ || '').trim().toLowerCase();
-      const filteredStarters = q
-        ? starters.filter(st => starterSearchText(st).includes(q))
-        : starters;
+      const filteredStarters = [];
+      for (const st of sop.starters) {
+        // clear previous annotation on re-render
+        if ('searchPlaceStepId' in st) delete st.searchPlaceStepId;
 
+        if (!q) { filteredStarters.push(st); continue; }
 
+        const { matched, place } = findSearchPlaceStepId(st, q);
+        if (matched) {
+          if (place) st.searchPlaceStepId = place;  // "starter" or a stepId
+          filteredStarters.push(st);
+        }
+      }
 
 
       // Build landing (viewer-like)
@@ -4826,9 +4849,14 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           <button class="vw-card" data-idx="${st.id}" data-action="starter-view">
             <h3>${escapeHtml(st.label)}</h3>
             ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ``}
-            <div class="vw-pill">
-              <span>Steps</span>
-              <strong>${(typeof countFlowSteps === 'function' ? countFlowSteps(st) : (st.steps || []).length)}</strong>
+            
+            <div class="vw-card__actions">
+              <div class="vw-pill">
+                <span>Steps</span>
+                <strong>${(typeof countFlowSteps === 'function' ? countFlowSteps(st) : (st.steps || []).length)}</strong>
+              </div>
+
+              <p class="search-place">${(typeof countFlowSteps === 'function' && q?.trim() !== "" ? "Found in step: " + countFlowSteps(st, st.searchPlaceStepId) : "")}</p>
             </div>
           </button>
 
@@ -4840,13 +4868,12 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
             <input class="st-summary" type="text"
                   placeholder="Summary"
                   value="${escapeAttr(st.summary || '')}" />
-            <div class="vw-card__meta">
+           
+            <div class="vw-card__actions" >
               <div class="vw-pill">
                 <span>Steps</span>
                 <strong>${(typeof countFlowSteps === 'function' ? countFlowSteps(st) : (st.steps || []).length)}</strong>
               </div>
-            </div>
-            <div class="vw-card__actions" >
               <button class="cfm-btn cfm-btn--subtleDanger" data-action="starter-delete">Delete</button>
             </div>
           </div>
@@ -4918,7 +4945,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     function starterSearchText(st) {
       const out = [];
+      console.log(`st, out`, st, out);
       (function walk(v, key) {
+        console.log(`v`, v);
         if (v == null) return;
         if (key === 'img_b64') return;                 // skip base64 blobs
         if (typeof v === 'string') out.push(v);
@@ -4927,6 +4956,66 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       })(st, '');
       return out.join(' ').toLowerCase();
     }
+
+    // returns { matched: boolean, place: string|null }
+    // place = stepId when match is inside a step; "starter" when match is outside steps; null if no match
+    // returns { matched: boolean, place: string|null }
+    // place = stepId when match is inside a step; "starter" when match is outside steps; null if no match
+    function findSearchPlaceStepId(st, q) {
+      q = (q || '').trim().toLowerCase();
+      if (!q) return { matched: true, place: null };
+
+      const stepIds = new Set((st.steps || []).map(s => s?.id).filter(Boolean));
+
+      // whitelist of fields we actually want to match
+      const ALLOWED_KEYS = new Set([
+        'id', 'label', 'summary',         // starter / step
+        'title', 'body',                  // step (instruction/input)
+        'placeholder', 'error', 'regex', 'requiredMessage',
+        'hint',                    // select option text
+      ]);
+
+      // blacklist of fields/branches to skip entirely
+      const SKIP_KEYS = new Set(['img_b64', 'pos', 'next', 'nextId', 'type', 'mode']);
+
+      let matched = false;
+      let place = null; // first hit wins
+
+      (function walk(node, key, stepCtx) {
+        if (matched || node == null) return;
+
+        // entering a step object → set context to that step id
+        if (node && typeof node === 'object' && node.id && stepIds.has(node.id)) {
+          stepCtx = node.id;
+        }
+
+        // skip whole branches by key
+        if (SKIP_KEYS.has(key)) return;
+
+        if (typeof node === 'string') {
+          // only match strings whose property name is allowed (root-level key may be '')
+          if (!key || ALLOWED_KEYS.has(key)) {
+            if (node.toLowerCase().includes(q)) {
+              matched = true;
+              place = stepCtx || 'starter';
+            }
+          }
+        }
+        else if (Array.isArray(node)) {
+          for (const item of node) walk(item, '', stepCtx);
+        }
+        else if (typeof node === 'object') {
+          for (const k in node) {
+            if (SKIP_KEYS.has(k)) continue;
+            walk(node[k], k, stepCtx);
+          }
+        }
+      })(st, '', null);
+
+      return { matched, place };
+    }
+
+
 
 
     // Run data normalization (ids/types/nexts/startId) for every starter.
@@ -5893,6 +5982,40 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       }
       return cnt;
     }
+
+    function getReachableStepIndex(starter, targetId) {
+      const steps = starter?.steps || [];
+      if (!steps.length || !targetId) return `unreachable "${targetId}"`;
+
+      const startId = starter.startId || getStarterStartId(starter);
+      if (!startId) return `unreachable "${targetId}"`;
+
+      const seen = new Set();
+      const stack = [startId];
+
+      while (stack.length) {
+        const id = stack.pop();
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+
+        if (id === targetId) return getStepIndexById(steps, id);
+
+        const idx = getStepIndexById(steps, id);
+        const cur = steps[idx];
+        if (!cur) continue;
+
+        if (cur.type === 'select' && cur.mode === 'single') {
+          // explore all option.next
+          (cur.options || []).forEach(o => { if (o && o.next) stack.push(o.next); });
+        } else {
+          // instruction / input / multi-select use step.next
+          if (cur.next) stack.push(cur.next);
+        }
+      }
+
+      return `unreachable "${targetId}"`;
+    }
+
 
 
 
