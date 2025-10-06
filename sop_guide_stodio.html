@@ -1463,7 +1463,7 @@
     .vw-card__actions {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: baseline;
       gap: 8px;
       margin-top: 10px;
     }
@@ -1887,7 +1887,7 @@
       }
     }
 
-     p.search-place {
+    p.search-place {
       color: var(--hl-bg);
     }
   </style>
@@ -4795,10 +4795,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const desc = String(sop?.description || 'Describe your library');
       const starters = Array.isArray(sop?.starters) ? sop.starters : [];
 
-      // const q = (viewState.searchQ || '').trim().toLowerCase();
-      // const filteredStarters = q
-      //   ? starters.filter(st => starterSearchText(st).includes(q))
-      //   : starters;
+
 
       const q = (viewState.searchQ || '').trim().toLowerCase();
       const filteredStarters = [];
@@ -4856,7 +4853,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
                 <strong>${(typeof countFlowSteps === 'function' ? countFlowSteps(st) : (st.steps || []).length)}</strong>
               </div>
 
-              <p class="search-place">${(typeof countFlowSteps === 'function' && q?.trim() !== "" ? "Found in step: " + countFlowSteps(st, st.searchPlaceStepId) : "")}</p>
+              <p class="search-place"> ${buildSearchBadge(st, q)} </p>
             </div>
           </button>
 
@@ -5952,6 +5949,62 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       return !s.next;
     };
 
+    // shortest hop count from start to target stepId, following real edges
+    // - instruction/input/multi → step.next
+    // - single-select → all option.next
+    // returns 0-based hops from start, or -1 if unreachable
+    function stepHopsFromStart(starter, targetId) {
+      const steps = starter?.steps || [];
+      if (!steps.length || !targetId) return -1;
+
+      const startId = starter.startId || getStarterStartId(starter);
+      if (!startId) return -1;
+
+      const dist = new Map([[startId, 0]]);
+      const q = [startId];
+
+      while (q.length) {
+        const id = q.shift();
+        if (id === targetId) return dist.get(id);
+
+        const i = getStepIndexById(steps, id);
+        const s = steps[i];
+        if (!s) continue;
+
+        const push = (nid) => {
+          if (!nid) return;
+          if (!dist.has(nid)) { dist.set(nid, dist.get(id) + 1); q.push(nid); }
+        };
+
+        if (s.type === 'select' && s.mode === 'single') {
+          (s.options || []).forEach(o => push(o && o.next));
+        } else {
+          push(s.next);
+        }
+      }
+      return -1;
+    }
+
+    // Build the small “found in …” label for a starter and current query.
+    // Uses your existing findSearchPlaceStepId(st, q)
+    function buildSearchBadge(starter, q) {
+      console.log(`buildSearchBadge`, { starter, q });
+      q = (q || '').trim();
+      if (!q) return '';
+
+      const res = findSearchPlaceStepId(starter, q);
+      if (!res.matched) return '';
+
+      if (res.place === 'starter') return 'Found in starter';
+      // place is a stepId
+      const hops = stepHopsFromStart(starter, res.place);
+      if (hops < 0) {
+        return `Found in step: ${res.place} <span class="warn">(unreachable)</span>`;
+      } else {
+        // show 1-based position from start for humans
+        return `Found in step: ${hops + 1}`;
+      }
+    }
 
     function countFlowSteps(starter) {
       const steps = starter?.steps || [];
