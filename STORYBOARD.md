@@ -4,9 +4,8 @@
 
 ## 🏇 Doing
 
-- Add rich text (new URL, bold, italic, …) (add link and upload file is left, also you may add variable from here) 
 - highlight the add button after clicking on it, on click again it should be cancelled
-
+- in the rich text, add variable can be added here
 - show actual values insted of variables on view guide
 - make on single select, it automatically jumps to the next one in the wizard
 - change the title name of the browser tab, make it sop - medical
@@ -25,6 +24,7 @@
 ---
 
 ## ✅ Done
+- Add rich text (new URL, bold, italic, …) (add link and upload file is left, also you may add variable from here) 
 - Fix the logic in the previous option in the wizard screen, specially when having options.
 -  Setting to combine some header buttons
 -  download button
@@ -59,6 +59,7 @@
 - Scroll up and down in the graph
 - for multi select it should have onle one next
 - move starters around to make them ordered as i need
+- Search capability  
 
 
 ---
@@ -77,7 +78,6 @@ bodyEl.addEventListener('blur', () => {
 
 - Undo and redo    
 - on click enter should go the next step on view guide
-- Search capability  
 - Zoom on cursor (not general zoom probably on shift + scroll) 
 - View picture (small, then maximize)  
 - ability to morge two files

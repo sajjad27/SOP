@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SOP Hub</title>
+  <style>
+    :root {
+      --fg: #0b1220;
+      --bg: #f7f9fc;
+      --muted: #60708a;
+      --card: #ffffff;
+      --line: #e4e8f0;
+      --accent: #2563eb;
+      --accent-weak: #eef3ff;
+      --ok: #16a34a;
+      --warn: #dc2626;
+      --shadow: 0 2px 10px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .06);
+      --radius: 16px;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --line: #cfd6dd;
+      --input-bg: #f6f8fa;
+      --hl-bg: #F7B733;
+      --hl-fg: #0f172a;
+      --content-w: 1240px;
+      --gutter: 16px;
+
+    }
+
+    html[data-theme="dark"] {
+      --fg: #e5e7eb;
+      --bg: #0b1220;
+      --muted: #9aa4b2;
+      --card: #0f172a;
+      --line: #334155;
+      /* was #233044: too low-contrast */
+      --accent: #3b82f6;
+      --accent-weak: rgba(59, 130, 246, .16);
+      --ok: #22c55e;
+      --warn: #ef4444;
+      --shadow: none;
+      --surface: #0f172a;
+      --text: #e5ecf4;
+      --input-bg: rgba(255, 255, 255, .06);
+      --hl-bg: #F7B733;
+      --hl-fg: #0f172a;
+      --content-w: 1240px;
+      --gutter: 16px;
+    }
+
+    @media (max-width:1439px) {
+      :root {
+        --content-w: 96vw;
+        --gutter: 12px
+      }
+    }
+
+    @media (min-width:1600px) {
+      :root {
+        --content-w: 1320px;
+        --gutter: 24px
+      }
+    }
+
+    @media (min-width:1920px) {
+      :root {
+        --content-w: 1440px;
+        --gutter: 28px
+      }
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(10, 14, 22, .85);
+      backdrop-filter: saturate(1.1) blur(6px);
+      border-bottom: 1px solid var(--line)
+    }
+
+    .wrap {
+      width: min(100%, var(--content-w));
+      margin-inline: auto;
+      padding: 10px var(--gutter)
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: .2px
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    .grow {
+      flex: 1
+    }
+
+    .pill {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      padding: 4px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--muted);
+      font-size: 12px
+    }
+
+    button,
+    .btn,
+    select,
+    input[type="text"] {
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--fg);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font: inherit
+    }
+
+    button:active {
+      transform: translateY(1px)
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      border-color: transparent;
+      color: #fff
+    }
+
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden
+    }
+
+    .seg button {
+      background: transparent;
+      border: 0;
+      padding: 8px 12px
+    }
+
+    .seg .active {
+      background: var(--accent);
+      color: #fff
+    }
+
+    main {
+      width: min(100%, var(--content-w));
+      margin: 16px auto 60px;
+      padding: 0 var(--gutter) 24px
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .card,
+    .rowitem {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow)
+    }
+
+    .card:hover,
+    .rowitem:hover {
+      outline: 3px solid var(--line)
+    }
+
+    .card h3,
+    .rowitem h3 {
+      margin: 0 0 4px;
+      font-size: 16px
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px
+    }
+
+    .link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--accent);
+      text-decoration: none
+    }
+
+    .link::after {
+      content: "↗"
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    #search {
+      min-width: 220px
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 40px 0;
+      border: 1px dashed var(--line);
+      border-radius: 12px
+    }
+
+    /* drop zone */
+    .dz {
+      border: 1.5px dashed var(--line);
+      border-radius: 12px;
+      padding: 8px 10px;
+      color: var(--muted)
+    }
+
+    .dz.drag {
+      background: var(--accent-weak);
+      border-color: var(--accent)
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap row">
+      <h1>SOP Hub</h1>
+      <span class="pill">CSV Driven</span>
+      <div class="grow"></div>
+      <div class="seg" role="tablist" aria-label="Layout switch">
+        <button id="btnCards" class="active" aria-pressed="true">Cards</button>
+        <button id="btnRows">Rows</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="controls">
+      <label for="file" class="dz" id="drop">Drop CSV here or <strong>choose</strong></label>
+      <input id="file" type="file" accept=".csv" />
+      <input id="search" type="text" placeholder="Search title, system, owner, tags…" />
+      <select id="groupBy">
+        <option value="">No grouping</option>
+        <option value="system">Group by System</option>
+        <option value="owner">Group by Owner</option>
+      </select>
+      <button id="btnClear" title="Clear loaded data">Clear</button>
+      <div class="grow"></div>
+      <a class="btn btn-accent" download href="#" id="dlSample">Download sample CSV</a>
+    </section>
+
+    <div id="viewCards" class="grid" aria-live="polite"></div>
+    <div id="viewRows" class="list hidden" aria-live="polite"></div>
+    <div id="empty" class="empty hidden">Load a CSV to list SOPs. You can drag & drop it above.</div>
+  </main>
+
+  <!--
+  Expected CSV headers (order can vary):
+  title,system,owner,tags,url,desc
+
+  Example rows:
+  "Medical – Claim Workflow",Medical,Shahad,"medical,claims,how-to",https://example.com/medical-claim.html,
+  "Payroll Adjustments",Payroll,Ahmed,"sap,pa30,how-to",https://example.com/payroll.html,"Monthly adjustments guide"
+  -->
+
+  <script>
+    const $ = (s, p = document) => p.querySelector(s);
+    const $$ = (s, p = document) => [...p.querySelectorAll(s)];
+
+    const state = { items: [], layout: localStorage.getItem('sopHubLayout') || 'cards' };
+
+    const fileInput = $('#file');
+    const searchInput = $('#search');
+    const groupBy = $('#groupBy');
+    const viewCards = $('#viewCards');
+    const viewRows = $('#viewRows');
+    const empty = $('#empty');
+    const drop = $('#drop');
+    const btnCards = $('#btnCards');
+    const btnRows = $('#btnRows');
+
+    // Sample CSV download
+    const sample = `title,system,owner,tags,url,desc\n"Medical – Claim Workflow",Medical,Shahad,"medical,claims,how-to",https://example.com/medical-claim.html,\n"Medical – Coverage Matrix",Medical,Shahad,"medical,policy",https://example.com/coverage.html,\n"Payroll – Adjustments",Payroll,Ahmed,"sap,pa30",https://example.com/payroll.html,"Monthly adjustments"`;
+    const dl = $('#dlSample');
+    dl.href = URL.createObjectURL(new Blob([sample], { type: 'text/csv' }));
+
+    // Layout toggle
+    function setLayout(mode) {
+      state.layout = mode;
+      localStorage.setItem('sopHubLayout', mode);
+      btnCards.classList.toggle('active', mode === 'cards');
+      btnCards.setAttribute('aria-pressed', mode === 'cards');
+      btnRows.classList.toggle('active', mode === 'rows');
+      btnRows.setAttribute('aria-pressed', mode === 'rows');
+      viewCards.classList.toggle('hidden', mode !== 'cards');
+      viewRows.classList.toggle('hidden', mode !== 'rows');
+      render();
+    }
+    btnCards.onclick = () => setLayout('cards');
+    btnRows.onclick = () => setLayout('rows');
+
+    // Basic CSV parser handling quoted fields and commas
+    function parseCSV(text) {
+      const rows = [];
+      let cur = '', row = [], inQ = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i], n = text[i + 1];
+        if (inQ) {
+          if (c === '"' && n === '"') { cur += '"'; i++; }
+          else if (c === '"') { inQ = false; }
+          else { cur += c; }
+        } else {
+          if (c === '"') { inQ = true; }
+          else if (c === ',') { row.push(cur.trim()); cur = ''; }
+          else if (c === '\n' || c === '\r') { if (cur !== '' || row.length) { row.push(cur.trim()); rows.push(row); row = []; cur = ''; } }
+          else { cur += c; }
+        }
+      }
+      if (cur !== '' || row.length) { row.push(cur.trim()); rows.push(row); }
+      return rows.filter(r => r.length && r.some(x => x !== ''));
+    }
+
+    function normalizeHeader(h) {
+      return h.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+    }
+
+    function rowsToObjects(rows) {
+      const header = rows[0].map(normalizeHeader);
+      const idx = (k) => header.indexOf(normalizeHeader(k));
+      const need = ['title', 'url'];
+      for (const k of need) { if (idx(k) === -1) throw new Error(`Missing required column: ${k}`); }
+      return rows.slice(1).map(r => ({
+        title: r[idx('title')] || '',
+        url: r[idx('url')] || '',
+        system: r[idx('system')] || '',
+        owner: r[idx('owner')] || '',
+        tags: (r[idx('tags')] || '').split(/[,;]/).map(t => t.trim()).filter(Boolean),
+        desc: r[idx('desc')] || ''
+      })).filter(o => o.title && o.url);
+    }
+
+    function loadCSV(text) {
+      try {
+        const rows = parseCSV(text);
+        const items = rowsToObjects(rows);
+        // sort stable by system then title
+        items.sort((a, b) => (a.system || '').localeCompare(b.system || '') || a.title.localeCompare(b.title));
+        state.items = items;
+        render();
+      } catch (e) {
+        alert('CSV error: ' + e.message);
+      }
+    }
+
+    function match(q, t) { return t.toLowerCase().includes(q); }
+
+    function render() {
+      const q = (searchInput.value || '').trim().toLowerCase();
+      const gb = groupBy.value || '';
+      const items = state.items.filter(it => {
+        if (!q) return true;
+        const hay = [it.title, it.system, it.owner, it.desc, (it.tags || []).join(' ')].join(' \n ').toLowerCase();
+        return match(q, hay);
+      });
+      empty.classList.toggle('hidden', items.length !== 0);
+
+      // grouping
+      let groups = { '': items };
+      if (gb) {
+        groups = {};
+        for (const it of items) {
+          const key = (it[gb] || 'Unspecified');
+          (groups[key] ||= []).push(it);
+        }
+      }
+
+      // wipe views
+      viewCards.innerHTML = '';
+      viewRows.innerHTML = '';
+
+      const makeTags = (tags = []) => {
+        const frag = document.createDocumentFragment();
+        tags.forEach(t => { const s = document.createElement('span'); s.className = 'pill'; s.textContent = t; frag.appendChild(s); });
+        return frag;
+      };
+
+      const renderCard = (it) => {
+        const el = document.createElement('article'); el.className = 'card';
+        el.innerHTML = `<h3>${escapeHTML(it.title)}</h3>
+          <div class="muted">${escapeHTML(it.system || '')}</div>
+          ${it.desc ? `<p class="muted" style="margin:6px 0 0">${escapeHTML(it.desc)}</p>` : ''}
+          <div class="tags"></div>
+          <p style="margin:10px 0 0"><a class="link" href="${it.url}" target="_blank" rel="noopener">Open SOP</a></p>`;
+        $('.tags', el).appendChild(makeTags(it.tags));
+        return el;
+      };
+
+      const renderRow = (it) => {
+        const el = document.createElement('article'); el.className = 'rowitem';
+        el.innerHTML = `<h3>${escapeHTML(it.title)}</h3>
+          <div class="muted">${escapeHTML([it.system, it.owner].filter(Boolean).join(' · '))}</div>
+          <p style="margin:6px 0 0"><a class="link" href="${it.url}" target="_blank" rel="noopener">Open SOP</a></p>`;
+        if (it.tags?.length) { const t = document.createElement('div'); t.className = 'tags'; t.appendChild(makeTags(it.tags)); el.appendChild(t); }
+        return el;
+      };
+
+      const addHeader = (name, parent) => {
+        const h = document.createElement('h2');
+        h.textContent = name || 'Unspecified';
+        h.style.cssText = 'margin:14px 2px 6px; font-size:14px; color:var(--muted)';
+        parent.appendChild(h);
+      };
+
+      const inCards = state.layout === 'cards';
+      const target = inCards ? viewCards : viewRows;
+      for (const [gname, arr] of Object.entries(groups)) {
+        if (gb) { addHeader(gname, target); }
+        (inCards ? arr : arr).forEach(it => target.appendChild(inCards ? renderCard(it) : renderRow(it)));
+      }
+      if (state.items.length === 0) { empty.classList.remove('hidden'); }
+    }
+
+    function escapeHTML(s) { return (s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[m])); }
+
+    // File select
+    fileInput.addEventListener('change', (e) => {
+      const f = e.target.files?.[0]; if (!f) return; readFile(f);
+    });
+
+    // Drag & drop
+    ;['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('drag'); }));
+    ;['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('drag'); }));
+    drop.addEventListener('drop', (e) => { const f = e.dataTransfer.files?.[0]; if (f) readFile(f); });
+
+    function readFile(file) {
+      const r = new FileReader();
+      r.onload = () => loadCSV(String(r.result || ''));
+      r.readAsText(file);
+    }
+
+    // Clear data
+    $('#btnClear').onclick = () => { state.items = []; render(); };
+
+    // Search & group handlers
+    searchInput.addEventListener('input', render);
+    groupBy.addEventListener('change', render);
+
+    // init
+    setLayout(state.layout);
+    render();
+  </script>
+</body>
+
+</html>

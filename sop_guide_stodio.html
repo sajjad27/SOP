@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>OpsPath Studio · SOP Builder</title>
+  <title id='sop-run-mode-tab-title'>OpsPath Studio · SOP Builder</title>
   <style>
     :root {
       --fg: #0b1220;
@@ -107,7 +107,12 @@
       padding-block: 12px;
     } */
 
-    main,
+    /* main {
+      width: min(100%, var(--content-w));
+      margin-inline: auto;
+      padding-inline: var(--gutter);
+    } */
+
     .wrap {
       width: min(100%, var(--content-w));
       margin-inline: auto;
@@ -447,16 +452,7 @@
       cursor: grabbing;
     }
 
-    .node-rect {
-      fill: #fff;
-      stroke: #d4dbe7;
-      rx: 8;
-    }
 
-    .node-rect.current {
-      stroke: var(--accent);
-      stroke-width: 2;
-    }
 
     .edge {
       stroke: #98a2b3;
@@ -582,7 +578,7 @@
       color: #6b7280;
       border: 1px dashed #9ca3af;
       box-shadow: none;
-      cursor: default;
+      cursor: not-allowed;
     }
 
 
@@ -612,6 +608,15 @@
     #importHtmlNote {
       color: var(--muted);
     }
+
+    /* thin, subtle divider under the step title */
+.vw-hr {
+  border: 0;
+  border-top: 1px solid var(--hairline, #3a3f4b);
+  margin: 6px 0 12px;
+}
+.vw-title { margin: 0; }
+
 
     #stepsList .item:hover {
       border-color: #cfd8ea;
@@ -660,6 +665,37 @@
 
     /* dark mode */
     /* Use vars for common surfaces so dark can override cleanly */
+
+    /* HTML labels inside nodes */
+    /* HTML labels inside nodes */
+    .node-fo {
+      pointer-events: none;
+    }
+
+    .node-fo .label {
+      font: inherit;
+      line-height: 1.15;
+
+      /* center the text both axes */
+      height: 100%;
+      display: flex;
+      align-items: center;
+      /* vertical center */
+      justify-content: center;
+      /* centers the text box horizontally */
+
+      text-align: center;
+      overflow-wrap: anywhere;
+      /* break even single long words */
+      word-break: break-word;
+      /* fallback */
+      white-space: normal;
+
+      margin: 0;
+      padding: 0;
+    }
+
+
 
     select {
       background-image: none;
@@ -832,7 +868,6 @@
     /* --- Default hidden --- */
     #vwLanding,
     #vwHeader,
-    #vwHeaderEditor,
     #starter,
     #vwWizard,
     #editStarter {
@@ -856,23 +891,18 @@
     }
 
     /* Landing + view → header text */
-    [screen="landing"][data-mode="view"] #vwHeader {
+    [screen="landing"] #vwHeader {
       display: flex;
-      justify-content: space-between;
+      justify-content: end;
     }
 
-    [screen="landing"][data-mode="view"] #vwHeaderEditor {
-      display: none;
-    }
+
 
     /* Landing + edit → header editor */
-    [screen="landing"][data-mode="edit"] #vwHeader {
+    /* [screen="landing"][data-mode="edit"] #vwHeader {
       display: none;
-    }
+    } */
 
-    [screen="landing"][data-mode="edit"] #vwHeaderEditor {
-      display: block;
-    }
 
     /* --- Starter screen --- */
     [screen="starter"] #starter {
@@ -896,6 +926,25 @@
     [screen="starter"][data-mode="edit"] #editStarter {
       display: flex;
       min-height: 0;
+    }
+
+    [screen="starter"][data-mode="edit"] #sop-run-mode-title,
+    [data-mode="view"] #sop-run-mode-title {
+      display: block;
+      cursor: pointer;
+    }
+
+    [screen="landing"][data-mode="edit"] #sop-run-mode-title {
+      display: none;
+    }
+
+    [screen="starter"][data-mode="edit"] #sop-run-mode-title-input,
+    [data-mode="view"] #sop-run-mode-title-input {
+      display: none;
+    }
+
+    [screen="landing"][data-mode="edit"] #sop-run-mode-title-input {
+      display: block;
     }
 
 
@@ -967,7 +1016,7 @@
     }
 
 
-    .vw-pill {
+     .vw-pill {
       display: inline-flex;
       gap: 6px;
       align-items: center;
@@ -982,7 +1031,7 @@
 
     .vw-pill strong {
       color: var(--fg);
-    }
+    } 
 
     /* view-mode wizard */
     .vw-crumbs {
@@ -1223,9 +1272,26 @@
       cursor: pointer;
     }
 
+    /* keep your existing hover */
     .rt-btn:hover {
       background-color: var(--input-bg);
     }
+
+    /* improved disabled state */
+    .rt-btn:disabled,
+    .rt-btn[disabled] {
+      opacity: .5;
+      cursor: not-allowed;
+      /* was: default */
+    }
+
+    /* kill hover when disabled */
+    .rt-btn:disabled:hover,
+    .rt-btn[disabled]:hover {
+      background-color: inherit;
+      /* no hover bg when disabled */
+    }
+
 
     /* Editor (same look/feel as your fields) */
     .rt-editor {
@@ -1242,6 +1308,21 @@
       font: inherit;
       line-height: 1.5;
       overflow: auto;
+    }
+
+    .rt-editor,
+    .rt-editor p,
+    .rt-editor li,
+    .rt-editor blockquote {
+      line-height: 1.2;
+    }
+
+    /* Make inline highlights not add extra vertical space */
+    .rt-editor [style*="background-color"]:not([style*="transparent"]) {
+      line-height: 1.2;
+      display: inline;
+      /* keep it inline, not inline-block */
+      background-clip: padding-box;
     }
 
     .rt-editor:focus {
@@ -1485,6 +1566,32 @@
       padding: 6px;
     }
 
+    /* Variables menu row layout + wrapping for long IDs */
+    .settings-panel .settings-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+    }
+
+    .settings-panel .settings-item .var-id {
+      flex: 1 1 auto;
+      min-width: 0;
+      /* allow flexbox to shrink the field */
+      overflow-wrap: anywhere;
+      /* break even single long tokens */
+      word-break: break-word;
+      /* fallback for older engines */
+    }
+
+    .settings-panel .settings-item .var-type {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      /* keep “(input)” / “(select)” on one line */
+      opacity: .7;
+    }
+
+
     /* Let the two variants participate in the grid like normal cards */
     .starter-dual {
       display: contents;
@@ -1645,25 +1752,53 @@
       font-size: 0.9em;
     }
 
-    /* normalize all icon buttons (including the delete one) */
-    /* .icon-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      padding: 0;
-      line-height: 0;
-      border: 0;
-      background: transparent;
-    } */
+    /* highlight palette dropdown */
+    .hl-menu {
+      position: absolute;
+      min-width: 220px;
+      z-index: 1000;
+      background: var(--c-bg-2, #222);
+      color: var(--c-fg, #fff);
+      border: 1px solid var(--c-bd, #444);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+      padding: 8px;
+    }
 
-    /* remove inline-svg baseline gap */
-    /* .icon-btn svg {
-      display: block;
-      width: 42px;
-      height: 42px;
-    } */
+    .hl-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .hl-swatch {
+      width: 28px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, .25);
+      cursor: pointer;
+    }
+
+    .hl-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .hl-clear {
+      background: transparent;
+      color: inherit;
+      border: 1px solid var(--c-bd, #444);
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+
+    .hl-clear:hover {
+      background: var(--input-bg);
+    }
+
 
     .icon-btn svg {
       display: block;
@@ -1889,6 +2024,8 @@
 
     p.search-place {
       color: var(--hl-bg);
+      text-align: right;
+      font-style: italic;
     }
   </style>
 
@@ -1920,7 +2057,12 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     <div class="wrap">
       <div class="row">
-        <h1 class="grow">OpsPath Studio · SOP Builder</h1>
+        <div class="grow">
+          <h1 id="sop-run-mode-title" onclick="goHome()" class="grow"></h1>
+          <input id="sop-run-mode-title-input" class="grow" style="width: 33.33%; padding: 8px 12px;" type="text"
+            value="New SOP" placeholder="SOP Title" />
+        </div>
+
         <div class="controls">
           <button id="btnHome" data-hide="guide" class="vw-home" title="Home" onclick="goHome()">
             🏠 Home
@@ -1949,13 +2091,12 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
   </header>
 
   <main>
-    <section id="starter">
+    <section id="starter" class="wrap">
       <div id="vwWizard">
         <div class="vw-crumbs">
           <button id="vwBackHome" onclick="goHome()" class="btn">◀ Back</button>
           <span class="title" id="vwStarterTitle"></span>
         </div>
-        <div id="vwProgress" class="small"></div>
         <div id="vwStep"></div>
         <div class="vw-nav">
           <button id="vwPrev" class="btn">Previous</button>
@@ -2152,7 +2293,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     let sop = makeBlankSOP();
     let savedSop = null; // last saved snapshot
 
-    const viewState = { starterIdx: 0, answers: {}, selectedStepId: 0, stepIdx: 0, history: [] };
+    const viewState = { starterIdx: 0, answers: {}, selectedStepId: 0, history: [] };
 
 
     // ---- Save button state ----
@@ -2169,9 +2310,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
     function isInEditableArea(el) {
-      const hdr = document.getElementById('vwHeaderEditor');
+      // const hdr = document.getElementById('vwHeaderEditor');
       const edt = document.getElementById('editStarter');
-      return (hdr && hdr.contains(el)) || (edt && edt.contains(el));
+      return (edt && edt.contains(el));
     }
 
     // is inside the graph area (to avoid trapping Del key when typing in inputs)
@@ -2255,6 +2396,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     const graphPanel = document.getElementById('graphPanel');
     const graphStarterTitle = document.getElementById('graph-starter-title');
 
+    function getCurrentRunMode() {
+      return document.documentElement.getAttribute('run-mode') || 'studio';
+    }
+
+
 
     document.addEventListener('DOMContentLoaded', () => {
 
@@ -2262,7 +2408,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       (async () => {
         // 1) Try embedded JSON
         // check run mode studio or guide
-        const currentRunMode = document.documentElement.getAttribute('run-mode');
+        const currentRunMode = getCurrentRunMode();
         if (currentRunMode === 'guide') {
           const embedded = document.getElementById('jsonEmbedded');
           if (embedded && embedded.textContent) {
@@ -2298,13 +2444,17 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
         viewState.starterIdx = 0;
-        viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+        // viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+        setSelectedStepById(getStarterStartId(sop.starters[0]));
 
         ensureSop();
         renderViewAndEditLanding();
+        renderSopTitle();
+
 
         wireGlobal();
         wireHotkeys();
+
         savedSop = structuredClone(sop);
 
 
@@ -2356,11 +2506,10 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     (function studioOrGuideInit() {
       // get current run mode from HTML attribute
-      const currentRunMode = document.documentElement.getAttribute('run-mode');
+      const currentRunMode = getCurrentRunMode();
       if (!currentRunMode) {
         document.documentElement.setAttribute('run-mode', 'studio');
       }
-
     })();
 
     (function modeInit() {
@@ -2423,67 +2572,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       // const saved = localStorage.getItem('screen');
       changeScreen('landing');
     })();
-
-
-
-    // (() => {
-
-    //   const STORAGE_KEY = 'split:rightPanelWidth';
-    //   const saved = localStorage.getItem(STORAGE_KEY);
-    //   if (saved && saved.trim() !== '' && saved !== '0px') {
-    //     document.documentElement.style.setProperty('--right-w', saved);
-    //     const right = document.getElementById('rightPanel');
-    //     if (right) {
-    //       right.style.flexBasis = saved;
-    //       right.style.width = saved;
-    //     }
-    //   }
-    //   window.addEventListener('beforeunload', () => {
-    //     const right = document.getElementById('rightPanel');
-    //     if (right) {
-    //       const w = right.getBoundingClientRect().width;
-    //       localStorage.setItem(STORAGE_KEY, w + 'px');
-    //     }
-    //   });
-
-    //   const root = document.documentElement;
-    //   const wrap = document.getElementById('editStarter');
-    //   const split = document.getElementById('splitter');
-    //   const right = document.getElementById('rightPanel');
-    //   const leftMin = 260;          // must match #graphPanel min-width
-    //   const rightMin = 180;
-
-    //   let drag = false, startX = 0, startW = 0;
-
-    //   split.addEventListener('mousedown', e => {
-    //     drag = true;
-    //     startX = e.clientX;
-    //     startW = right.getBoundingClientRect().width;
-    //     document.body.style.userSelect = 'none';
-    //   });
-
-    //   window.addEventListener('mousemove', e => {
-    //     if (!drag) return;
-    //     const dx = e.clientX - startX;            // move left = negative, right = positive
-    //     const total = wrap.clientWidth;
-    //     // Grow right when dragging LEFT (dx < 0), shrink when dragging RIGHT (dx > 0)
-    //     let w = startW - dx;
-
-    //     // Clamp so left stays >= leftMin and right >= rightMin
-    //     w = Math.max(rightMin, Math.min(w, total - leftMin));
-
-    //     // Apply both flex-basis and width so it actually expands
-    //     right.style.flexBasis = w + 'px';
-    //     right.style.width = w + 'px';
-    //     root.style.setProperty('--right-w', w + 'px');
-    //   });
-
-    //   window.addEventListener('mouseup', () => {
-    //     if (!drag) return;
-    //     drag = false;
-    //     document.body.style.userSelect = '';
-    //   });
-    // })();
 
     (() => {
       const STORAGE_KEY = 'split:rightPanelWidth';
@@ -2565,10 +2653,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         saveWidth(); // persist immediately, not only on unload
       });
     })();
-
-
-
-
 
     function changeDataMode(newDataMode) {
       if (newDataMode !== 'view' && newDataMode !== 'edit') {
@@ -2709,14 +2793,17 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
               <button type="button" class="rt-btn" data-cmd="insertUnorderedList" title="Bulleted list">• • •</button>
               <button type="button" class="rt-btn" data-cmd="insertOrderedList" title="Numbered list">1.</button>
-              <button type="button" class="rt-btn" data-cmd="highlight" title="Highlight">HL</button>
+              <button type="button" class="rt-btn" id="rt-hl-btn" title="Highlight">HL ▾</button>
+
               <button type="button" class="rt-btn" id="rt-link-btn" title="Insert/edit link">🔗</button>
 
               <button type="button" class="rt-btn" data-cmd="attach" title="Attach file">📎</button>
               <input id="rt_attach" type="file" style="display:none">
 
 
-              
+              <button id="variables-select" disabled title="No variables found" class="rt-btn">{{x}}</button>
+
+
               <button type="button" id="clearFmt" class="push-right rt-btn" title="Clear formatting">✖︎</button>
               </div>
               <div id="f_body" class="rt-editor" contenteditable="true">${step.body || ''}</div>
@@ -2795,14 +2882,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       }
 
       // Step-level Next (instruction, input, select+multi)
-      //   if (isInstr || isInput || isMulti) {
-      //     html += `
-      //   <label>${isMulti ? 'After (step.next, used for multi)' : 'Next (step.id)'}</label>
-      //   ${nextSelectHtml(st.steps, step.next, step.id)}
-      // `;
-      //   }
-
-      // Step-level Next (instruction, input, select+multi)
       if (isInstr || isInput || isMulti) {
         html += `
     <label>${isMulti ? 'After (step.next, used for multi)' : 'Next (step.id)'}</label>
@@ -2810,14 +2889,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
   `;
       }
 
-
-      // Image (kept for instruction & input & select if you want it global)
-      //     html += `
-      //   <div class="kv">
-      //     <div><label>Image (base64)</label><input id="f_img" type="text" value="${escapeAttr(step.img_b64 || '')}"/></div>
-      //     <div><label>Upload image</label><input id="f_img_file" type="file" accept="image/*"/></div>
-      //   </div>
-      // `;
 
       html += `
     <div class="layout">
@@ -2855,6 +2926,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
       box.innerHTML = html;
+      // populateVariableDropdown(st, step);
+
 
       // === Listeners ===
 
@@ -2862,14 +2935,26 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const fId = document.getElementById('f_id');
       const fIdErr = document.getElementById('f_id_err');
       fId?.addEventListener('input', () => {
-        const nv = (fId.value || '').trim();
-        const ok = nv && !st.steps.some(s => s !== step && s.id === nv);
+        const newId = (fId.value || '').trim();
+        const oldId = step.id;
+        const ok = newId && !st.steps.some(s => s !== step && s.id === newId);
         fIdErr.style.display = ok ? 'none' : '';
-        fIdErr.textContent = ok ? '' : (nv ? 'ID already exists.' : 'ID is required.');
+        fIdErr.textContent = ok ? '' : (newId ? 'ID already exists.' : 'ID is required.');
         if (ok) {
-          step.id = nv; viewState.selectedStepId = nv;
-          setDirty?.(true);
-          renderGraph();
+          // rewriteRefs(oldId, newId);
+          // step.id = newId;
+          // viewState.selectedStepId = newId;
+          // renderGraph();
+
+
+          // rewriteRefs(oldId, newId);
+          // step.id = newId;
+          // setSelectedStepById(newId);          // <-- sync id + idx
+          // renderGraph();
+
+          navigateToStepId(step.id, { record: false });
+
+
         }
       });
 
@@ -2879,12 +2964,14 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         const t = fType.value;
         if (t !== step.type) {
           step.type = t;
-          if (t === 'select' && !Array.isArray(step.options))
-            step.options = [
+          if (t === 'select'
+          ) {
+
+            step.mode = getSelectMode();
+            step.options = step.options ?? [
               getDefaultOption(step)
             ];
-          // normalize fields when switching types
-          if (t !== 'instruction') { delete step.body; }
+          }
           setDirty?.(true);
           renderInspector(); // re-render to show correct controls
           renderGraph();
@@ -2917,6 +3004,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         setDirty(true);
         renderViewStep();
       });
+
+
+
 
       document.execCommand('defaultParagraphSeparator', false, 'p');
 
@@ -2992,6 +3082,480 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
+      //   function openVariablesMenu(anchorBtn) {
+      //     // prevent duplicates (reuse the same overlay id you're using elsewhere)
+      //     if (document.getElementById('settingsOverlay')) return;
+
+      //     // Get the current starter/step + candidates (from expando or recompute)
+      //     const starter = getStarter?.();
+      //     const curStep = starter?.steps.find(s => s.id === viewState?.selectedStepId);
+      //     const list = anchorBtn._varsCandidates || getVariableCandidates(starter, curStep);
+
+      //     // overlay (click outside to close)
+      //     const overlay = document.createElement('div');
+      //     overlay.id = 'settingsOverlay';
+      //     overlay.className = 'settings-overlay';
+
+      //     // panel
+      //     const panel = document.createElement('div');
+      //     panel.className = 'settings-panel';
+      //     panel.style.minWidth = '220px';   // was ~auto; gives IDs some breathing room
+
+
+      //     // ---- content: VARIABLES ONLY (read-only) ----
+      //     let bodyHtml = '';
+      //     if (!list || list.length === 0) {
+      //       bodyHtml = `<div class="settings-empty" style="padding:8px 10px;opacity:.7">— No inputs/selects available —</div>`;
+      //     } else {
+      //       //   bodyHtml = list.map(s => {
+      //       //     // visual: left = raw id (no {{ }}), right = (input) or (select)
+      //       //     return `
+      //       // <div class="settings-item" data-var="${s.id}"
+      //       //      style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;">
+      //       //   <span class="mono" style="user-select:text">${s.id}</span>
+      //       //   <span class="small" style="opacity:.7">(${s.type})</span>
+      //       // </div>`;
+      //       //   }).join('');
+      //       bodyHtml = list.map(s => {
+      //         return `
+      // <div class="settings-item" data-var="${s.id}">
+      //   <span class="mono var-id">${s.id}</span>
+      //   <span class="small var-type">(${s.type})</span>
+      // </div>`;
+      //       }).join('');
+      //     }
+
+      //     panel.innerHTML = bodyHtml; // no "Variables" title, just the list
+
+      //     // place panel near the anchor button
+      //     document.body.appendChild(overlay);
+      //     document.body.appendChild(panel);
+      //     const rect = anchorBtn.getBoundingClientRect();
+      //     const top = rect.bottom + 6 + window.scrollY;
+      //     const left = Math.min(
+      //       rect.left + window.scrollX,
+      //       window.scrollX + document.documentElement.clientWidth - panel.offsetWidth - 12
+      //     );
+      //     panel.style.top = `${top}px`;
+      //     panel.style.left = `${left}px`;
+
+      //     // handlers (no item action for now; just close on outside/esc)
+      //     const onOutside = (e) => { if (e.target === overlay) cleanup(); };
+      //     const onEsc = (e) => { if (e.key === 'Escape') cleanup(); };
+
+      //     overlay.addEventListener('click', onOutside);
+      //     document.addEventListener('keydown', onEsc);
+
+      //     function cleanup() {
+      //       overlay.removeEventListener('click', onOutside);
+      //       document.removeEventListener('keydown', onEsc);
+      //       panel.remove();
+      //       overlay.remove();
+      //     }
+      //   }
+
+      function openVariablesMenu(anchorBtn) {
+        // prevent duplicates (reuse your settings overlay id)
+        if (document.getElementById('settingsOverlay')) return;
+
+        // --- capture caret BEFORE opening (so we can restore later) ---
+        const editor = getBodyEditorEl();          // your rich-text body
+        let savedRange = null;
+        if (editor) {
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount && editor.contains(sel.anchorNode)) {
+            savedRange = sel.getRangeAt(0).cloneRange(); // snapshot current caret/selection
+          }
+        }
+
+        // pull cached candidates from the button (set in renderInspector), or recompute
+        const starter = getStarter?.();
+        const curStep = starter?.steps.find(s => s.id === viewState?.selectedStepId);
+        const list = anchorBtn._varsCandidates || getVariableCandidates(starter, curStep);
+
+        // overlay (click outside to close)
+        const overlay = document.createElement('div');
+        overlay.id = 'settingsOverlay';
+        overlay.className = 'settings-overlay';
+
+        // panel
+        const panel = document.createElement('div');
+        panel.className = 'settings-panel';
+        panel.style.minWidth = '320px';
+
+        // list UI (no header, no braces)
+        let bodyHtml = '';
+        if (!list || list.length === 0) {
+          bodyHtml = `<div class="settings-empty" style="padding:8px 10px;opacity:.7">— No inputs/selects available —</div>`;
+        } else {
+          bodyHtml = list.map(s => `
+      <div class="settings-item" data-var="${s.id}"
+           style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;">
+        <span class="mono var-id" style="min-width:0;overflow-wrap:anywhere;word-break:break-word;">${s.id}</span>
+        <span class="small var-type" style="white-space:nowrap;opacity:.7">(${s.type})</span>
+      </div>
+    `).join('');
+        }
+        panel.innerHTML = bodyHtml;
+
+        // place panel near the anchor button
+        document.body.appendChild(overlay);
+        document.body.appendChild(panel);
+        const rect = anchorBtn.getBoundingClientRect();
+        const top = rect.bottom + 6 + window.scrollY;
+        const left = Math.min(
+          rect.left + window.scrollX,
+          window.scrollX + document.documentElement.clientWidth - panel.offsetWidth - 12
+        );
+        panel.style.top = `${top}px`;
+        panel.style.left = `${left}px`;
+
+        // --- handlers ---
+        const onItemClick = (e) => {
+          const row = e.target.closest('.settings-item');
+          if (!row) return;
+
+          const id = row.getAttribute('data-var') || '';
+          if (!id) return;
+
+          const token = `{{${id}}}`;
+
+          if (editor) {
+            editor.focus();
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+
+            // restore saved range if it's still inside the editor; else move to end
+            if (savedRange && editor.contains(savedRange.commonAncestorContainer)) {
+              sel.addRange(savedRange);
+            } else {
+              const r = document.createRange();
+              r.selectNodeContents(editor);
+              r.collapse(false);
+              sel.addRange(r);
+            }
+
+            // insert at caret (replace selection if any)
+            const r = sel.getRangeAt(0);
+            r.deleteContents();
+            const node = document.createTextNode(token);
+            r.insertNode(node);
+            // place caret right after inserted token
+            r.setStartAfter(node);
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
+          }
+
+          cleanup();
+          setDirty?.(true);
+        };
+
+        const onOutside = (e) => { if (e.target === overlay) cleanup(); };
+        const onEsc = (e) => { if (e.key === 'Escape') cleanup(); };
+
+        panel.addEventListener('click', onItemClick);
+        overlay.addEventListener('click', onOutside);
+        document.addEventListener('keydown', onEsc);
+
+        function cleanup() {
+          panel.removeEventListener('click', onItemClick);
+          overlay.removeEventListener('click', onOutside);
+          document.removeEventListener('keydown', onEsc);
+          panel.remove();
+          overlay.remove();
+        }
+
+        // --- tiny local helpers (kept here for clarity) ---
+        function getBodyEditorEl() {
+          return document.getElementById('f_body')
+            || document.querySelector('[data-field="body"]')
+            || document.querySelector('.rt-body')
+            || document.querySelector('[contenteditable][data-rich="body"]');
+        }
+      }
+
+
+
+      // Return earlier steps (ancestors) that are input/select
+      function getVariableCandidates(starter, currentStep) {
+        if (!starter || !currentStep) return [];
+        const pred = buildPredecessors(starter);
+        const seen = new Set([currentStep.id]);
+        const stack = [currentStep.id];
+        const out = [];
+        while (stack.length) {
+          const id = stack.pop();
+          const ps = pred[id]; if (!ps) continue;
+          for (const p of ps) if (!seen.has(p)) {
+            seen.add(p);
+            out.push(p);
+            stack.push(p);
+          }
+        }
+        // map to step objects and filter input/select
+        const byId = Object.fromEntries(starter.steps.map(s => [s.id, s]));
+        return out.map(id => byId[id]).filter(s => s && (s.type === 'input' || s.type === 'select'));
+      }
+
+
+
+
+
+      // Small palette (includes your current #F7B733)
+      // const HL_COLORS = ['#F7B733', '#FFE066', '#7FDBFF', '#B5E48C', '#CDB4DB', '#FFADAD'];
+
+      // const HL_COLORS = ['#FACC15', '#EF4444', '#3B82F6', '#22C55E'];
+      // const HL_COLORS = ['#E9B949', '#E24A3A', '#2F5FE3', '#17A773'];
+      // const HL_COLORS = ['#f1ba40', '#5ecd8c', '#4191dd', '#c03c37'];
+
+      // const HL_COLORS = ['#cc9e36', '#4fae77', '#377bbb', '#a3332e'];
+
+      // this is good
+      // const HL_COLORS = ['#f1ba40', '#4fae77', '#377bbb', '#c03c37'];
+      // const HL_COLORS = ['#f1ba40', '#f6d283', '#4fae77', '#8dcaa7', '#377bbb', '#7da9d3', '#c03c37', '#d6807d'];
+      const HL_COLORS = ['#F6D283', '#8DCAA7', '#7DA9D3', '#D6807D'];
+
+
+
+      function openHighlightMenu(anchorBtn, bodyEl) {
+        // avoid duplicate panels
+        if (document.getElementById('settingsOverlay')) return;
+
+        // figure out which command this browser supports
+        const HL_CMD = document.queryCommandSupported('hiliteColor') ? 'hiliteColor' : 'backColor';
+
+        // snapshot selection BEFORE opening (clicking the menu will steal focus)
+        let savedRange = null;
+        if (bodyEl?.isContentEditable) {
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount && bodyEl.contains(sel.anchorNode)) {
+            savedRange = sel.getRangeAt(0).cloneRange();
+          }
+        }
+
+        // overlay + panel (reuse your settings styles)
+        const overlay = document.createElement('div');
+        overlay.id = 'settingsOverlay';
+        overlay.className = 'settings-overlay';
+
+        const panel = document.createElement('div');
+        panel.className = 'settings-panel';
+        // pandel.style.minWidth = '160px';
+        // display: flex; flex-direction: column; gap: 3px
+
+        // build items using your .settings-item
+        const colorItems = HL_COLORS.map(c => `
+    <button class="settings-item" data-color="${c}">
+      <span style="
+        width:18px;height:18px;border-radius:4px;border:1px solid rgba(0,0,0,.2);
+        background:${c}; display:inline-block; margin-right:8px; vertical-align:middle;"></span>
+      <span>${c}</span>
+    </button>
+  `).join('');
+
+        const clearItem = `
+    <button class="settings-item" data-clear>
+      Remove highlight
+    </button>
+  `;
+
+        panel.innerHTML = colorItems + clearItem;
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(panel);
+
+        // position under the button (like your other menu)
+        const rect = anchorBtn.getBoundingClientRect();
+        const top = rect.bottom + 6 + window.scrollY;
+        const left = Math.min(
+          rect.left + window.scrollX,
+          window.scrollX + document.documentElement.clientWidth - panel.offsetWidth - 12
+        );
+        panel.style.top = `${top}px`;
+        panel.style.left = `${left}px`;
+
+        // --- helpers ---
+        function restoreSelection() {
+          if (!bodyEl) return false;
+          bodyEl.focus();
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+
+          if (savedRange && bodyEl.contains(savedRange.commonAncestorContainer)) {
+            sel.addRange(savedRange);
+          } else {
+            // fallback to end of editor (but will be collapsed → we’ll no-op)
+            const r = document.createRange();
+            r.selectNodeContents(bodyEl);
+            r.collapse(false);
+            sel.addRange(r);
+          }
+          return !sel.isCollapsed;
+        }
+
+        function applyColor(color) {
+          if (!restoreSelection()) { cleanup(); return; }
+
+          const fg = cssVar('--hl-fg') || '#0B1220';  // fallback if var missing
+
+          document.execCommand('styleWithCSS', false, true);
+          document.execCommand(HL_CMD, false, color); // background
+          document.execCommand('foreColor', false, fg); // text color from :root
+
+          if (typeof step !== 'undefined') {
+            step.body = bodyEl.innerHTML;
+            setDirty?.(true);
+            renderViewStep?.();
+          }
+          cleanup();
+        }
+
+
+
+        // Choose black/white text that reads on a given hex/bg (handles #RGB/#RRGGBB)
+        function readableTextOn(bg) {
+          const hex = String(bg).replace('#', '').trim();
+          const h = hex.length === 3
+            ? hex.split('').map(ch => ch + ch).join('')
+            : hex.padEnd(6, '0').slice(0, 6);
+          const r = parseInt(h.slice(0, 2), 16) / 255;
+          const g = parseInt(h.slice(2, 4), 16) / 255;
+          const b = parseInt(h.slice(4, 6), 16) / 255;
+          // WCAG-ish relative luminance
+          const L = 0.2126 * Math.pow(r, 2.2) + 0.7152 * Math.pow(g, 2.2) + 0.0722 * Math.pow(b, 2.2);
+          return (L > 0.55) ? '#0F172A' : '#FFFFFF'; // dark slate on light bg, white on dark bg
+        }
+
+
+
+        function clearHighlight() {
+          if (!restoreSelection()) { cleanup(); return; }
+
+          // clear background
+          document.execCommand(HL_CMD, false, 'transparent');
+          // scrubBgInSelection?.();
+
+          // clear any forced foreground color (in-range + ancestor chain)
+          const editor = bodyEl || getBodyEditorEl();
+          clearInlineFgInRange(editor);
+          clearColorUpwardsFromRangeEdges(editor);
+          normalizeInlineColorArtifacts(editor);
+
+          if (typeof step !== 'undefined') {
+            step.body = editor.innerHTML;
+            setDirty?.(true);
+            renderViewStep?.();
+          }
+          cleanup();
+        }
+
+
+        // Walk elements intersecting the selection and clear inline color
+        function clearInlineFgInRange(editor) {
+          const sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0) return;
+          const range = sel.getRangeAt(0);
+
+          const walker = document.createTreeWalker(
+            range.commonAncestorContainer,
+            NodeFilter.SHOW_ELEMENT,
+            {
+              acceptNode: (el) =>
+                (editor.contains(el) && range.intersectsNode(el))
+                  ? NodeFilter.FILTER_ACCEPT
+                  : NodeFilter.FILTER_SKIP
+            }
+          );
+
+          const hits = [];
+          while (walker.nextNode()) {
+            const el = walker.currentNode;
+            if (!el) continue;
+            if (el.style && el.style.color) hits.push(el);
+            if (el.tagName === 'FONT' && el.hasAttribute('color')) hits.push(el);
+          }
+          hits.forEach(el => {
+            if (el.style) el.style.color = '';
+            if (el.tagName === 'FONT') el.removeAttribute('color');
+          });
+        }
+
+        // If a parent (outside the range) holds the color, clear it going upward from both ends
+        function clearColorUpwardsFromRangeEdges(editor) {
+          const sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0) return;
+          const range = sel.getRangeAt(0);
+
+          clearUp(range.startContainer);
+          clearUp(range.endContainer);
+
+          function clearUp(node) {
+            let el = node.nodeType === 1 ? node : node.parentElement;
+            while (el && el !== editor && el !== document.body) {
+              // break if we hit a block (don’t blast layout-wide styles)
+              const disp = getComputedStyle(el).display;
+              const isBlockish = disp === 'block' || disp === 'list-item' || disp === 'table';
+              if (isBlockish) break;
+
+              if (el.style && el.style.color) {
+                el.style.color = '';
+                // if style attr is empty now, remove it
+                if (!el.getAttribute('style')) el.removeAttribute('style');
+              }
+              if (el.tagName === 'FONT' && el.hasAttribute('color')) {
+                el.removeAttribute('color');
+              }
+              el = el.parentElement;
+            }
+          }
+        }
+
+        // Clean up spans/fonts that no longer do anything
+        function normalizeInlineColorArtifacts(editor) {
+          // unwrap <font> without attributes
+          editor.querySelectorAll('font').forEach(f => {
+            if (f.attributes.length === 0) {
+              while (f.firstChild) f.parentNode.insertBefore(f.firstChild, f);
+              f.remove();
+            }
+          });
+          // drop empty style="" attrs
+          editor.querySelectorAll('[style]').forEach(el => {
+            if (el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+          });
+        }
+
+        function cssVar(name, el = document.documentElement) {
+          return getComputedStyle(el).getPropertyValue(name).trim();
+        }
+
+
+
+
+
+        // --- events ---
+        panel.addEventListener('click', (e) => {
+          const btn = e.target.closest('.settings-item');
+          if (!btn) return;
+          const clr = btn.getAttribute('data-color');
+          if (clr) { applyColor(clr); return; }
+          if (btn.hasAttribute('data-clear')) { clearHighlight(); return; }
+        });
+
+        overlay.addEventListener('click', cleanup);
+        document.addEventListener('keydown', onEsc);
+
+        function onEsc(e) { if (e.key === 'Escape') cleanup(); }
+        function cleanup() {
+          overlay.removeEventListener('click', cleanup);
+          document.removeEventListener('keydown', onEsc);
+          panel.remove();
+          overlay.remove();
+        }
+      }
+
+
 
 
       function getBlocksInSelection() {
@@ -3054,39 +3618,77 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       const HL_CMD = document.queryCommandSupported('hiliteColor') ? 'hiliteColor' : 'backColor';
 
-      document.querySelector('.rt-toolbar [data-cmd="highlight"]')?.addEventListener('mousedown', e => e.preventDefault());
-      document.querySelector('.rt-toolbar [data-cmd="highlight"]')?.addEventListener('click', () => {
-        bodyEl.focus();
-        const sel = window.getSelection();
-        if (!sel || sel.isCollapsed) return; // nothing selected
+      // document.querySelector('.rt-toolbar [data-cmd="highlight"]')?.addEventListener('mousedown', e => e.preventDefault());
+      // document.querySelector('.rt-toolbar [data-cmd="highlight"]')?.addEventListener('click', () => {
+      //   bodyEl.focus();
+      //   const sel = window.getSelection();
+      //   if (!sel || sel.isCollapsed) return; // nothing selected
 
-        const current = (document.queryCommandValue(HL_CMD) || '').toLowerCase();
-        const isOn = current.includes('rgb') || current.includes('#'); // any bg set at caret
+      //   const current = (document.queryCommandValue(HL_CMD) || '').toLowerCase();
+      //   console.log(`current`, current);
+      //   const isOn = current.includes('rgb') || current.includes('#'); // any bg set at caret
 
-        if (isOn) {
-          document.execCommand(HL_CMD, false, 'transparent'); // remove bg
-          scrubBgInSelection();                                // you already have this
-          // scrubFgInSelection();                                // NEW: clear inline color in range
-        } else {
-          const hlBg = getComputedStyle(document.documentElement)
-            .getPropertyValue('--hl-bg')
-            .trim() || '#000000';
+      //   if (isOn) {
+      //     console.log('is on');
+      //     document.execCommand(HL_CMD, false, 'transparent'); // remove bg
+      //     scrubBgInSelection();                                // you already have this
+      //     scrubFgInSelection();                                // NEW: clear inline color in range
+      //   } else {
+      //     console.log('is off');
 
-          const hlFg = getComputedStyle(document.documentElement)
-            .getPropertyValue('--hl-fg')
-            .trim() || '#000000';
+      //     const hlBg = getComputedStyle(document.documentElement)
+      //       .getPropertyValue('--hl-bg')
+      //       .trim() || '#000000';
 
-
-          document.execCommand(HL_CMD, false, hlBg);       // keep your bg
-          document.execCommand('styleWithCSS', false, true);
-          document.execCommand('foreColor', false, hlFg);        // set opposite text color
-        }
+      //     const hlFg = getComputedStyle(document.documentElement)
+      //       .getPropertyValue('--hl-fg')
+      //       .trim() || '#000000';
 
 
-        step.body = bodyEl.innerHTML;
-        setDirty(true);
-        renderViewStep();
-      });
+      //     document.execCommand(HL_CMD, false, hlBg);       // keep your bg
+      //     document.execCommand('styleWithCSS', false, true);
+      //     document.execCommand('foreColor', false, hlFg);        // set opposite text color
+      //   }
+
+
+      //   step.body = bodyEl.innerHTML;
+      //   setDirty(true);
+      //   renderViewStep();
+      // });
+
+      // document.querySelector('.rt-toolbar [data-cmd="highlight"]')?.addEventListener('mousedown', e => e.preventDefault());
+      // document.querySelector('.rt-toolbar [data-cmd="highlight"]')?.addEventListener('click', () => {
+      //   bodyEl.focus();
+      //   const sel = window.getSelection();
+      //   if (!sel || sel.isCollapsed) return; // nothing selected
+
+      //   // your theme colors
+      //   const hlBg = getComputedStyle(document.documentElement).getPropertyValue('--hl-bg').trim() || '#000000';
+      //   const hlFg = getComputedStyle(document.documentElement).getPropertyValue('--hl-fg').trim() || '#000000';
+
+      //   // Look across the whole selection, not just the caret
+      //   const isOn = hasBgInSelection();
+
+      //   if (isOn) {
+      //     // try native clear, then scrub inline styles in the range
+      //     document.execCommand(HL_CMD, false, 'transparent');
+      //     scrubBgInSelection();
+      //     scrubFgInSelection?.(); // if you added this earlier
+      //   } else {
+      //     // apply highlight with inline CSS so we can reliably detect/scrub later
+      //     document.execCommand('styleWithCSS', false, true);
+      //     document.execCommand(HL_CMD, false, hlBg);
+      //     document.execCommand('foreColor', false, hlFg);
+      //   }
+
+      //   step.body = bodyEl.innerHTML;
+      //   setDirty(true);
+      //   renderViewStep();
+      // });
+
+      const hlBtn = document.getElementById('rt-hl-btn'); // <button id="rt-hl-btn">HL ▾</button>
+      hlBtn?.addEventListener('mousedown', e => e.preventDefault()); // keep caret from blurring
+      hlBtn?.addEventListener('click', () => openHighlightMenu(hlBtn, bodyEl));
 
 
       // Elements
@@ -3095,6 +3697,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const pop = document.getElementById('rt-link-pop');
       const urlInput = document.getElementById('rt-link-url');
       const insertBtn = document.getElementById('rt-link-insert');
+      const variablesSelect = document.getElementById('variables-select');
 
       let savedRange = null;
       let selectedText = '';
@@ -3124,52 +3727,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         // Focus first empty field
         // (txtInput.value ? urlInput : txtInput).focus();
       });
-
-      // Insert/Update link
-      // insertBtn?.addEventListener('click', () => {
-      //   const text = selectedText.trim();
-      //   let url = (urlInput.value || '').trim();
-
-      //   if (!url) { urlInput.focus(); return; }
-      //   if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-
-      //   restoreSelectionOrFocus();
-      //   // If no selection and no display text → create one
-      //   const sel = window.getSelection();
-      //   if (sel.isCollapsed) {
-      //     console.log(`collapsed selection`);
-      //     const toInsert = document.createTextNode(text || url);
-      //     console.log(`toInsert`, toInsert);
-      //     const r = sel.getRangeAt(0);
-      //     console.log(`r`, r);
-      //     r.insertNode(toInsert);
-      //     r.setStartAfter(toInsert);
-      //     r.collapse(true);
-      //     sel.removeAllRanges(); 
-      //     sel.addRange(r);
-      //   } else if (text && sel.toString() !== text) {
-      //     // Replace selection text to match user-entered display text
-      //     console.log(`replace selection text`);
-      //     const r = sel.getRangeAt(0);
-      //     r.deleteContents();
-      //     r.insertNode(document.createTextNode(text));
-      //     // reselect new text
-      //     const newRange = document.createRange();
-      //     newRange.setStart(r.startContainer, r.startOffset);
-      //     newRange.collapse(false);
-      //     sel.removeAllRanges(); 
-      //     sel.addRange(newRange);
-      //   }
-
-      //   // Create/update link around current selection/caret
-      //   document.execCommand('createLink', false, url);
-
-      //   // normalize attributes on created links in the selection
-      //   normalizeLinksInSelection();
-
-      //   closeInsertLinkPopup();
-      //   persistEditor();
-      // });
 
       insertBtn?.addEventListener('click', () => {
         let url = (urlInput.value || '').trim();
@@ -3222,13 +3779,31 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         persistEditor();
       });
 
+      // variablesSelect?.removeAttribute('disabled');
+      // variables icon state (enable/disable + tooltip)
+      // const variablesSelect = document.getElementById('variables-select');
+      if (variablesSelect) {
+        const candidates = getVariableCandidates(st, step);
+        if (candidates.length > 0) {
+          variablesSelect.removeAttribute('disabled');
+          variablesSelect.title = 'Insert variable';
+          // stash for the click handler if you want to reuse
+          variablesSelect._varsCandidates = candidates;
+        } else {
+          variablesSelect.setAttribute('disabled', '');
+          variablesSelect.title = 'No variables found';
+          variablesSelect._varsCandidates = [];
+        }
+      }
 
-      // Cancel
-      // cancelBtn?.addEventListener('click', () => {
-      //   closeInsertLinkPopup();
-      // });
 
-      // Click-away close (but ignore clicks inside popup)
+      variablesSelect?.addEventListener('click', (e) => {
+        if (variablesSelect.hasAttribute('disabled')) return;
+        // optional: pass the precomputed list to your menu if you want
+        openVariablesMenu(variablesSelect /*, variablesSelect._varsCandidates */);
+      });
+
+
       document.addEventListener('mousedown', (e) => {
         if (!pop) return;
         if (!pop.hidden && !pop.contains(e.target) && e.target !== linkBtn) closeInsertLinkPopup();
@@ -3335,39 +3910,117 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       }
 
 
+      // function scrubFgInSelection() {
+      //   const sel = window.getSelection();
+      //   if (!sel || !sel.rangeCount) return;
+      //   const range = sel.getRangeAt(0);
+
+      //   const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_ELEMENT, {
+      //     acceptNode: (el) => (bodyEl.contains(el) && range.intersectsNode(el)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+      //   });
+
+      //   const toClear = [];
+      //   while (walker.nextNode()) {
+      //     const el = walker.currentNode;
+      //     if (el.style && el.style.color) toClear.push(el);
+      //   }
+      //   toClear.forEach(el => el.style.color = '');
+      // }
+
+      // function scrubFgInSelection() {
+      //   const sel = window.getSelection();
+      //   if (!sel || sel.rangeCount === 0) return;
+      //   const range = sel.getRangeAt(0);
+
+      //   const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_ELEMENT, {
+      //     acceptNode: (el) => (bodyEl.contains(el) && range.intersectsNode(el))
+      //       ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+      //   });
+
+      //   const toClear = [];
+      //   while (walker.nextNode()) {
+      //     const el = walker.currentNode;
+      //     if (el.style && el.style.color) toClear.push(el);
+      //   }
+      //   toClear.forEach(el => el.style.color = '');
+      // }
+
       function scrubFgInSelection() {
-        const sel = window.getSelection();
-        if (!sel || !sel.rangeCount) return;
-        const range = sel.getRangeAt(0);
-
-        const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_ELEMENT, {
-          acceptNode: (el) => (bodyEl.contains(el) && range.intersectsNode(el)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
-        });
-
-        const toClear = [];
-        while (walker.nextNode()) {
-          const el = walker.currentNode;
-          if (el.style && el.style.color) toClear.push(el);
-        }
-        toClear.forEach(el => el.style.color = '');
-      }
-
-
-      // remove background-color only within the current selection (keeps links/bold/etc.)
-      function scrubBgInSelection() {
         const sel = window.getSelection();
         if (!sel || sel.rangeCount === 0) return;
         const range = sel.getRangeAt(0);
 
+        const walker = document.createTreeWalker(
+          range.commonAncestorContainer,
+          NodeFilter.SHOW_ELEMENT,
+          {
+            acceptNode: (el) =>
+              (bodyEl.contains(el) && range.intersectsNode(el))
+                ? NodeFilter.FILTER_ACCEPT
+                : NodeFilter.FILTER_SKIP
+          }
+        );
+
+        const toClear = [];
+        const toUnwrap = [];
+        while (walker.nextNode()) {
+          const el = walker.currentNode;
+          if (!el) continue;
+
+          // inline color via CSS
+          if (el.style && el.style.color) toClear.push(el);
+
+          // legacy <font color="..."> from some engines
+          if (el.tagName === 'FONT' && el.hasAttribute('color')) {
+            el.removeAttribute('color');       // drop the color attr
+            // if <font> has no other attrs, unwrap it to keep DOM clean
+            if (!el.attributes.length) toUnwrap.push(el);
+          }
+        }
+
+        toClear.forEach(el => { el.style.color = ''; if (!el.getAttribute('style')) el.removeAttribute('style'); });
+        toUnwrap.forEach(el => { while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el); el.remove(); });
+      }
+
+
+
+
+      // remove background-color only within the current selection (keeps links/bold/etc.)
+      // function scrubBgInSelection() {
+      //   const sel = window.getSelection();
+      //   if (!sel || sel.rangeCount === 0) return;
+      //   const range = sel.getRangeAt(0);
+
+      //   const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_ELEMENT, {
+      //     acceptNode: (el) => (bodyEl.contains(el) && range.intersectsNode(el)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+      //   });
+
+      //   while (walker.nextNode()) {
+      //     const el = walker.currentNode;
+      //     if (el.style && el.style.backgroundColor) el.style.backgroundColor = '';
+      //   }
+      // }
+
+      function hasBgInSelection() {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return false;
+        const range = sel.getRangeAt(0);
+
         const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_ELEMENT, {
-          acceptNode: (el) => (bodyEl.contains(el) && range.intersectsNode(el)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+          acceptNode: (el) => (bodyEl.contains(el) && range.intersectsNode(el))
+            ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
         });
 
         while (walker.nextNode()) {
           const el = walker.currentNode;
-          if (el.style && el.style.backgroundColor) el.style.backgroundColor = '';
+          // detect inline highlight (what execCommand writes)
+          if (el.style && el.style.backgroundColor && el.style.backgroundColor !== '' && el.style.backgroundColor !== 'transparent') {
+            return true;
+          }
         }
+        return false;
       }
+
 
 
       toolbar?.querySelectorAll('[data-cmd]').forEach(btn => {
@@ -3378,13 +4031,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           // map custom cmds to execCommand names
           const cmd = btn.dataset.cmd;
           if (cmd === 'attach') { attachInput.click(); return; }
-          // const cmd = raw === 'ul' ? 'insertUnorderedList'
-          //   : raw === 'ol' ? 'insertOrderedList'
-          //     : raw; // bold, italic, indent, outdent
 
           document.execCommand(cmd, false, null);
 
-          // persist + re-render
           step.body = bodyEl.innerHTML;
           setDirty(true);
           renderViewStep();
@@ -3405,13 +4054,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           const selectedText = sel && sel.rangeCount ? sel.toString() : '';
           const label = selectedText || f.name;
           const safeLabel = label.replace(/[<>&]/g, s => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[s]));
-
-          // insert link at caret
-          // document.execCommand(
-          //   'insertHTML',
-          //   false,
-          //   `<a href="${href}" download="${encodeURIComponent(f.name)}" class="rt-attach">${safeLabel}</a>`
-          // );
 
           console.log(`f`, f);
 
@@ -3440,32 +4082,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-      // function normalizeEditorRoot() {
-      //   if (!bodyEl) return;
-      //   const defaultPx = getDefaultPx();
-
-      //   [...bodyEl.childNodes].forEach(n => {
-      //     console.log('normalizeEditorRoot');
-      //     if (n.nodeType === 3 && n.nodeValue.trim() !== '') {
-      //       const p = document.createElement('p');
-      //       p.textContent = n.nodeValue;
-      //       p.style.fontSize = defaultPx + 'px';
-      //       n.replaceWith(p);
-      //     } else if (n.nodeType === 1 && n.tagName === 'DIV') {
-      //       const p = document.createElement('p');
-      //       p.innerHTML = n.innerHTML;
-      //       p.style.fontSize = defaultPx + 'px';
-      //       n.replaceWith(p);
-      //     }
-      //   });
-
-      //   if (!bodyEl.firstElementChild) {
-      //     const p = document.createElement('p');
-      //     p.innerHTML = '<br>';
-      //     p.style.fontSize = defaultPx + 'px';
-      //     bodyEl.appendChild(p);
-      //   }
-      // }
 
       function bytesToHuman(n) {
         if (n >= 1024 * 1024) return (n / 1048576).toFixed(1).replace(/\.0$/, '') + ' MB';
@@ -3578,53 +4194,19 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       const fMode = document.getElementById('f_mode');
       fMode?.addEventListener('change', () => {
-        const newMode = (fMode.value === 'multi') ? 'multi' : 'single';
-        if (step.mode === newMode) return;
+        step.mode = getSelectMode();
 
-        step.mode = newMode;
-        // let dirty = true;
-
-        // if (newMode === 'multi') {
-        //   if (stripOptionNexts(step)) dirty = true; // removed option.next that don't make sense in multi
-        // }
-
-        // if (dirty) 
         setDirty?.(true);
 
         renderInspector();
         renderGraph();
       });
 
+      function getSelectMode() {
+        const sel = document.getElementById('f_mode');
+        return sel?.value || 'single';
+      }
 
-      // Image text
-      // const fImg = document.getElementById('f_img');
-      // fImg?.addEventListener('input', () => { step.img_b64 = fImg.value || ''; setDirty?.(true); });
-
-      // // Image file
-      // const fImgFile = document.getElementById('f_img_file');
-      // fImgFile?.addEventListener('change', ev => { 
-      //   handleImageToBase64(ev, uri => { step.img_b64 = uri; f_img.value = uri; }); 
-      //   setDirty?.(true); 
-      //   renderViewStep(); 
-      // });
-
-      // fImgFile?.addEventListener('change', (ev) => {
-      //   handleImageToBase64(ev, (uri) => {
-      //     step.img_b64 = uri;
-      //     const fImg = document.getElementById('f_img');
-      //     if (fImg) fImg.value = uri;
-
-      //     setDirty?.(true);
-      //     // let DOM settle, then render
-      //     requestAnimationFrame(() => {
-      //       // renderInspector?.();     // if your UI shows the image field
-      //       renderViewStep();
-      //     });
-
-      //     // allow picking the same file again
-      //     ev.target.value = '';
-      //   });
-      // });
 
       const pickBtn = document.getElementById('f_img_pick');
       const fileInp = document.getElementById('f_img_file');
@@ -3728,21 +4310,29 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-      // Options: add row
       const addOptBtn = document.getElementById('addOptBtn');
       addOptBtn?.addEventListener('click', (e) => {
         e.preventDefault();
         if (!Array.isArray(step.options)) step.options = [];
-        // const idx = step.options.length + 1;
-        step.options.push(getDefaultOption(step));
+
+        const opt = getDefaultOption(step);
+
+
+        step.options.push(opt);
         setDirty?.(true);
         renderInspector();
         renderViewStep();
+        renderGraph();
       });
+
 
       // maybe not present in case select-single 
       const f_next = document.getElementById('f_next');
-      f_next?.addEventListener('change', () => { step.next = f_next.value || undefined; renderGraph(); ensureStarterStartId(getStarter()); });
+      f_next?.addEventListener('change', () => {
+        step.next = f_next.value || undefined;
+        renderGraph();
+        ensureStarterStartId(getStarter());
+      });
 
 
       // Delegate option row events
@@ -3762,13 +4352,12 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         if (e.target.classList.contains('opt-value')) opt.value = e.target.value;
         if (e.target.classList.contains('opt-label')) opt.label = e.target.value;
         if (e.target.classList.contains('opt-hint')) opt.hint = e.target.value;
-        if (e.target.classList.contains('opt-next')) {
-          opt.next = e.target.value || '';
-          renderGraph();
-        }
+        if (e.target.classList.contains('opt-next')) opt.next = e.target.value || '';
+        // renderViewStep();
+        // }
 
         setDirty?.(true);
-
+        renderGraph();
         renderViewStep();
 
       });
@@ -3787,10 +4376,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
 
-
-
-
-
     /*** Graph ***/
     let mapZoom = 0;
     let mapPan = { x: 0, y: 0 };
@@ -3802,6 +4387,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     let draggingStepId = null;
     let dragOffset = null;
+
+    // store each node’s x/y under its ID so the graph doesn’t shuffle every time you re-render
     let lastPositions = {}; // stepId -> {x,y} snapshot from last render
 
 
@@ -3868,12 +4455,15 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         const step = makeStep('instruction');
         step.pos = { x: pt.x, y: pt.y };
         st.steps.push(step);
-        viewState.selectedStepId = step.id;
+        // viewState.selectedStepId = step.id;
+        setSelectedStepById(step.id);
+
         placingFree = false; ghostPos = null;
         setDirty(true);
 
         renderGraph();
         renderInspector();
+        renderViewStep();
 
         // focus the editor instead of leaving focus on the Add button
         queueMicrotask(() => {
@@ -3945,18 +4535,21 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       renderGraph();
     }, { passive: false });
 
-    graphSvg.addEventListener('click', () => {
-      if (!placingFree || !ghostPos) return;
-      const st = getStarter(); if (!st) return;
-      const step = makeStep('instruction');
-      step.pos = { x: ghostPos.x, y: ghostPos.y }; // lock position
-      st.steps.push(step);
-      viewState.selectedStepId = step.id;
-      placingFree = false; ghostPos = null;
-      setDirty(true);
-      // renderAll();
+    // graphSvg.addEventListener('click', () => {
 
-    }, true);
+    // if (!placingFree || !ghostPos) return;
+    // const st = getStarter(); if (!st) return;
+    // const step = makeStep('instruction');
+    // step.pos = { x: ghostPos.x, y: ghostPos.y }; // lock position
+    // st.steps.push(step);
+    // // viewState.selectedStepId = step.id;
+    // setSelectedStepById(step.id);
+
+    // placingFree = false; ghostPos = null;
+    // setDirty(true);
+    // // renderAll();
+
+    // }, true);
 
 
     function renderGraph() {
@@ -4025,19 +4618,38 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
         grp.appendChild(rect);
 
-        const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        tx.setAttribute('class', 'node-label');
-        tx.setAttribute('text-anchor', 'middle');
-        tx.setAttribute('y', 4);
-        tx.textContent = n.label;
-        tx.setAttribute('pointer-events', 'none');
-        grp.appendChild(tx);
+        // HTML label via foreignObject so long ids wrap
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const htmlNS = 'http://www.w3.org/1999/xhtml';
+        const pad = 8;  // inner padding
+
+        const fo = document.createElementNS(svgNS, 'foreignObject');
+        fo.classList.add('node-fo');
+        fo.setAttribute('x', -80 + pad);
+        fo.setAttribute('y', -28 + pad);
+        fo.setAttribute('width', 160 - pad * 2);
+        fo.setAttribute('height', 56 - pad * 2);
+
+        const div = document.createElementNS(htmlNS, 'div');
+        div.className = 'label mono';          // keep your mono look
+        div.textContent = n.label ?? '';
+        fo.appendChild(div);
+
+        grp.appendChild(fo);
+
+
+        // grp.addEventListener('click', () => {
+        //   // viewState.selectedStepId = n.id;
+        //   setSelectedStepById(n.id);
+
+        //   renderInspector();
+        //   renderGraph();
+        //   renderViewStep();
+        //   // updateAddAfterState(); // disable Add After when 'done' is selected
+        // });
 
         grp.addEventListener('click', () => {
-          viewState.selectedStepId = n.id;
-          renderInspector();
-          renderGraph();
-          // updateAddAfterState(); // disable Add After when 'done' is selected
+          navigateToStepId(n.id, { record: false });
         });
 
         g.appendChild(grp);
@@ -4057,12 +4669,24 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         rect.setAttribute('stroke-dasharray', '6,6');
         grp.appendChild(rect);
 
-        const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        tx.setAttribute('class', 'node-label');
-        tx.setAttribute('text-anchor', 'middle');
-        tx.setAttribute('y', 4);
-        tx.textContent = 'New step';
-        grp.appendChild(tx);
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const htmlNS = 'http://www.w3.org/1999/xhtml';
+        const pad = 8;
+
+        const fo = document.createElementNS(svgNS, 'foreignObject');
+        fo.classList.add('node-fo');
+        fo.setAttribute('x', -80 + pad);
+        fo.setAttribute('y', -28 + pad);
+        fo.setAttribute('width', 160 - pad * 2);
+        fo.setAttribute('height', 56 - pad * 2);
+
+        const div = document.createElementNS(htmlNS, 'div');
+        div.className = 'label mono';
+        div.textContent = 'New step';
+        fo.appendChild(div);
+
+        grp.appendChild(fo);
+
 
         g.appendChild(grp);
       }
@@ -4111,7 +4735,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
             // single-select → use per-option next only
             if (Array.isArray(s.options)) {
               for (const o of s.options) {
-                if (o?.next) pushEdge(s.id, o.next, (o.label || o.value || ''));
+                if (o?.next) pushEdge(s.id, o.next, (o.value || o.label || ''));
               }
             }
           }
@@ -4239,7 +4863,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           }
         }
       }
-      viewState.selectedStepId = st.steps[Math.max(0, i - 1)]?.id || null;
+      // viewState.selectedStepId = st.steps[Math.max(0, i - 1)]?.id || null;
+      setSelectedStepById(st.steps[Math.max(0, i - 1)]?.id);
+
       setDirty(true);
 
       ensureSopMandatory();
@@ -4258,9 +4884,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const i = st.steps.findIndex(x => x.id === id);
       if (i >= 0) st.steps[i] = repl;
     }
+
     function rewriteRefs(oldId, newId) {
       if (oldId === newId) return;
       const st = getStarter();
+      if (st.startId === oldId) st.startId = newId;
       for (const step of st.steps) {
         if ((step.type === 'instruction' || step.type === 'input') && step.next === oldId) step.next = newId;
         if (step.type === 'select') {
@@ -4370,11 +4998,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         if (props && props.length) {
           return base.map(x => viewPickPath(x, props)).filter(v => v != null && v !== '').join(', ');
         }
-        return base.map(x => (x && (x.label || x.value)) || String(x)).join(', ');
+        return base.map(x => (x && (x.value || x.label)) || String(x)).join(', ');
       }
       if (typeof base === 'object') {
         if (props && props.length) return viewPickPath(base, props) ?? '';
-        return base.label || base.value || '';
+        return base.value || base.label || '';
       }
       return String(base);
     }
@@ -4413,21 +5041,37 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       if (!slot) { alert('Missing #jsonEmbedded'); return; }
 
       try {
-
         // embed current sop or replace json in existing html <script id="jsonEmbedded">/script>
         slot.textContent = JSON.stringify(loadSopFromSaved ? savedSop : sop, null, 2) + '\n';
         // switch to guide mode (removes editor-only UI)
         changeRunMode('guide');
+        // change title
+        renderSopTitle();
         // download current html 
         downloadCurrentHTML((typeof slugify === 'function' ? slugify(sop?.title || 'sop-viewer') : 'sop-viewer') + '.html');
+
         // switch back to studio mode
         changeRunMode('studio');
+        // change title again
+        renderSopTitle();
 
 
       } catch (e) {
         alert('Failed to stringify SOP JSON: ' + (e?.message || e));
       }
     }
+
+    function renderSopTitle() {
+      const modeTitle = document.getElementById('sop-run-mode-title');
+      const modeTabTitle = document.getElementById('sop-run-mode-tab-title');
+      const elInput = document.getElementById('sop-run-mode-title-input');
+      const sopTypeTitle = `${sop.title} ${sop.title?.trim() === '' ? '' : ' ·'} SOP ${getCurrentRunMode() === 'guide' ? 'Guide' : 'Studio Builder'}`;
+
+      if (modeTitle) modeTitle.textContent = sopTypeTitle;
+      if (modeTabTitle) modeTabTitle.textContent = sopTypeTitle;
+      if (elInput) elInput.value = sop.title;
+    }
+
 
     function downloadCurrentHTML(filename) {
       // filename fallback
@@ -4566,7 +5210,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       sop = parsed;
       ensureSop();
       viewState.starterIdx = 0;
-      viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+      // viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+      setSelectedStepById(sop.starters[0]?.steps?.[0]?.id);
+
       setDirty(true);
       const saved = await performSave();   // persists + updates savedSop
       if (!saved) return;
@@ -4625,7 +5271,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       // reset pointers
       viewState.starterIdx = 0;
-      viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+      // viewState.selectedStepId = sop.starters[0]?.steps?.[0]?.id || null;
+      setSelectedStepById(sop.starters[0]?.steps?.[0]?.id);
 
       // show edit landing for the new SOP
       changeDataMode('edit');
@@ -4727,72 +5374,12 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-    // function countFlowSteps(starter) {
-    //   const steps = starter?.steps || [];
-    //   if (!steps.length) return 0;
-
-    //   const byId = new Map(steps.map((s, i) => [s.id, i]));
-
-    //   function outgoing(s, i) {
-    //     const out = new Set();
-
-    //     if (s.type === 'instruction' || s.type === 'input') {
-    //       // explicit next OR fallback to the next step in the array
-    //       let n = s.next;
-    //       if (!n && i < steps.length - 1) n = steps[i + 1].id;
-    //       if (n && byId.has(n)) out.add(n);
-    //     }
-    //     else if (s.type === 'select') {
-    //       const mode = (s.mode === 'multi') ? 'multi' : 'single';
-
-    //       // option-level next
-    //       if (Array.isArray(s.options)) {
-    //         for (const o of s.options) {
-    //           let n = o.next;
-    //           // for single-select options, fallback to step.next or linear next
-    //           if (!n && mode === 'single') {
-    //             n = s.next || (i < steps.length - 1 ? steps[i + 1].id : undefined);
-    //           }
-    //           if (n && byId.has(n)) out.add(n);
-    //         }
-    //       }
-
-    //       // step-level next (used esp. for multi-select after)
-    //       if (s.next && byId.has(s.next)) out.add(s.next);
-
-    //       // multi-select fallback to linear next when no step.next provided
-    //       if (mode === 'multi' && !s.next && i < steps.length - 1) {
-    //         const n = steps[i + 1].id;
-    //         if (byId.has(n)) out.add(n);
-    //       }
-    //     }
-
-    //     return Array.from(out);
-    //   }
-
-    //   const visited = new Set();
-    //   const stack = [steps[0].id];
-    //   while (stack.length) {
-    //     const id = stack.pop();
-    //     if (visited.has(id)) continue;
-    //     visited.add(id);
-
-    //     const i = byId.get(id);
-    //     if (i == null) continue;
-
-    //     for (const nid of outgoing(steps[i], i)) {
-    //       if (!visited.has(nid)) stack.push(nid);
-    //     }
-    //   }
-    //   return visited.size;
-    // }
-
     function renderViewAndEditLanding() {
       const landing = document.getElementById('vwLanding');   // preview landing host
       if (!landing) return;
 
-      const title = String(sop?.title || 'New SOP Library');
-      const desc = String(sop?.description || 'Describe your library');
+      // const title = String(sop?.title || 'New SOP Library');
+      // const desc = String(sop?.description || 'Describe your library');
       const starters = Array.isArray(sop?.starters) ? sop.starters : [];
 
 
@@ -4812,34 +5399,20 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         }
       }
 
-
-      // Build landing (viewer-like)
       landing.innerHTML = `
       <div class="wrap">
       <!-- VIEW block -->
-      <div id="vwHeader" style="margin:16px 0 14px">
-        <div>
-          <h1 style="margin:8px 0 6px">${escapeHtml(title)}</h1>
-          <p class="small" style="margin:0 0 12px">${escapeHtml(desc)}</p>
-        </div>
-      <div id="vwSearchBar" class="vw-search">
-        <label for="vwSearchInput" class="vh">Search starters</label>
-        <input id="vwSearchInput" type="search" placeholder="Search ..." autocomplete="off">
+        <div id="vwHeader" style="margin:16px 0 14px">
+          <div id="vwSearchBar" class="vw-search">
+            <label for="vwSearchInput" class="vh">Search starters</label>
+            <input id="vwSearchInput" type="search" placeholder="Search ..." autocomplete="off">
+          </div>
       </div>
-        </div>
 
-      <!-- EDIT block -->
-      <div id="vwHeaderEditor">
-        <input id="vwTitleInput" type="text" value="${escapeAttr(title)}"
-          style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font-size:20px;" />
-        <input id="vwDescInput" type="text" value="${escapeAttr(desc)}"
-          style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);font-size:14px;margin-top:8px;" />
-        <div style="display:flex;gap:8px;margin-top:10px">
-        </div>
-      </div>
+     
     </div>
 
-    <div class="vw-grid">
+   <div class="vw-grid">
       ${filteredStarters.map((st, idx) => `
         <div class="starter-dual" data-idx="${st.id}">
           <!-- read-only card (shown in view mode) -->
@@ -4890,6 +5463,15 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
   </div>
 `;
+
+      // if filteredStarters is 0 show no found
+      if (filteredStarters.length === 0) {
+        console.log(`no starters match "${q}"`);
+        const msg = document.createElement('div');
+        msg.className = 'small';
+        msg.textContent = `No starters match “${(viewState.searchQ || '').trim()}”.`;
+        landing.appendChild(msg); // use your landing container element
+      }
 
       const sInp = document.getElementById('vwSearchInput');
       sInp.value = viewState.searchQ || '';
@@ -4958,25 +5540,111 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     // place = stepId when match is inside a step; "starter" when match is outside steps; null if no match
     // returns { matched: boolean, place: string|null }
     // place = stepId when match is inside a step; "starter" when match is outside steps; null if no match
+    // function findSearchPlaceStepId(st, q) {
+    //   q = (q || '').trim().toLowerCase();
+    //   if (!q) return { matched: true, place: null };
+
+    //   const stepIds = new Set((st.steps || []).map(s => s?.id).filter(Boolean));
+
+    //   // whitelist of fields we actually want to match
+    //   const ALLOWED_KEYS = new Set([
+    //     'id', 'label', 'summary',         // starter / step
+    //     'title', 'body',                  // step (instruction/input)
+    //     'placeholder', 'error', 'regex', 'requiredMessage',
+    //     'hint',                    // select option text
+    //   ]);
+
+    //   // blacklist of fields/branches to skip entirely
+    //   const SKIP_KEYS = new Set(['img_b64', 'pos', 'next', 'nextId', 'type', 'mode']);
+
+    //   let matched = false;
+    //   let place = null; // first hit wins
+
+    //   (function walk(node, key, stepCtx) {
+    //     if (matched || node == null) return;
+
+    //     // entering a step object → set context to that step id
+    //     if (node && typeof node === 'object' && node.id && stepIds.has(node.id)) {
+    //       stepCtx = node.id;
+    //     }
+
+    //     // skip whole branches by key
+    //     if (SKIP_KEYS.has(key)) return;
+
+    //     if (typeof node === 'string') {
+    //       // only match strings whose property name is allowed (root-level key may be '')
+    //       if (!key || ALLOWED_KEYS.has(key)) {
+    //         if (node.toLowerCase().includes(q)) {
+    //           matched = true;
+    //           place = stepCtx || 'starter';
+    //         }
+    //       }
+    //     }
+    //     else if (Array.isArray(node)) {
+    //       for (const item of node) walk(item, '', stepCtx);
+    //     }
+    //     else if (typeof node === 'object') {
+    //       for (const k in node) {
+    //         if (SKIP_KEYS.has(k)) continue;
+    //         walk(node[k], k, stepCtx);
+    //       }
+    //     }
+    //   })(st, '', null);
+
+    //   return { matched, place };
+    // }
+
     function findSearchPlaceStepId(st, q) {
       q = (q || '').trim().toLowerCase();
       if (!q) return { matched: true, place: null };
 
       const stepIds = new Set((st.steps || []).map(s => s?.id).filter(Boolean));
 
-      // whitelist of fields we actually want to match
+      // fields to search
       const ALLOWED_KEYS = new Set([
-        'id', 'label', 'summary',         // starter / step
-        'title', 'body',                  // step (instruction/input)
+        'id', 'label', 'summary',
+        'title', 'body',
         'placeholder', 'error', 'regex', 'requiredMessage',
-        'hint',                    // select option text
+        'hint',
       ]);
 
-      // blacklist of fields/branches to skip entirely
+      // branches to skip entirely
       const SKIP_KEYS = new Set(['img_b64', 'pos', 'next', 'nextId', 'type', 'mode']);
 
       let matched = false;
       let place = null; // first hit wins
+
+      // Build a searchable string from rich HTML:
+      // - include visible text (between tags)
+      // - include title="" attribute values
+      // - ignore href entirely (so data:… base64 doesn’t match)
+      function bodySearchHaystack(html) {
+        if (!html || typeof html !== 'string') return '';
+        const tpl = document.createElement('template');
+        tpl.innerHTML = html;
+
+        const parts = [];
+        const walker = document.createTreeWalker(
+          tpl.content,
+          NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+          null
+        );
+
+        let n;
+        while ((n = walker.nextNode())) {
+          if (n.nodeType === Node.TEXT_NODE) {
+            const t = n.nodeValue;
+            if (t && t.trim()) parts.push(t);
+          } else if (n.nodeType === Node.ELEMENT_NODE) {
+            const el = /** @type {HTMLElement} */(n);
+            // collect useful attributes that are human-facing
+            const title = el.getAttribute && el.getAttribute('title');
+            if (title && title.trim()) parts.push(title);
+            // NOTE: intentionally do NOT read href/src/etc.
+          }
+        }
+        return parts.join(' ').trim();
+      }
 
       (function walk(node, key, stepCtx) {
         if (matched || node == null) return;
@@ -4986,22 +5654,20 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           stepCtx = node.id;
         }
 
-        // skip whole branches by key
         if (SKIP_KEYS.has(key)) return;
 
         if (typeof node === 'string') {
-          // only match strings whose property name is allowed (root-level key may be '')
           if (!key || ALLOWED_KEYS.has(key)) {
-            if (node.toLowerCase().includes(q)) {
+            let hay = node;
+            if (key === 'body') hay = bodySearchHaystack(node); // parse HTML, ignore href
+            if (hay.toLowerCase().includes(q)) {
               matched = true;
               place = stepCtx || 'starter';
             }
           }
-        }
-        else if (Array.isArray(node)) {
+        } else if (Array.isArray(node)) {
           for (const item of node) walk(item, '', stepCtx);
-        }
-        else if (typeof node === 'object') {
+        } else if (typeof node === 'object') {
           for (const k in node) {
             if (SKIP_KEYS.has(k)) continue;
             walk(node[k], k, stepCtx);
@@ -5011,6 +5677,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       return { matched, place };
     }
+
 
 
 
@@ -5512,7 +6179,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       // 5) Ensure single valid startId at starter level
       //    Prefer a node with in-degree 0; among them prefer one that has an outgoing edge; else first.
-      // console.log('hello');
       // if (!(typeof starter.startId === 'string' && byId[starter.startId])) {
 
       //   const indeg = Object.fromEntries(steps.map(s => [s.id, 0]));
@@ -5610,20 +6276,23 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       if (window.titleDescWired) return; window.titleDescWired = true;
 
       document.addEventListener('input', (e) => {
+        // debugger;
         if (!isEditMode()) return;
         const t = e.target;
-        if (t.id !== 'vwTitleInput' && t.id !== 'vwDescInput') return;
+        if (t.id !== 'sop-run-mode-title-input') return;
 
         const v = (t.value || '').trim();
 
-        if (t.id === 'vwTitleInput') {
-          if ((sop.title || '') !== v) { sop.title = v; setDirty?.(true); }
+        if (t.id === 'sop-run-mode-title-input') {
+          if ((sop.title || '') !== v) {
+            sop.title = v;
+            renderSopTitle();
+            setDirty?.(true);
+
+          }
           return;
         }
-        if (t.id === 'vwDescInput') {
-          if ((sop.description || '') !== v) { sop.description = v; setDirty?.(true); }
-          return;
-        }
+
       }, true);
     })();
 
@@ -5747,8 +6416,10 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const startId = (typeof st?.startId === 'string') ? st.startId : steps[0]?.id;
       // const startId = 2;
 
-      viewState.stepIdx = getStepIndexById(steps, startId);
-      viewState.selectedStepId = startId || null;
+      // viewState.stepIdx = getStepIndexById(steps, startId);
+      // viewState.selectedStepId = startId || null;
+      setSelectedStepById(startId);
+
       viewState.history = [];
     }
     // Creates a new starter, re-renders grid (optional), and returns its index.
@@ -5988,7 +6659,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     // Build the small “found in …” label for a starter and current query.
     // Uses your existing findSearchPlaceStepId(st, q)
     function buildSearchBadge(starter, q) {
-      console.log(`buildSearchBadge`, { starter, q });
       q = (q || '').trim();
       if (!q) return '';
 
@@ -6006,8 +6676,52 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       }
     }
 
+    // Linearize the path for THIS run, honoring current answers.
+    // Returns an array of step IDs in the order they'd be visited.
+    // function computeProjectedPath(starter, answers = {}) {
+    //   if (!starter) return [];
+    //   const steps = starter.steps || [];
+    //   const byId = Object.fromEntries(steps.map(s => [s.id, s]));
+    //   const seen = new Set();                         // guard against cycles
+    //   const path = [];
+
+    //   let id = starter.startId || steps[0]?.id || null;
+    //   while (id && !seen.has(id)) {
+    //     const step = byId[id]; if (!step) break;
+    //     path.push(id);
+    //     seen.add(id);
+
+    //     // decide next
+    //     let nextId = null;
+    //     if (step.type === 'select' && step.mode === 'single') {
+    //       const choice = answers[step.id];            // you already store the chosen option object
+    //       nextId = choice?.next || step.next || null; // prefer chosen option.next, else fallback
+    //     } else if (step.type === 'select' && step.mode === 'multi') {
+    //       nextId = step.next || null;                 // multi branches continue via step.next
+    //     } else {
+    //       nextId = step.next || null;                 // instruction/input
+    //     }
+
+    //     if (!nextId) break;
+    //     id = nextId;
+    //   }
+    //   return path;
+    // }
+
+    // // Update "Step N of M" using the projected path & current selection
+    // function updateProgressLabel() {
+    //   const st = getStarter();
+    //   const path = computeProjectedPath(st, viewState.answers || {});
+    //   const curId = viewState.selectedStepId;
+    //   const idx = Math.max(0, path.indexOf(curId));   // if not found, show as first
+    //   const total = path.length || 1;
+    //   document.getElementById('vwProgress').textContent = `Step ${idx + 1} of ${total}`;
+    // }
+
+
     function countFlowSteps(starter) {
       const steps = starter?.steps || [];
+
       if (!steps.length) return 0;
 
       const startId = starter.startId || getStarterStartId(starter);
@@ -6072,191 +6786,367 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
+    // function renderViewStep() {
+
+    //   const st = sop.starters[viewState.starterIdx];
+    //   const steps = st.steps || [];
+    //   let i = getStepIndexById(steps, viewState.selectedStepId);
+
+    //   const box = document.getElementById('vwStep');
+    //   box.innerHTML = '';
+    //   const step = steps[i];
+    //   const head = step.title ? `<div class="vw-head"><h3 id="vw-head">${viewEscape(step.title)}</h3></div>` : '';
+
+    //   if (!step) { setNextEnabled(false); return; }
+    //   // const isDoneStep = step.type === 'end';
+
+    //   let node;
+    //   if (step.type === 'instruction') {
+    //     node = document.createElement('div');
+
+    //     // hello
+
+
+    //     node.innerHTML = `
+    //   ${head}
+    //   ${renderBody(step.body)}
+    //   ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ''}
+    // `;
+    //     box.appendChild(node);
+    //     setNextEnabled(true);
+    //   }
+    //   else if (step.type === 'input') {
+    //     node = document.createElement('div');
+    //     node.innerHTML = `
+    //   ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
+    //   <input id="vw_inp" type="text" class="text-input" placeholder="${viewEscape(step.placeholder || '')}">
+    //   ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ''}
+    // `;
+    //     box.appendChild(node);
+    //     const inp = node.querySelector('#vw_inp');
+    //     const img = node.querySelector('.thumb');              // ← add this
+    //     inp.value = viewState.answers[step.id] || '';
+    //     const err = document.createElement('div');
+    //     err.className = 'error';
+    //     err.style.display = 'none';
+    //     // node.appendChild(err);                               // ← remove this
+    //     img ? img.before(err) : inp.insertAdjacentElement('afterend', err);  // ← insert here
+
+
+    //     function refreshInput() {
+    //       const res = validateValueForStep(step, inp.value);
+    //       err.textContent = res.ok ? '' : res.msg;
+    //       err.style.display = res.ok ? 'none' : '';
+    //       setNextEnabled(res.ok);
+    //     }
+    //     inp.addEventListener('input', () => {
+    //       viewState.answers[step.id] = inp.value;
+    //       // console.log(`answers`, viewState.answers);
+    //       refreshInput();
+    //     });
+    //     refreshInput();  // initial
+
+    //   }
+    //   else if (step.type === 'select') {
+    //     node = document.createElement('div');
+    //     if (step.title) node.innerHTML = `<h3>${viewEscape(step.title)}</h3>`;
+    //     const wrap = document.createElement('div');
+    //     wrap.className = 'vw-grid-sel';
+    //     const mode = step.mode === 'multi' ? 'multi' : 'single';
+    //     let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
+
+    //     (step.options || []).forEach(opt => {
+    //       const btn = document.createElement('button');
+    //       btn.className = 'vw-option';
+    //       btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
+    //       const isSel = mode === 'multi' ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
+    //         : (sel && ((sel?.value ?? sel) === opt.value));
+    //       if (isSel) btn.classList.add('selected');
+    //       btn.addEventListener('click', () => {
+    //         if (mode === 'multi') {
+    //           sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
+    //           const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
+    //           if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
+    //           else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
+    //           viewState.answers[step.id] = sel;
+    //           // setNextEnabled(sel.length > 0 || !step.required);
+    //           // validate
+
+    //           refreshSelect();
+    //         } else {
+    //           viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
+    //           wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
+    //           btn.classList.add('selected');
+    //           // setNextEnabled(true);
+    //           refreshSelect();
+
+    //         }
+    //       });
+    //       wrap.appendChild(btn);
+    //     });
+
+    //     node.appendChild(wrap);
+    //     // error message area
+    //     const err = document.createElement('div');
+    //     err.className = 'error';
+    //     err.style.display = 'none';
+    //     node.appendChild(err);
+
+    //     function refreshSelect() {
+    //       const res = validateValueForStep(step, viewState.answers[step.id]);
+    //       err.textContent = res.ok ? '' : res.msg;
+    //       err.style.display = res.ok ? 'none' : '';
+    //       setNextEnabled(res.ok);
+    //     }
+
+    //     refreshSelect();
+
+    //     box.appendChild(node);
+    //     const hasSel = mode === 'multi' ? (Array.isArray(sel) && sel.length > 0) : Boolean(sel);
+    //     setNextEnabled(hasSel || !step.required);
+    //   }
+    //   else if (isEndStep(step)) {
+    //     node = document.createElement('div');
+    //     node.innerHTML = `
+    //   ${step.title ? `<h3>${viewEscape(step.title)}</h3>` : '<h3>Completed</h3>'}
+    //   ${viewBodyHtml(step.body)}`;
+    //     box.appendChild(node);
+    //     setNextEnabled(false);
+    //   } else {
+    //     box.textContent = 'Unknown step type';
+    //     setNextEnabled(false);
+    //   }
+
+    //   document.getElementById('vwPrev').disabled =
+    //     !((viewState.history?.length || 0) > 0 || !!getFirstPredecessorId(getStarter(), viewState.selectedStepId));
+
+    //   const nextBtn = document.getElementById('vwNext');
+    //   nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
+
+
+    //   document.getElementById('vwPrev').onclick = () => goPrevious();
+
+   
+    //   nextBtn.onclick = () => {
+    //     if (isEndStep(step)) return;
+
+    //     const steps = getSteps();
+    //     const current = getStepById(viewState.selectedStepId);
+
+    //     // try single-select branch (use chosen option.next if present)
+    //     if (current?.type === 'select' && current.mode === 'single') {
+    //       const choice = viewState.answers[current.id];
+    //       if (choice?.next && steps.find(x => x.id === choice.next)) {
+    //         viewState.history.push(viewState.selectedStepId); // record traversal
+    //         setSelectedStepById(choice.next);
+    //         renderViewStep(); renderGraph(); renderInspector();
+    //         // updateProgressLabel();                             // ← recompute "of M"
+    //         return;
+    //       }
+    //     }
+
+    //     // step-level next
+    //     if (current?.next) {
+    //       if (steps.find(x => x.id === current.next)) {
+    //         viewState.history.push(viewState.selectedStepId); // record traversal
+    //         setSelectedStepById(current.next);
+    //         renderViewStep(); renderGraph(); renderInspector();
+    //         return;
+    //       }
+    //     }
+
+    //     renderViewStep(); renderGraph(); renderInspector();
+    //   };
+
+
+
+    // }
+
     function renderViewStep() {
+  const st = sop.starters[viewState.starterIdx];
+  const steps = st.steps || [];
+  let i = getStepIndexById(steps, viewState.selectedStepId);
 
-      const st = sop.starters[viewState.starterIdx];
-      const steps = st.steps || [];
-      let i = viewState.stepIdx;
-      const stepCnt = countFlowSteps(st);
+  const box = document.getElementById('vwStep');
+  box.innerHTML = '';
+  const step = steps[i];
+  if (!step) { setNextEnabled(false); return; }
 
-      document.getElementById('vwProgress').textContent = `Step ${Math.min(1 + viewState.history?.length)} of ${stepCnt}`;
-      const box = document.getElementById('vwStep');
-      box.innerHTML = '';
-      const step = steps[i];
-      if (!step) { setNextEnabled(false); return; }
-      // const isDoneStep = step.type === 'end';
+  // one header everywhere
+  // const head = step.title ? `<h3 class="vw-title">${viewEscape(step.title)}</h3>` : '';
+  const head = step.title
+  ? `<h3 class="vw-title" id="vw-title-${step.id}">${viewEscape(step.title)}</h3><hr class="vw-hr">`
+  : '';
+  const imgHtml = step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : '';
 
-      let node;
-      if (step.type === 'instruction') {
-        node = document.createElement('div');
+  let node;
 
+  if (step.type === 'instruction') {
+    node = document.createElement('div');
+    node.innerHTML = `${head}${renderBody(step.body)}${imgHtml}`;
+    box.appendChild(node);
+    setNextEnabled(true);
+  }
 
-        node.innerHTML = `
-      ${step.title ? `<h3>${viewEscape(step.title)}</h3>` : ''}
-      ${renderBody(step.body)}
-      ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ''}
-    `;
-        box.appendChild(node);
-        setNextEnabled(true);
-      }
-      else if (step.type === 'input') {
-        node = document.createElement('div');
-        node.innerHTML = `
+  else if (step.type === 'input') {
+    node = document.createElement('div');
+    node.innerHTML = `
       ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
-      <input id="vw_inp" type="text" class="text-input" placeholder="${viewEscape(step.placeholder || '')}">
-      ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ''}
+      <input id="vw_inp" type="text" class="text-input" placeholder="${viewEscape(step.placeholder || '')}
+      " aria-labelledby="${step.title ? `vw-title-${step.id}` : ''}>
+      ${imgHtml}
     `;
-        box.appendChild(node);
-        const inp = node.querySelector('#vw_inp');
-        const img = node.querySelector('.thumb');              // ← add this
-        inp.value = viewState.answers[step.id] || '';
-        const err = document.createElement('div');
-        err.className = 'error';
-        err.style.display = 'none';
-        // node.appendChild(err);                               // ← remove this
-        img ? img.before(err) : inp.insertAdjacentElement('afterend', err);  // ← insert here
+    box.appendChild(node);
 
+    const inp = node.querySelector('#vw_inp');
+    const img = node.querySelector('.thumb');
+    inp.value = viewState.answers[step.id] || '';
 
-        function refreshInput() {
-          const res = validateValueForStep(step, inp.value);
-          err.textContent = res.ok ? '' : res.msg;
-          err.style.display = res.ok ? 'none' : '';
-          setNextEnabled(res.ok);
+    const err = document.createElement('div');
+    err.className = 'error';
+    err.style.display = 'none';
+    (img ? img : inp).insertAdjacentElement(img ? 'beforebegin' : 'afterend', err);
+
+    function refreshInput() {
+      const res = validateValueForStep(step, inp.value);
+      err.textContent = res.ok ? '' : res.msg;
+      err.style.display = res.ok ? 'none' : '';
+      setNextEnabled(res.ok);
+    }
+    inp.addEventListener('input', () => {
+      viewState.answers[step.id] = inp.value;
+      refreshInput();
+    });
+    refreshInput();
+  }
+
+  else if (step.type === 'select') {
+    node = document.createElement('div');
+    node.innerHTML = `<h3>${viewEscape(step.title)}</h3>`;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'vw-grid-sel';
+    node.appendChild(wrap);
+
+    const mode = step.mode === 'multi' ? 'multi' : 'single';
+    let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
+
+    (step.options || []).forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'vw-option';
+      btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
+
+      const isSel = mode === 'multi'
+        ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
+        : (sel && ((sel?.value ?? sel) === opt.value));
+
+      if (isSel) btn.classList.add('selected');
+
+      btn.addEventListener('click', () => {
+        if (mode === 'multi') {
+          sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
+          const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
+          if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
+          else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
+          viewState.answers[step.id] = sel;
+          refreshSelect();
+        } else {
+          viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
+          wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
+          btn.classList.add('selected');
+          refreshSelect();
         }
-        inp.addEventListener('input', () => {
-          viewState.answers[step.id] = inp.value;
-          // console.log(`answers`, viewState.answers);
-          refreshInput();
-        });
-        refreshInput();  // initial
+      });
 
+      wrap.appendChild(btn);
+    });
+
+    const err = document.createElement('div');
+    err.className = 'error';
+    err.style.display = 'none';
+    node.appendChild(err);
+
+    function refreshSelect() {
+      const res = validateValueForStep(step, viewState.answers[step.id]);
+      err.textContent = res.ok ? '' : res.msg;
+      err.style.display = res.ok ? 'none' : '';
+      setNextEnabled(res.ok);
+    }
+    refreshSelect();
+
+    box.appendChild(node);
+
+    const hasSel = mode === 'multi' ? (Array.isArray(sel) && sel.length > 0) : Boolean(sel);
+    setNextEnabled(hasSel || !step.required);
+  }
+
+  else if (isEndStep(step)) {
+    node = document.createElement('div');
+    node.innerHTML = `${head || '<h3>Completed</h3>'}${viewBodyHtml(step.body)}`;
+    box.appendChild(node);
+    setNextEnabled(false);
+  }
+
+  else {
+    box.textContent = 'Unknown step type';
+    setNextEnabled(false);
+  }
+
+  // Prev state + handlers
+  document.getElementById('vwPrev').disabled =
+    !((viewState.history?.length || 0) > 0 || !!getFirstPredecessorId(getStarter(), viewState.selectedStepId));
+
+  const nextBtn = document.getElementById('vwNext');
+  nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
+
+  document.getElementById('vwPrev').onclick = () => goPrevious();
+
+  nextBtn.onclick = () => {
+    if (isEndStep(step)) return;
+
+    const stepsAll = getSteps();
+    const current = getStepById(viewState.selectedStepId);
+
+    // single-select branch
+    if (current?.type === 'select' && current.mode === 'single') {
+      const choice = viewState.answers[current.id];
+      if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
+        viewState.history.push(viewState.selectedStepId);
+        setSelectedStepById(choice.next);
+        renderViewStep(); renderGraph(); renderInspector();
+        return;
       }
-      else if (step.type === 'select') {
-        node = document.createElement('div');
-        if (step.title) node.innerHTML = `<h3>${viewEscape(step.title)}</h3>`;
-        const wrap = document.createElement('div');
-        wrap.className = 'vw-grid-sel';
-        const mode = step.mode === 'multi' ? 'multi' : 'single';
-        let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
+    }
 
-        (step.options || []).forEach(opt => {
-          const btn = document.createElement('button');
-          btn.className = 'vw-option';
-          btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
-          const isSel = mode === 'multi' ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
-            : (sel && ((sel?.value ?? sel) === opt.value));
-          if (isSel) btn.classList.add('selected');
-          btn.addEventListener('click', () => {
-            if (mode === 'multi') {
-              sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
-              const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
-              if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
-              else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
-              viewState.answers[step.id] = sel;
-              // setNextEnabled(sel.length > 0 || !step.required);
-              // validate
+    // step-level next
+    if (current?.next && stepsAll.find(x => x.id === current.next)) {
+      viewState.history.push(viewState.selectedStepId);
+      setSelectedStepById(current.next);
+      renderViewStep(); renderGraph(); renderInspector();
+      return;
+    }
 
-              refreshSelect();
-            } else {
-              viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
-              wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
-              btn.classList.add('selected');
-              // setNextEnabled(true);
-              refreshSelect();
+    renderViewStep(); renderGraph(); renderInspector();
+  };
+}
 
-            }
-          });
-          wrap.appendChild(btn);
-        });
+    function getFirstPredecessorId(starter, stepId) {
+      if (!starter || !stepId) return null;
+      const pred = buildPredecessors(starter);           // you already have this
+      const set = pred[stepId];
+      if (!set || set.size === 0) return null;
+      const order = starter.steps.map(s => s.id);
+      return [...set].sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
+    }
 
-        node.appendChild(wrap);
-        // error message area
-        const err = document.createElement('div');
-        err.className = 'error';
-        err.style.display = 'none';
-        node.appendChild(err);
-
-        function refreshSelect() {
-          const res = validateValueForStep(step, viewState.answers[step.id]);
-          err.textContent = res.ok ? '' : res.msg;
-          err.style.display = res.ok ? 'none' : '';
-          setNextEnabled(res.ok);
-        }
-
-        refreshSelect();
-
-        box.appendChild(node);
-        const hasSel = mode === 'multi' ? (Array.isArray(sel) && sel.length > 0) : Boolean(sel);
-        setNextEnabled(hasSel || !step.required);
+    function buildPredecessors(starter) {
+      const pred = Object.create(null);
+      const add = (from, to) => { if (to) (pred[to] ||= new Set()).add(from); };
+      for (const s of starter.steps) {
+        add(s.id, s.next);
+        if (Array.isArray(s.options)) for (const o of s.options) add(s.id, o?.next);
       }
-      else if (isEndStep(step)) {
-        node = document.createElement('div');
-        node.innerHTML = `
-      ${step.title ? `<h3>${viewEscape(step.title)}</h3>` : '<h3>Completed</h3>'}
-      ${viewBodyHtml(step.body)}`;
-        box.appendChild(node);
-        setNextEnabled(false);
-      } else {
-        box.textContent = 'Unknown step type';
-        setNextEnabled(false);
-      }
-
-      // nav buttons
-      document.getElementById('vwPrev').disabled = viewState.history.length <= 0;
-      const nextBtn = document.getElementById('vwNext');
-      nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
-
-      // document.getElementById('vwBackHome').onclick = renderViewAndEditLanding;
-
-      document.getElementById('vwPrev').onclick = () => {
-        // debugger;
-        if (viewState.history.length > 0) {
-          // pop last position; fallback to clamp at 0
-          const prevIdx = viewState.history.pop();
-          if (typeof prevIdx === 'number') {
-            viewState.stepIdx = prevIdx;
-          } else {
-            viewState.stepIdx = Math.max(0, viewState.stepIdx - 1);
-          }
-          viewState.selectedStepId = steps[viewState.stepIdx]?.id;  // keep selection in sync
-          renderViewStep();
-        }
-      };
-      nextBtn.onclick = () => {
-        if (!isEndStep(step)) {
-          // branch support
-          const currentStep = steps[viewState.stepIdx];
-          // console.log(`currentStep`, currentStep);
-          if (currentStep &&
-            currentStep.type === 'select' &&
-            currentStep.mode === 'single') {
-            // console.log(`viewState.answers`, viewState.answers);
-            const choice = viewState.answers[currentStep.id];
-            if (choice && choice.next) {
-              // jump to label
-              const to = steps.findIndex(x => x.id === choice.next);
-              if (to >= 0) {
-                viewState.history.push(viewState.stepIdx);
-                viewState.stepIdx = to;
-                viewState.selectedStepId = to;
-                renderViewStep();
-                return;
-              }
-            }
-          }
-          // step-level next
-          else if (currentStep && currentStep.next) {
-            const to = steps.findIndex(x => x.id === currentStep.next);
-            if (to >= 0) {
-              viewState.history.push(viewState.stepIdx);
-              viewState.stepIdx = to;
-              renderViewStep();
-              return;
-            }
-          }
-          renderViewStep();
-        }
-      };
+      return pred;
     }
 
     // function pushToHistory() {
@@ -6301,6 +7191,73 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       return sop.starters[viewState.starterIdx];
     }
 
+    function getSteps() {
+      return getStarter()?.steps || [];
+    }
+
+    // get step by stepId 
+    function getStepById(stepId) {
+      const steps = getSteps();
+      return steps.find(s => s.id === stepId) || null;
+    }
+
+    // Set selection by **ID** and mirror stepIdx
+    function setSelectedStepById(id) {
+      const steps = getSteps();
+      viewState.selectedStepId = id || null;
+      // viewState.stepIdx = (id != null) ? steps.findIndex(s => s.id === id) : -1;
+      // if (viewState.stepIdx < 0) viewState.stepIdx = 0; // fallback to first if missing
+    }
+
+    // Set selection by **index** and mirror selectedStepId
+    function setSelectedStepByIdx(idx) {
+      const steps = getSteps();
+      const i = Math.max(0, Math.min(idx | 0, steps.length - 1));
+      // viewState.stepIdx = i;
+      viewState.selectedStepId = steps[i]?.id || null;
+    }
+
+    // Select a step by id. If record=true, push the previous id into history.
+    function navigateToStepId(nextId, { record = true } = {}) {
+      const curId = viewState.selectedStepId || null;
+      if (!nextId || nextId === curId) return;
+
+      if (record && curId) {
+        viewState.history ||= [];
+        viewState.history.push(curId);
+      }
+      setSelectedStepById(nextId);     // your existing helper: syncs ID + index
+      renderViewStep();
+      renderGraph();
+      renderInspector();
+    }
+
+    // Go back in history (no re-recording)
+    function goPrevious() {
+      const st = getStarter();
+      const hasHist = (viewState.history?.length || 0) > 0;
+
+      if (hasHist) {
+        const prevStepId = viewState.history.pop();
+        setSelectedStepById(prevStepId);
+        renderViewStep();
+        renderGraph();
+        renderInspector();
+        return;
+      }
+
+      // No history → treat the nearest parent as "Prev"
+      const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
+      if (parentId) {
+        setSelectedStepById(parentId);
+        renderViewStep();
+        renderGraph();
+        renderInspector();
+      }
+    }
+
+
+
     function makeBlankSOP() {
       return {
         version: "1.3",
@@ -6334,17 +7291,39 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
     function getDefaultOption(step) {
+      // debugger;
       if (!step || step.type !== 'select') return null;
 
       const len = Array.isArray(step.options) ? step.options.length : 0;
       const idx = len + 1;
 
-      return {
+      const opt = {
         value: 'opt' + idx,
         label: 'Option ' + idx,
         hint: '',
         next: step.next ?? null
       };
+
+      // ensure unique value even with null holes or user-made names
+      const nextOptionVal = nextOptionValue(step);          // e.g., opt1, opt2, ...
+      if (opt.value == null || String(opt.value).trim() === '' || !step.options || step.options.some(o => o && o.value === opt.value)) {
+        opt.value = nextOptionVal;                   // keep value aligned if you use it as token
+      }
+      return opt;
+    }
+
+    function nextOptionValue(step, prefix = 'opt') {
+      const used = new Set();
+      if (Array.isArray(step.options)) {
+        for (const o of step.options) {
+          if (!o) continue;
+          const k = (o.id ?? o.value ?? '').trim();
+          if (k) used.add(k);
+        }
+      }
+      let n = 1;
+      while (used.has(`${prefix}${n}`)) n++;
+      return `${prefix}${n}`;
     }
 
 
