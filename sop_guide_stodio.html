@@ -610,12 +610,15 @@
     }
 
     /* thin, subtle divider under the step title */
-.vw-hr {
-  border: 0;
-  border-top: 1px solid var(--hairline, #3a3f4b);
-  margin: 6px 0 12px;
-}
-.vw-title { margin: 0; }
+    .vw-hr {
+      border: 0;
+      border-top: 1px solid var(--line);
+      margin: 6px 0 12px;
+    }
+
+    .vw-title {
+      margin: 0;
+    }
 
 
     #stepsList .item:hover {
@@ -1016,7 +1019,7 @@
     }
 
 
-     .vw-pill {
+    .vw-pill {
       display: inline-flex;
       gap: 6px;
       align-items: center;
@@ -1031,7 +1034,7 @@
 
     .vw-pill strong {
       color: var(--fg);
-    } 
+    }
 
     /* view-mode wizard */
     .vw-crumbs {
@@ -1815,6 +1818,9 @@
       flex-wrap: wrap;
       width: 100%;
       overflow-x: hidden;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.3rem;
     }
 
     .icon-btn.danger {
@@ -2293,7 +2299,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     let sop = makeBlankSOP();
     let savedSop = null; // last saved snapshot
 
-    const viewState = { starterIdx: 0, answers: {}, selectedStepId: 0, history: [] };
+    const viewState = { starterIdx: 0, answers: {}, selectedStepId: 0, prev: {} };
 
 
     // ---- Save button state ----
@@ -2748,28 +2754,39 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       if (isSelect && !Array.isArray(step.options)) step.options = [];
 
       let html = `
-    <label>ID</label>
-    <input id="f_id" type="text" value="${escapeAttr(step.id)}"/>
-    <div id="f_id_err" class="error" style="display:none"></div>
+                  <label>ID</label>
+                  <input id="f_id" type="text" value="${escapeAttr(step.id)}"/>
+                  <div id="f_id_err" class="error" style="display:none"></div>
 
-    <label>Title</label>
-    <input id="f_title" type="text" value="${escapeAttr(step.title)}"/>
+                  <label>Title</label>
+                  <input id="f_title" type="text" value="${escapeAttr(step.title)}"/>    
+                `;
 
-    <div class="kv">
-      <div>
-        <label>Type</label>
-        <select id="f_type">
-          ${['instruction', 'input', 'select'].map(t => `<option ${t === step.type ? 'selected' : ''} value="${t}">${t}</option>`).join('')}
-        </select>
-      </div>
-      <div>
-        <div><input id="f_req" type="checkbox" ${step.required ? 'checked' : ''} /></div>
-        <label>Required</label>
-      </div>
-    </div>
+      // REPLACE your existing <div class="kv"> that contains Type with:
+      html += `
+              <div class="kv">
+                <div>
+                  <label>Type</label>
+                  <select id="f_type">
+                    ${['instruction', 'input', 'select'].map(t => `<option ${t === step.type ? 'selected' : ''} value="${t}">${t}</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  ${isInput
+          ? `<label>Placeholder</label>
+                        <input id="f_ph" type="text" value="${escapeAttr(step.placeholder || '')}"/>`
+          : isSelect
+            ? `<label>Mode</label>
+                          <select id="f_mode">
+                            <option ${isSingle ? 'selected' : ''} value="single">single</option>
+                            <option ${isMulti ? 'selected' : ''} value="multi">multi</option>
+                          </select>`
+            : ``
+        }
+                </div>
+              </div>
+            `;
 
-    
-  `;
 
       if (isInstr) {
 
@@ -2800,6 +2817,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
               <button type="button" class="rt-btn" data-cmd="attach" title="Attach file">📎</button>
               <input id="rt_attach" type="file" style="display:none">
 
+              <button type="button" class="rt-btn" data-align="left"   title="Align left">⟸</button>
+              <button type="button" class="rt-btn" data-align="center" title="Align center">⟺</button>
+              <button type="button" class="rt-btn" data-align="right"  title="Align right">⟹</button>
+
+
 
               <button id="variables-select" disabled title="No variables found" class="rt-btn">{{x}}</button>
 
@@ -2819,78 +2841,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           `;
 
 
-      }
-
-      if (isInput) {
+        // upload img
         html += `
-      <label>Placeholder</label>
-      <input id="f_ph" type="text" value="${escapeAttr(step.placeholder || '')}"/>
-
-      <div class="kv">
-        <div>
-          <label>Regex</label>
-          <input id="f_regex" type="text" value="${escapeAttr(step.regex || '')}" placeholder="e.g. ^[1-9][0-9]{5}$"/>
-        </div>
-        <div>
-          <label>Error message</label>
-          <input id="f_err" type="text" value="${escapeAttr(step.error || '')}"/>
-        </div>
-      </div>
-
-      <div class="kv">
-        <div>
-          <label>Required message</label>
-          <input id="f_reqmsg" type="text" value="${escapeAttr(step.requiredMessage || '')}"/>
-        </div>
-        <div></div>
-      </div>
-    `;
-      }
-
-      // Select specifics
-      if (isSelect) {
-        html += `
-      <div class="kv">
-        <div>
-          <label>Mode</label>
-          <select id="f_mode">
-            <option ${isSingle ? 'selected' : ''} value="single">single</option>
-            <option ${isMulti ? 'selected' : ''} value="multi">multi</option>
-          </select>
-        </div>
-      </div>
-
-      <label>Options</label>
-      <table class="table" id="optTable">
-        <thead>
-          <tr>
-            <th style="width:18%">value</th>
-            <th style="width:18%">label</th>
-            <th>hint</th>
-            ${isSingle ? '<th style="width:20%">next</th>' : ''}
-            <th class="center">del</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(step.options || []).map((o, i) => optionRowHtml(o, i, st.steps, isSingle, step.id)).join('')}
-        </tbody>
-      </table>
-      <div class="rowflex">
-        <button id="addOptBtn" class="iconbtn">+ Option</button>
-      </div>
-    `;
-      }
-
-      // Step-level Next (instruction, input, select+multi)
-      if (isInstr || isInput || isMulti) {
-        html += `
-    <label>${isMulti ? 'After (step.next, used for multi)' : 'Next (step.id)'}</label>
-    ${nextSelectHtml(st.steps, step.next, step.id, /*withId=*/true)}
-  `;
-      }
-
-
-      html += `
     <div class="layout">
   <div style="flex-grow:1">
     <div>
@@ -2924,6 +2876,59 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
   `;
 
 
+      }
+
+      if (isInput) {
+        html += `
+      <div class="kv">
+        <div>
+          <label>Regex</label>
+          <input id="f_regex" type="text" value="${escapeAttr(step.regex || '')}" placeholder="e.g. ^[1-9][0-9]{5}$"/>
+        </div>
+        <div>
+          <label>Error message</label>
+          <input id="f_err" type="text" value="${escapeAttr(step.error || '')}"/>
+        </div>
+      </div>
+
+     
+    `;
+      }
+
+      // Select specifics
+      if (isSelect) {
+        html += `
+      <label>Options</label>
+      <table class="table" id="optTable">
+        <thead>
+          <tr>
+            <th style="width:18%">value</th>
+            <th style="width:18%">label</th>
+            <th>hint</th>
+            ${isSingle ? '<th style="width:20%">next</th>' : ''}
+            <th class="center">del</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(step.options || []).map((o, i) => optionRowHtml(o, i, st.steps, isSingle, step.id)).join('')}
+        </tbody>
+      </table>
+      <div class="rowflex">
+        <button id="addOptBtn" class="iconbtn">+ Option</button>
+      </div>
+    `;
+      }
+
+      // Step-level Next (instruction, input, select+multi)
+      if (isInstr || isInput || isMulti) {
+        html += `
+    <label>${isMulti ? 'After (step.next, used for multi)' : 'Next (step.id)'}</label>
+    ${nextSelectHtml(st.steps, step.next, step.id, /*withId=*/true)}
+  `;
+      }
+
+
+
 
       box.innerHTML = html;
       // populateVariableDropdown(st, step);
@@ -2947,12 +2952,13 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           // renderGraph();
 
 
-          // rewriteRefs(oldId, newId);
-          // step.id = newId;
-          // setSelectedStepById(newId);          // <-- sync id + idx
-          // renderGraph();
+          rewriteRefs(oldId, newId);
+          step.id = newId;
+          setSelectedStepById(newId);          // <-- sync id + idx
+          renderGraph();
 
-          navigateToStepId(step.id, { record: false });
+
+          // navigateToStepId(step.id, { record: false });
 
 
         }
@@ -4040,6 +4046,26 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         });
       });
 
+      // Align buttons (left/center/right) applied to block elements in selection
+      toolbar?.querySelectorAll('[data-align]').forEach(btn => {
+        btn.addEventListener('mousedown', e => e.preventDefault());
+        btn.addEventListener('click', () => {
+          bodyEl.focus();
+          const dir = btn.dataset.align;  // 'left' | 'center' | 'right'
+          const blocks = getBlocksInSelection(); // you already have this helper
+
+          // Toggle: if all selected blocks already have this alignment, clear it; else apply it
+          const allSame = blocks.length && blocks.every(el => (el.style.textAlign || '') === dir);
+          blocks.forEach(el => el.style.textAlign = allSame ? '' : dir);
+
+          // persist + refresh preview
+          step.body = bodyEl.innerHTML;
+          setDirty(true);
+          renderViewStep();
+        });
+      });
+
+
       attachInput?.addEventListener('change', () => {
         const f = attachInput.files?.[0];
         if (!f) return;
@@ -4401,12 +4427,36 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       mapPan = { x: 0, y: -20 }
     };
 
+    // function clientToWorld(e) {
+    //   const bb = graphSvg.getBoundingClientRect();
+    //   const vw = 1000, vh = 1000; // must match renderGraph() viewBox world size
+    //   const x = mapPan.x + (e.clientX - bb.left) * (vw / mapZoom) / bb.width;
+    //   console.log(`x`, x);
+    //   const y = mapPan.y + (e.clientY - bb.top) * (vh / mapZoom) / bb.height;
+    //   return { x, y };
+    // }
+
     function clientToWorld(e) {
-      const bb = graphSvg.getBoundingClientRect();
-      const vw = 1000, vh = 1000; // must match renderGraph() viewBox world size
-      const x = mapPan.x + (e.clientX - bb.left) * (vw / mapZoom) / bb.width;
-      const y = mapPan.y + (e.clientY - bb.top) * (vh / mapZoom) / bb.height;
-      return { x, y };
+      const svg = graphSvg;
+
+      // Preferred: use SVG's screen CTM (handles viewBox, pan, zoom, CSS scale)
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX; pt.y = e.clientY;
+      const ctm = svg.getScreenCTM();
+      if (ctm) {
+        const p = pt.matrixTransform(ctm.inverse());
+        return { x: p.x, y: p.y };
+      }
+
+      // Fallback: derive from current viewBox (no hard-coded 1000s)
+      const bb = svg.getBoundingClientRect();
+      const vb = svg.viewBox.baseVal;
+      const sx = vb.width / bb.width;
+      const sy = vb.height / bb.height;
+      return {
+        x: vb.x + (e.clientX - bb.left) * sx,
+        y: vb.y + (e.clientY - bb.top) * sy
+      };
     }
 
 
@@ -4649,7 +4699,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         // });
 
         grp.addEventListener('click', () => {
-          navigateToStepId(n.id, { record: false });
+          // navigateToStepId(n.id, { record: false });
+          navigateToStepId(n.id);
+          // setSelectedStepById(n.id);
         });
 
         g.appendChild(grp);
@@ -6565,23 +6617,32 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
     function setNextEnabled(enabled) {
-      const n = document.getElementById('vwNext');
-      if (n) n.disabled = !enabled;
+      const btn = document.getElementById('vwNext');
+      if (!btn) return;
+      btn.disabled = !enabled; // enable when true, disable when false
     }
+
 
     // put this *after* setNextEnabled(...)
     function validateValueForStep(step, value) {
-      if (step.required) {
-        if (step.type === 'input') {
-          if (!String(value || '').trim()) return { ok: false, msg: step.requiredMessage || 'This field is required' };
-        } else if (step.type === 'select') {
-          if (step.mode === 'multi') {
-            if (!Array.isArray(value) || value.length === 0) return { ok: false, msg: step.requiredMessage || 'Select at least one' };
-          } else {
-            if (!value) return { ok: false, msg: step.requiredMessage || 'Please choose an option' };
-          }
-        }
+      // if (step.required) {
+      if (step.type === 'input') {
+        if (!String(value || '').trim()) return { ok: false, msg: step.requiredMessage || 'This field is required' };
       }
+      // else if () {
+      // if (step.mode === 'multi') {
+      //   if (!Array.isArray(value) || value.length === 0) return { ok: false, msg: step.requiredMessage || 'Select at least one' };
+      // } else {
+      //   if (!value) return { ok: false, msg: step.requiredMessage || 'Please choose an option' };
+      // }
+      // if single select manda
+      else if (step.type === 'select' && step.mode === 'single' && !value) {
+        return {
+          ok: false, msg: step.requiredMessage || 'Please choose an option'
+        };
+        // }
+      }
+      // }
       if (step.type === 'input' && step.regex) {
         // console.log(`validating regex`, step.regex, value);
         try {
@@ -6669,10 +6730,10 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       // place is a stepId
       const hops = stepHopsFromStart(starter, res.place);
       if (hops < 0) {
-        return `Found in step: ${res.place} <span class="warn">(unreachable)</span>`;
+        return `Found around step: ${res.place} <span class="warn">(unreachable)</span>`;
       } else {
         // show 1-based position from start for humans
-        return `Found in step: ${hops + 1}`;
+        return `Found around step: ${hops + 1}`;
       }
     }
 
@@ -6926,7 +6987,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     //   document.getElementById('vwPrev').onclick = () => goPrevious();
 
-   
+
     //   nextBtn.onclick = () => {
     //     if (isEndStep(step)) return;
 
@@ -6963,172 +7024,190 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     // }
 
     function renderViewStep() {
-  const st = sop.starters[viewState.starterIdx];
-  const steps = st.steps || [];
-  let i = getStepIndexById(steps, viewState.selectedStepId);
+      const st = sop.starters[viewState.starterIdx];
+      const steps = st.steps || [];
+      let i = getStepIndexById(steps, viewState.selectedStepId);
 
-  const box = document.getElementById('vwStep');
-  box.innerHTML = '';
-  const step = steps[i];
-  if (!step) { setNextEnabled(false); return; }
+      const box = document.getElementById('vwStep');
+      box.innerHTML = '';
+      const step = steps[i];
+      if (!step) { setNextEnabled(false); return; }
 
-  // one header everywhere
-  // const head = step.title ? `<h3 class="vw-title">${viewEscape(step.title)}</h3>` : '';
-  const head = step.title
-  ? `<h3 class="vw-title" id="vw-title-${step.id}">${viewEscape(step.title)}</h3><hr class="vw-hr">`
-  : '';
-  const imgHtml = step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : '';
+      // one header everywhere
+      // const head = step.title ? `<h3 class="vw-title">${viewEscape(step.title)}</h3>` : '';
+      const head = step.title
+        ? `<h3 class="vw-title" id="vw-title-${step.id}">${viewEscape(step.title)}</h3><hr class="vw-hr">`
+        : '';
+      const imgHtml = step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : '';
 
-  let node;
+      let node;
 
-  if (step.type === 'instruction') {
-    node = document.createElement('div');
-    node.innerHTML = `${head}${renderBody(step.body)}${imgHtml}`;
-    box.appendChild(node);
-    setNextEnabled(true);
-  }
-
-  else if (step.type === 'input') {
-    node = document.createElement('div');
-    node.innerHTML = `
-      ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
-      <input id="vw_inp" type="text" class="text-input" placeholder="${viewEscape(step.placeholder || '')}
-      " aria-labelledby="${step.title ? `vw-title-${step.id}` : ''}>
-      ${imgHtml}
-    `;
-    box.appendChild(node);
-
-    const inp = node.querySelector('#vw_inp');
-    const img = node.querySelector('.thumb');
-    inp.value = viewState.answers[step.id] || '';
-
-    const err = document.createElement('div');
-    err.className = 'error';
-    err.style.display = 'none';
-    (img ? img : inp).insertAdjacentElement(img ? 'beforebegin' : 'afterend', err);
-
-    function refreshInput() {
-      const res = validateValueForStep(step, inp.value);
-      err.textContent = res.ok ? '' : res.msg;
-      err.style.display = res.ok ? 'none' : '';
-      setNextEnabled(res.ok);
-    }
-    inp.addEventListener('input', () => {
-      viewState.answers[step.id] = inp.value;
-      refreshInput();
-    });
-    refreshInput();
-  }
-
-  else if (step.type === 'select') {
-    node = document.createElement('div');
-    node.innerHTML = `<h3>${viewEscape(step.title)}</h3>`;
-
-    const wrap = document.createElement('div');
-    wrap.className = 'vw-grid-sel';
-    node.appendChild(wrap);
-
-    const mode = step.mode === 'multi' ? 'multi' : 'single';
-    let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
-
-    (step.options || []).forEach(opt => {
-      const btn = document.createElement('button');
-      btn.className = 'vw-option';
-      btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
-
-      const isSel = mode === 'multi'
-        ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
-        : (sel && ((sel?.value ?? sel) === opt.value));
-
-      if (isSel) btn.classList.add('selected');
-
-      btn.addEventListener('click', () => {
-        if (mode === 'multi') {
-          sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
-          const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
-          if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
-          else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
-          viewState.answers[step.id] = sel;
-          refreshSelect();
-        } else {
-          viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
-          wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
-          btn.classList.add('selected');
-          refreshSelect();
-        }
-      });
-
-      wrap.appendChild(btn);
-    });
-
-    const err = document.createElement('div');
-    err.className = 'error';
-    err.style.display = 'none';
-    node.appendChild(err);
-
-    function refreshSelect() {
-      const res = validateValueForStep(step, viewState.answers[step.id]);
-      err.textContent = res.ok ? '' : res.msg;
-      err.style.display = res.ok ? 'none' : '';
-      setNextEnabled(res.ok);
-    }
-    refreshSelect();
-
-    box.appendChild(node);
-
-    const hasSel = mode === 'multi' ? (Array.isArray(sel) && sel.length > 0) : Boolean(sel);
-    setNextEnabled(hasSel || !step.required);
-  }
-
-  else if (isEndStep(step)) {
-    node = document.createElement('div');
-    node.innerHTML = `${head || '<h3>Completed</h3>'}${viewBodyHtml(step.body)}`;
-    box.appendChild(node);
-    setNextEnabled(false);
-  }
-
-  else {
-    box.textContent = 'Unknown step type';
-    setNextEnabled(false);
-  }
-
-  // Prev state + handlers
-  document.getElementById('vwPrev').disabled =
-    !((viewState.history?.length || 0) > 0 || !!getFirstPredecessorId(getStarter(), viewState.selectedStepId));
-
-  const nextBtn = document.getElementById('vwNext');
-  nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
-
-  document.getElementById('vwPrev').onclick = () => goPrevious();
-
-  nextBtn.onclick = () => {
-    if (isEndStep(step)) return;
-
-    const stepsAll = getSteps();
-    const current = getStepById(viewState.selectedStepId);
-
-    // single-select branch
-    if (current?.type === 'select' && current.mode === 'single') {
-      const choice = viewState.answers[current.id];
-      if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
-        viewState.history.push(viewState.selectedStepId);
-        setSelectedStepById(choice.next);
-        renderViewStep(); renderGraph(); renderInspector();
-        return;
+      if (step.type === 'instruction') {
+        node = document.createElement('div');
+        node.innerHTML = `${head}${renderBody(step.body)}${imgHtml}`;
+        box.appendChild(node);
+        setNextEnabled(true);
       }
-    }
 
-    // step-level next
-    if (current?.next && stepsAll.find(x => x.id === current.next)) {
-      viewState.history.push(viewState.selectedStepId);
-      setSelectedStepById(current.next);
-      renderViewStep(); renderGraph(); renderInspector();
-      return;
-    }
+      else if (step.type === 'input') {
+        node = document.createElement('div');
+        node.innerHTML = `
+                        ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
+                        <input id="vw_inp" type="text" class="text-input"
+                              placeholder="${viewEscape(step.placeholder || '')}">
+                        ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ''}
+                      `;
 
-    renderViewStep(); renderGraph(); renderInspector();
-  };
-}
+        box.appendChild(node);
+
+        const inp = node.querySelector('#vw_inp');
+        console.log(`inp`, inp);
+        const img = node.querySelector('.thumb');
+        inp.value = viewState.answers[step.id] || '';
+
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.style.display = 'none';
+        (img ? img : inp).insertAdjacentElement(img ? 'beforebegin' : 'afterend', err);
+
+        function refreshInput() {
+          const res = validateValueForStep(step, inp.value);
+          err.textContent = res.ok ? '' : res.msg;
+          err.style.display = res.ok ? 'none' : '';
+          setNextEnabled(res.ok);
+        }
+        inp.addEventListener('input', () => {
+          viewState.answers[step.id] = inp.value;
+          refreshInput();
+        });
+        refreshInput();
+      }
+
+      else if (step.type === 'select') {
+        node = document.createElement('div');
+        node.innerHTML = `<h3>${viewEscape(step.title)}</h3>`;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'vw-grid-sel';
+        node.appendChild(wrap);
+
+        const mode = step.mode === 'multi' ? 'multi' : 'single';
+        let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
+
+        (step.options || []).forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'vw-option';
+          btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
+
+          const isSel = mode === 'multi'
+            ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
+            : (sel && ((sel?.value ?? sel) === opt.value));
+
+          if (isSel) btn.classList.add('selected');
+
+          btn.addEventListener('click', () => {
+            if (mode === 'multi') {
+              sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
+              const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
+              if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
+              else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
+              viewState.answers[step.id] = sel;
+              refreshSelect();
+            } else {
+              viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
+              wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
+              btn.classList.add('selected');
+              refreshSelect();
+            }
+          });
+
+          wrap.appendChild(btn);
+        });
+
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.style.display = 'none';
+        node.appendChild(err);
+
+        function refreshSelect() {
+          const res = validateValueForStep(step, viewState.answers[step.id]);
+          err.textContent = res.ok ? '' : res.msg;
+          err.style.display = res.ok ? 'none' : '';
+          console.log(`res`, res);
+          setNextEnabled(res.ok);
+        }
+        refreshSelect();
+
+        box.appendChild(node);
+
+        // const hasSel = mode === 'multi' ? (Array.isArray(sel) && sel.length > 0) : Boolean(sel);
+        // console.log(`hasSel`, hasSel);
+        // setNextEnabled(hasSel);
+      }
+
+      else if (isEndStep(step)) {
+        node = document.createElement('div');
+        node.innerHTML = `${head || '<h3>Completed</h3>'}${viewBodyHtml(step.body)}`;
+        box.appendChild(node);
+        setNextEnabled(false);
+      }
+
+      else {
+        box.textContent = 'Unknown step type';
+        setNextEnabled(false);
+      }
+
+      // Prev state + handlers
+      document.getElementById('vwPrev').disabled =
+        !((viewState.history?.length || 0) > 0 || !!getFirstPredecessorId(getStarter(), viewState.selectedStepId));
+
+      const nextBtn = document.getElementById('vwNext');
+      nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
+      if (isEndStep(step)) {
+        nextBtn.disabled = true;
+      }
+
+      document.getElementById('vwPrev').onclick = () => goPrevious();
+
+      nextBtn.onclick = () => {
+        if (isEndStep(step)) return;
+
+        const stepsAll = getSteps();
+        const current = getStepById(viewState.selectedStepId);
+
+
+        // single-select branch
+        if (current?.type === 'select' && current.mode === 'single') {
+          const choice = viewState.answers[current.id];
+          if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
+            const toId = choice.next;
+            if (toId !== viewState.selectedStepId) {
+              recordTransition(viewState.selectedStepId, toId);   // ← add this
+              setSelectedStepById(toId);
+              renderViewStep(); renderGraph(); renderInspector();
+            }
+            return;
+          }
+
+        }
+
+
+        // step-level next
+        if (current?.next && stepsAll.find(x => x.id === current.next)) {
+          const toId = current.next;
+          if (toId !== viewState.selectedStepId) {
+            recordTransition(viewState.selectedStepId, toId);   // ← add this
+            setSelectedStepById(toId);
+            renderViewStep(); renderGraph(); renderInspector();
+          }
+          return;
+        }
+
+
+
+        renderViewStep(); renderGraph(); renderInspector();
+      };
+    }
 
     function getFirstPredecessorId(starter, stepId) {
       if (!starter || !stepId) return null;
@@ -7138,6 +7217,20 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const order = starter.steps.map(s => s.id);
       return [...set].sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
     }
+
+    // Map: nextId -> prevId (last traversed prev for that node)
+    function recordTransition(prevId, nextId) {
+      if (!prevId || !nextId || prevId === nextId) return;
+      (viewState.prev ||= Object.create(null))[nextId] = prevId; // overwrite if path changes
+    }
+
+    // Is `from` a valid predecessor of `to` in the current graph?
+    function isValidPredecessor(starter, from, to) {
+      if (!starter || !from || !to) return false;
+      const pred = buildPredecessors(starter);       // you already use this util
+      return !!(pred[to] && pred[to].has(from));
+    }
+
 
     function buildPredecessors(starter) {
       const pred = Object.create(null);
@@ -7218,43 +7311,108 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
     // Select a step by id. If record=true, push the previous id into history.
-    function navigateToStepId(nextId, { record = true } = {}) {
+    // function navigateToStepId(nextId, { record = true } = {}) {
+    //   const curId = viewState.selectedStepId || null;
+    //   if (!nextId || nextId === curId) return;
+
+    //   if (record && curId) {
+    //     viewState.history ||= [];
+    //     viewState.history.push(curId);
+    //   }
+    //   setSelectedStepById(nextId);     // your existing helper: syncs ID + index
+    //   renderViewStep();
+    //   renderGraph();
+    //   renderInspector();
+    // }
+
+    function navigateToStepId(nextId) {
       const curId = viewState.selectedStepId || null;
       if (!nextId || nextId === curId) return;
 
-      if (record && curId) {
-        viewState.history ||= [];
-        viewState.history.push(curId);
-      }
-      setSelectedStepById(nextId);     // your existing helper: syncs ID + index
+      setSelectedStepById(nextId);   // sync id + idx
       renderViewStep();
       renderGraph();
       renderInspector();
     }
 
+
     // Go back in history (no re-recording)
+    // function goPrevious() {
+    //   const st = getStarter();
+    //   const hasHist = (viewState.history?.length || 0) > 0;
+
+    //   if (hasHist) {
+    //     const prevStepId = viewState.history.pop();
+    //     setSelectedStepById(prevStepId);
+    //     renderViewStep();
+    //     renderGraph();
+    //     renderInspector();
+    //     return;
+    //   }
+
+    //   // No history → treat the nearest parent as "Prev"
+    //   const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
+    //   if (parentId) {
+    //     setSelectedStepById(parentId);
+    //     renderViewStep();
+    //     renderGraph();
+    //     renderInspector();
+    //   }
+    // }
+
+    // function goPrevious() {
+    //   const st = getStarter();
+    //   const hist = (viewState.history ||= []);
+
+    //   if (hist.length > 0) {
+    //     const prevStepId = hist.pop();
+    //     if (prevStepId && prevStepId !== viewState.selectedStepId) {
+    //       setSelectedStepById(prevStepId);
+    //       renderViewStep(); renderGraph(); renderInspector();
+    //     }
+    //     return;
+    //   }
+
+    //   // No history → fall back to first predecessor (don’t record history)
+    //   const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
+    //   if (parentId && parentId !== viewState.selectedStepId) {
+    //     setSelectedStepById(parentId);
+    //     renderViewStep(); renderGraph(); renderInspector();
+    //   }
+    // }
+
     function goPrevious() {
       const st = getStarter();
-      const hasHist = (viewState.history?.length || 0) > 0;
+      const cur = viewState.selectedStepId;
+      const prevMap = viewState.prev || Object.create(null);
 
-      if (hasHist) {
-        const prevStepId = viewState.history.pop();
-        setSelectedStepById(prevStepId);
-        renderViewStep();
-        renderGraph();
-        renderInspector();
-        return;
+      // 1) Prefer the last traversed predecessor if still valid
+      let target = prevMap[cur];
+      if (target && !isValidPredecessor(st, target, cur)) {
+        target = null; // path changed; don't trust stale link
       }
 
-      // No history → treat the nearest parent as "Prev"
-      const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
-      if (parentId) {
-        setSelectedStepById(parentId);
-        renderViewStep();
-        renderGraph();
-        renderInspector();
+      // 2) Fallback: first predecessor in the current graph
+      if (!target) {
+        target = getFirstPredecessorId(st, cur);
       }
+
+      if (target && target !== cur) {
+        setSelectedStepById(target);
+        renderViewStep(); renderGraph(); renderInspector();
+      }
+      // If no predecessor at all, do nothing (button can be disabled upstream)
     }
+
+
+
+    function recordHistoryFromCurrent() {
+      const cur = viewState.selectedStepId;
+      if (!cur) return;
+      const h = (viewState.history ||= []);
+      if (h[h.length - 1] !== cur) h.push(cur);   // avoid consecutive duplicates
+    }
+
 
 
 
