@@ -4,26 +4,28 @@
 
 ## 🏇 Doing
 
-- highlight the add button after clicking on it, on click again it should be cancelled
-- in the rich text, add variable can be added here
-- show actual values insted of variables on view guide
 - make on single select, it automatically jumps to the next one in the wizard
-- change the title name of the browser tab, make it sop - medical
 - fix is editable field, i have thought of making all fields an indicator to check if need to set dirty or not, because when we create a new link in the rich text, while typing the link it will highlight the save button
 - on enter click it should go next
 
 - have map link in the preview 
 
-- select does not render pictures, not sure how will you do it, either remove it from select and input, or keep it in both
 - mandate starter label while editing
-- group right label to have matching fields together
-- make selected or active starter and active step on the url instead of variable to be able to share it
-- required should not exist, probably only in the single select, and maybe in the input but i am not sure
 
 
 ---
 
 ## ✅ Done
+- select does not render pictures, not sure how will you do it, either remove it from select and input, or keep it in both
+- make selected or active starter and active step on the url instead of variable to be able to share it
+- required should not exist, probably only in the single select, and maybe in the input but i am not sure
+- group right label to have matching fields together
+- change the title name of the browser tab, make it sop - medical
+
+- highlight the add button after clicking on it, on click again it should be cancelled
+- in the rich text, add variable can be added here
+- show actual values insted of variables on view guide
+
 - Add rich text (new URL, bold, italic, …) (add link and upload file is left, also you may add variable from here) 
 - Fix the logic in the previous option in the wizard screen, specially when having options.
 -  Setting to combine some header buttons

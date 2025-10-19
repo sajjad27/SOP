@@ -27,6 +27,7 @@
       /* --hl-fg: #ff0000; */
       --content-w: 1240px;
       --gutter: 16px;
+      --grid-dot: color-mix(in srgb, var(--line) 65%, transparent);
 
     }
 
@@ -51,6 +52,8 @@
 
       --content-w: 1240px;
       --gutter: 16px;
+      --grid-dot: color-mix(in srgb, var(--line) 45%, transparent);
+
     }
 
     * {
@@ -369,7 +372,7 @@
       flex: 0 0 var(--right-w, 360px);
       width: var(--right-w, 360px);
       width: 33%;
-      overflow: auto;
+      /* overflow: auto; */
     }
 
     /* Splitter */
@@ -775,7 +778,7 @@
     .graph-svg {
       /* subtle grid so spacing is readable */
       background:
-        radial-gradient(circle at 1px 1px, rgba(148, 163, 184, .12) 1px, transparent 1px),
+        radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 1px),
         radial-gradient(circle at 1px 1px, rgba(148, 163, 184, .06) 1px, transparent 1px);
       background-size: 16px 16px, 80px 80px;
       background-position: 0 0, -1px -1px;
@@ -1046,6 +1049,177 @@
       gap: 10px;
       margin: 10px 0;
     }
+
+    .vw-crumbs a {
+      flex: 1;
+      text-align: end;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .vw-crumbs a:hover {
+      text-decoration: underline;
+    }
+
+
+    /* === Map Dialog ========================================================= */
+    .dlg {
+      position: fixed;
+      inset: 105px auto auto 252px;
+      /* adjust if you want */
+      width: 720px;
+      max-width: min(92vw, 920px);
+      height: 520px;
+      max-height: min(86vh, 720px);
+      z-index: 9999;
+
+      display: flex;
+      /* flex only when not [hidden] */
+      flex-direction: column;
+
+      background: var(--card, #fff);
+      color: var(--fg, #111);
+      border: 1px solid var(--line, #ddd);
+      border-radius: 12px;
+      box-shadow: var(--shadow, 0 10px 30px rgba(0, 0, 0, .2));
+    }
+
+    .dlg[hidden] {
+      display: none !important;
+    }
+
+    .dlg-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      cursor: move;
+      user-select: none;
+      background: var(--panel, rgba(0, 0, 0, .03));
+      border-bottom: 1px solid var(--line, #eee);
+    }
+
+    .btn-sm {
+      font: 500 12px/1 system-ui, Arial;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--line, #ddd);
+      background: var(--card, #fff);
+      color: var(--fg, #111);
+      cursor: pointer;
+    }
+
+    .btn-sm:hover {
+      border-color: var(--accent, #4f8cff);
+    }
+
+    .dlg-x {
+      border: 1px solid var(--line, #ddd);
+      border-radius: 8px;
+      background: var(--card, #fff);
+      padding: 4px 8px;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--fg, #111);
+    }
+
+    .dlg-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+    }
+
+    /* === Mini Viewport (centered + scroll + dotted background) ============= */
+    .mini-viewport {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+
+      /* dotted grid */
+      /* --mini-grid-size: 16px; */
+      /* JS can update this if you want zoom-aware dots */
+      /* --mini-dot: rgba(0, 0, 0, .15); */
+      background-image: radial-gradient(var(--mini-dot) 1px, transparent 1px);
+      background-size: var(--mini-grid-size) var(--mini-grid-size);
+    }
+
+    :root.dark .mini-viewport {
+      --mini-dot: rgba(255, 255, 255, .12);
+    }
+
+    #vwMiniGraph {
+      width: 100%;
+      height: 100%;
+      max-width: 1400px;
+      max-height: 1000px;
+    }
+
+    /*
+    .graph-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .edge {
+      stroke: var(--graph-edge, #98a2b3);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .node-rect {
+      fill: var(--card, #fff);
+      stroke: var(--line, #cfcfcf);
+      stroke-width: 1.5;
+      rx: 8;
+    }
+
+    .node-rect.current {
+      stroke: var(--accent, #4f8cff);
+      stroke-width: 2;
+    }
+
+    .node-label {
+      font: 600 13px/1.2 system-ui, Segoe UI, Roboto, Arial;
+      fill: var(--fg, #111);
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .is-mini .edge {
+      stroke-width: 1.1;
+    }
+
+    .mini-node-rect {
+      fill: var(--card, #fff);
+      stroke: var(--line, #cfcfcf);
+      stroke-width: 1.1;
+      rx: 8;
+    }
+
+    .mini-node-rect.current {
+      stroke: var(--accent, #4f8cff);
+      stroke-width: 1.6;
+    }
+
+    .mini-label {
+      font: 600 12px/1.2 system-ui, Segoe UI, Roboto, Arial;
+      fill: var(--fg, #111);
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    .mini-node {
+      cursor: pointer;
+    } */
+
+
 
     #vwStep {
       background: var(--card);
@@ -2090,10 +2264,12 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-  <script type="text/plain" id="jsonEmbedded">
+  <!-- <script type="text/plain" id="jsonEmbedded">
 
 
-  </script>
+  </script> -->
+
+  <script id="jsonEmbedded" type="application/json"></script>
 
 
   <header>
@@ -2139,7 +2315,26 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         <div class="vw-crumbs">
           <button id="vwBackHome" onclick="goHome()" class="btn">◀ Back</button>
           <span class="title" id="vwStarterTitle"></span>
+          <a id="vwOpenMap" href="#" class="link">Show Map</a>
         </div>
+
+        <!-- Movable Map Dialog -->
+        <!-- Mini-Map dialog (hidden by default) -->
+        <div id="vwMapDlg" class="dlg" hidden>
+          <div id="vwMapDrag" class="dlg-head">
+            <strong>Map</strong>
+            <button id="vwMapClose" class="dlg-x" type="button" aria-label="Close">×</button>
+          </div>
+          <div class="dlg-body">
+            <div class="mini-viewport">
+              <div id="vwMiniGraph"></div>
+            </div>
+          </div>
+        </div>
+
+
+
+
         <div id="vwStep"></div>
         <div class="vw-nav">
           <button id="vwPrev" class="btn">Previous</button>
@@ -2160,7 +2355,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
               <button id="zoomInBtn">+</button>
               <button id="zoomResetBtn">Reset position & zoom</button>
               <button id="formatBtn" class="graph-action" title="Auto format">Format graph</button>
-              <button id="fullscreenBtn">Full screen</button>
+              <!-- <button id="fullscreenBtn">Full screen</button> -->
             </div>
           </div>
           <div class="graph-canvas" id="graphCanvas">
@@ -2710,6 +2905,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       });
     })();
 
+    // Uses your existing: getStarter(), buildGraph(), layoutVertical(), setSelectedStepById(), navigateToStepId()
+
+    // choose the canonical selector: your code defines navigateToStepId(nextId) later
+
+
 
     function changeDataMode(newDataMode) {
       if (newDataMode !== 'view' && newDataMode !== 'edit') {
@@ -2761,18 +2961,22 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-      document.getElementById('zoomInBtn').addEventListener('click', () => { mapZoom *= 1.2; renderGraph(); });
-      document.getElementById('zoomOutBtn').addEventListener('click', () => { mapZoom /= 1.2; renderGraph(); });
+      document.getElementById('zoomInBtn').addEventListener('click', () => zoomAroundCenter(1.2));
+      document.getElementById('zoomOutBtn').addEventListener('click', () => zoomAroundCenter(1 / 1.2));
       document.getElementById('zoomResetBtn').addEventListener('click', () => { resetGraphZoom(); renderGraph(); });
 
       document.getElementById('formatBtn').addEventListener('click', formatGraph);
 
+      // Zoom around the viewport center (uses the same vw/vh you use in renderGraph)
 
-      const fsBtn = document.getElementById('fullscreenBtn');
-      fsBtn.addEventListener('click', () => {
-        if (document.fullscreenElement === graphPanel) document.exitFullscreen();
-        else graphPanel.requestFullscreen?.();
-      });
+
+
+
+      // const fsBtn = document.getElementById('fullscreenBtn');
+      // fsBtn.addEventListener('click', () => {
+      //   if (document.fullscreenElement === graphPanel) document.exitFullscreen();
+      //   else graphPanel.requestFullscreen?.();
+      // });
 
 
 
@@ -3093,14 +3297,24 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         //   `<span class="embed-chip" contenteditable="false" data-embed-id="${embId}" title="Will render in viewer">&lt;${safeLabel}&gt;</span>`
         // );
         // inside your insert-embed click handler (editor toolbar)
+        // document.execCommand(
+        //   'insertHTML',
+        //   false,
+        //   `<span class="embed-chip" contenteditable="false" data-embed-id="${embId}">
+        //               <span class="label">&lt;${safeLabel}&gt;</span>
+        //               <button class="embed-del" type="button" title="Remove">×</button>
+        //             </span>`
+        // );
+
         document.execCommand(
           'insertHTML',
           false,
-          `<span class="embed-chip" contenteditable="false" data-embed-id="${embId}">
-                      <span class="label">&lt;${safeLabel}&gt;</span>
-                      <button class="embed-del" type="button" title="Remove">×</button>
-                    </span>`
+          `<span class="embed-chip" contenteditable="false" data-embed-id="${embId}" title="Not rendered here — will show in Preview">
+     <span class="label">&lt;${safeLabel}&gt;</span>
+     <button class="embed-del" type="button" title="Remove">×</button>
+   </span>`
         );
+
 
 
         step.body = bodyEl.innerHTML;
@@ -5293,31 +5507,134 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-    graphSvg.addEventListener('wheel', (e) => {
-      e.preventDefault(); // stop the page from scrolling
-      const k = 1 / mapZoom; // keep speed consistent under zoom
-      // vertical wheel → move up/down, horizontal wheel (trackpads) → left/right
-      mapPan.x += e.deltaX * k;
-      mapPan.y += e.deltaY * k;
-      // renderAll();
+    // // detach any old wheel binding we might have left around
+    // try { if (graphSvg._wheelBound) graphSvg.removeEventListener('wheel', graphSvg._wheelBound); } catch { }
+
+    // /* ONE wheel handler: 
+    //    - Ctrl/Cmd + wheel → zoom around viewport center (uses your zoomAroundCenter)
+    //    - Shift + wheel   → horizontal pan (wheel up = left)
+    //    - default         → normal pan (trackpad X/Y) */
+    // function onGraphWheel(e) {
+    //   if (e.ctrlKey || e.metaKey) {
+    //     e.preventDefault();
+    //     const step = Math.pow(1.0018, -e.deltaY); // wheel up => zoom in
+    //     zoomAroundCenter(step);
+    //     return;
+    //   }
+
+    //   e.preventDefault();
+    //   const unit = (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 256 : 1); // line/page → px
+    //   const k = unit / mapZoom;
+
+    //   const dx = e.shiftKey ? (-e.deltaY) : e.deltaX; // Shift+wheel up = left
+    //   const dy = e.shiftKey ? 0 : e.deltaY;
+
+    //   mapPan.x += dx * k;
+    //   mapPan.y += dy * k;
+
+    //   renderGraph();
+    // }
+
+    // graphSvg.addEventListener('wheel', onGraphWheel, { passive: false });
+    // graphSvg._wheelBound = onGraphWheel;
+
+    // ----- ONE wheel handler with mouse-anchored zoom (Figma-style) -----
+    // Requires: graphSvg (your SVG element), mapZoom (number), mapPan = {x,y}, renderGraph()
+
+    // Attach (ensure passive:false so preventDefault works)
+    try { if (graphSvg._wheelBound) graphSvg.removeEventListener('wheel', graphSvg._wheelBound); } catch { }
+    graphSvg._wheelBound = onGraphWheel;
+    graphSvg.addEventListener('wheel', onGraphWheel, { passive: false });
+
+    function onGraphWheel(e) {
+      // Ctrl/Cmd + wheel → zoom at mouse position (keeps the point under cursor pinned)
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const step = Math.pow(1.0018, -e.deltaY); // wheel up => zoom in
+        zoomAtMouse(e, step);
+        return;
+      }
+
+      // PAN (Shift = horizontal, up→left)
+      e.preventDefault();
+      const unit = (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 256 : 1);
+      const k = unit / mapZoom;
+      const dx = e.shiftKey ? (-e.deltaY) : e.deltaX;
+      const dy = e.shiftKey ? 0 : e.deltaY;
+      mapPan.x += dx * k;
+      mapPan.y += dy * k;
       renderGraph();
-    }, { passive: false });
+    }
 
-    // graphSvg.addEventListener('click', () => {
+    // Zoom around the mouse position using current SVG viewBox (no magic constants)
+    function zoomAtMouse(e, factor) {
+      const rect = graphSvg.getBoundingClientRect();
+      const sx = e.clientX - rect.left;   // mouse in SVG viewport pixels
+      const sy = e.clientY - rect.top;
 
-    // if (!placingFree || !ghostPos) return;
-    // const st = getStarter(); if (!st) return;
-    // const step = makeStep('instruction');
-    // step.pos = { x: ghostPos.x, y: ghostPos.y }; // lock position
-    // st.steps.push(step);
-    // // viewState.selectedStepId = step.id;
-    // setSelectedStepById(step.id);
+      // Read current viewBox; fall back to mapPan/mapZoom if missing
+      let vx, vy, vw, vh;
+      const vb = (graphSvg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+      if (vb.length === 4 && vb.every(n => Number.isFinite(n))) {
+        [vx, vy, vw, vh] = vb;
+      } else {
+        // fallback to your renderGraph convention (world=1000x1000)
+        const WORLD = 1000;
+        vx = mapPan.x; vy = mapPan.y; vw = WORLD / mapZoom; vh = WORLD / mapZoom;
+      }
 
-    // placingFree = false; ghostPos = null;
-    // setDirty(true);
-    // // renderAll();
+      // World coords under the cursor BEFORE zoom:
+      // world = vmin + screen * (viewSize / pixelSize)
+      const wx = vx + sx * (vw / rect.width);
+      const wy = vy + sy * (vh / rect.height);
 
-    // }, true);
+      // Apply zoom with clamps
+      const minZ = 0.1, maxZ = 8;
+      const oldZ = mapZoom;
+      const newZ = clamp(oldZ * factor, minZ, maxZ);
+      const eff = newZ / oldZ;                // effective factor after clamping
+      if (eff === 1) return;
+
+      // New viewBox size after zoom
+      const vw2 = vw / eff;
+      const vh2 = vh / eff;
+
+      // Choose new pan so (wx,wy) stays at (sx,sy)
+      // sx = (wx - vx2) * (rect.width / vw2)  => vx2 = wx - sx * (vw2 / rect.width)
+      const vx2 = wx - sx * (vw2 / rect.width);
+      const vy2 = wy - sy * (vh2 / rect.height);
+
+      mapZoom = newZ;
+      mapPan.x = vx2;
+      mapPan.y = vy2;
+
+      renderGraph();
+    }
+
+    function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+
+
+
+
+    function zoomAroundCenter(factor) {
+      const vw = 1000, vh = 1000;             // same world size used in renderGraph
+      const viewW = vw / mapZoom;
+      const viewH = vh / mapZoom;
+      const cx = mapPan.x + viewW / 2;        // world center before zoom
+      const cy = mapPan.y + viewH / 2;
+
+      // apply zoom (with optional clamps if you use them)
+      mapZoom = mapZoom * factor;
+
+      // recompute top-left so the same center stays in the middle
+      const newViewW = vw / mapZoom;
+      const newViewH = vh / mapZoom;
+      mapPan.x = cx - newViewW / 2;
+      mapPan.y = cy - newViewH / 2;
+
+      renderGraph();
+    }
 
 
     function renderGraph() {
@@ -5462,6 +5779,154 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       }
 
     }
+
+    // Shared graph renderer used by editor graph and mini-map dialog.
+    // Clone the existing editor graph into `mount`.
+    // opts: { readonly = true, compact = true, fit = true, onNodeClick?: (id) => void }
+    function renderGraphInto(mount, opts = {}) {
+      const { readonly = true, compact = true, fit = true, onNodeClick = (id) => console.log(id) } = opts;
+      // if (id && typeof onNodeClick === 'function') onNodeClick(id);
+
+      if (!mount) return;
+
+      // 1) Find the source graph in Studio (ordered by specificity)
+      const src =
+        document.querySelector('#graphSvg') ||                        // your main SVG id (common)
+        document.querySelector('.graph-canvas svg') ||                // SVG inside canvas
+        document.querySelector('#graph svg') ||                       // legacy container + svg
+        document.querySelector('svg[data-graph-root]') ||             // explicit marker
+        document.querySelector('.graph svg');                         // last resort
+
+      mount.innerHTML = '';
+
+      if (!src) {
+        // Nothing to copy → show a small hint (won't throw)
+        const msg = document.createElement('div');
+        msg.textContent = 'Graph not found in editor.';
+        msg.style.opacity = '0.7';
+        msg.style.font = '12px system-ui, Arial';
+        mount.appendChild(msg);
+        return;
+      }
+
+      // If user selected a container instead of the <svg>, find its svg
+      const srcSvg = src.tagName.toLowerCase() === 'svg' ? src : src.querySelector('svg');
+      if (!srcSvg) {
+        const msg = document.createElement('div');
+        msg.textContent = 'No SVG in graph container.';
+        msg.style.opacity = '0.7';
+        msg.style.font = '12px system-ui, Arial';
+        mount.appendChild(msg);
+        return;
+      }
+
+      // 2) Deep-clone the SVG
+      const clone = srcSvg.cloneNode(true);
+
+      // 3) Rewrite any <defs> ids and their url(#...) references to avoid collisions
+      rewriteSvgIds(clone, 'mini_');
+
+      // 4) Make it responsive (fit to container)
+      if (fit) {
+        if (!clone.getAttribute('viewBox')) {
+          const w = parseFloat(clone.getAttribute('width')) || 1000;
+          const h = parseFloat(clone.getAttribute('height')) || 600;
+          clone.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        }
+        clone.removeAttribute('width');
+        clone.removeAttribute('height');
+        clone.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        clone.style.width = '100%';
+        clone.style.height = '100%';
+      }
+
+      // 5) Compact look (optional class your CSS already styles)
+      clone.classList.add('graph-svg');
+      if (compact) clone.classList.add('is-mini');
+
+      // 6) Read-only: disable drag/handles/edges pointer capture; keep nodes clickable
+      if (readonly) {
+        // Common editor affordances to disable:
+        const inertSel = [
+          '.handle', '.connector', '.drag-handle', '.edge-hit', '.wheel',
+          '.port', '.ghost', '.bbox', '.selection-rect'
+        ].join(',');
+        clone.querySelectorAll(inertSel).forEach(el => { el.style.pointerEvents = 'none'; });
+
+        // Edges themselves shouldn’t swallow clicks in the mini
+        clone.querySelectorAll('.edge, path.edge').forEach(el => { el.style.pointerEvents = 'none'; });
+
+        // Nodes should feel clickable
+        clone.querySelectorAll('g.node, .node').forEach(g => { g.style.cursor = 'pointer'; });
+      }
+
+      // 7) Mount it
+      mount.appendChild(clone);
+
+      // 8) Click → select step id (robust attribute probing)
+      if (readonly) {
+        mount.addEventListener('click', (ev) => {
+          const n = ev.target.closest('[step-id], g.node, .node');
+          console.log(`n`, n);
+          if (!n) return;
+
+          // Try a few places for the id
+          const id =
+            n.getAttribute?.('step-id');
+          // ||
+          // n.dataset?.stepId ||
+          // n.getAttribute?.('data-id') ||
+          // n.id ||
+          // // sometimes the group stores on parent <g>
+          // n.closest('[data-step-id]')?.getAttribute('data-step-id');
+
+          if (id && typeof onNodeClick === 'function') onNodeClick(id);
+        }, { passive: true });
+      }
+
+      // Helper: rewrite ids/urls to be unique inside the document
+      function rewriteSvgIds(svg, prefix) {
+        const idMap = new Map();
+
+        // 1) Collect all elements with id
+        const withId = svg.querySelectorAll('[id]');
+        withId.forEach(el => {
+          const oldId = el.id;
+          const newId = prefix + oldId;
+          idMap.set(oldId, newId);
+          el.id = newId;
+        });
+
+        if (idMap.size === 0) return;
+
+        // 2) Update all url(#...) references and xlink:href/href fragments
+        const ATTRS = [
+          'fill', 'stroke', 'filter', 'clip-path', 'mask', 'marker-start', 'marker-mid', 'marker-end',
+          'xlink:href', 'href'
+        ];
+
+        const all = svg.querySelectorAll('*');
+        all.forEach(el => {
+          ATTRS.forEach(attr => {
+            const val = el.getAttribute(attr);
+            if (!val) return;
+
+            // url(#id) form
+            const next = val.replace(/url\(#([^)]+)\)/g, (m, id) => {
+              return idMap.has(id) ? `url(#${idMap.get(id)})` : m;
+            });
+
+            // plain fragment href="#id"
+            const next2 = next.replace(/^#(.+)$/, (m, id) => {
+              return idMap.has(id) ? `#${idMap.get(id)}` : m;
+            });
+
+            if (next2 !== val) el.setAttribute(attr, next2);
+          });
+        });
+      }
+    }
+
 
 
 
@@ -5812,7 +6277,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       try {
         // embed current sop or replace json in existing html <script id="jsonEmbedded">/script>
-        slot.textContent = JSON.stringify(loadSopFromSaved ? savedSop : sop, null, 2) + '\n';
+        slot.textContent = safeJSONStringify(loadSopFromSaved ? savedSop : sop, null, 2) + '\n';
         // switch to guide mode (removes editor-only UI)
         changeRunMode('guide');
         // change title
@@ -5830,6 +6295,18 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         alert('Failed to stringify SOP JSON: ' + (e?.message || e));
       }
     }
+
+    function safeJSONStringify(obj) {
+      return JSON.stringify(obj, null, 2)
+        // Escape anything that could prematurely close the script tag
+        .replace(/<\/script>/gi, '<\\/script>')
+    // Also neutralize raw "<" so any "</script" variants are safe
+    .replace(/</g, '\\u003C')
+    // Normalize line separators that can break JS/JSON embedding in some engines
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
 
     function renderSopTitle() {
       const modeTitle = document.getElementById('sop-run-mode-title');
@@ -6364,6 +6841,90 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     //   return { matched, place };
     // }
 
+    // function findSearchPlaceStepId(st, q) {
+    //   q = (q || '').trim().toLowerCase();
+    //   if (!q) return { matched: true, place: null };
+
+    //   const stepIds = new Set((st.steps || []).map(s => s?.id).filter(Boolean));
+
+    //   // fields to search
+    //   const ALLOWED_KEYS = new Set([
+    //     'id', 'label', 'summary',
+    //     'title', 'body',
+    //     'placeholder', 'error', 'regex', 'requiredMessage',
+    //     'hint',
+    //   ]);
+
+    //   // branches to skip entirely
+    //   const SKIP_KEYS = new Set(['img_b64', 'pos', 'next', 'nextId', 'type', 'mode']);
+
+    //   let matched = false;
+    //   let place = null; // first hit wins
+
+    //   // Build a searchable string from rich HTML:
+    //   // - include visible text (between tags)
+    //   // - include title="" attribute values
+    //   // - ignore href entirely (so data:… base64 doesn’t match)
+    //   function bodySearchHaystack(html) {
+    //     if (!html || typeof html !== 'string') return '';
+    //     const tpl = document.createElement('template');
+    //     tpl.innerHTML = html;
+
+    //     const parts = [];
+    //     const walker = document.createTreeWalker(
+    //       tpl.content,
+    //       NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+    //       null
+    //     );
+
+    //     let n;
+    //     while ((n = walker.nextNode())) {
+    //       if (n.nodeType === Node.TEXT_NODE) {
+    //         const t = n.nodeValue;
+    //         if (t && t.trim()) parts.push(t);
+    //       } else if (n.nodeType === Node.ELEMENT_NODE) {
+    //         const el = /** @type {HTMLElement} */(n);
+    //         // collect useful attributes that are human-facing
+    //         const title = el.getAttribute && el.getAttribute('title');
+    //         if (title && title.trim()) parts.push(title);
+    //         // NOTE: intentionally do NOT read href/src/etc.
+    //       }
+    //     }
+    //     return parts.join(' ').trim();
+    //   }
+
+    //   (function walk(node, key, stepCtx) {
+    //     if (matched || node == null) return;
+
+    //     // entering a step object → set context to that step id
+    //     if (node && typeof node === 'object' && node.id && stepIds.has(node.id)) {
+    //       stepCtx = node.id;
+    //     }
+
+    //     if (SKIP_KEYS.has(key)) return;
+
+    //     if (typeof node === 'string') {
+    //       if (!key || ALLOWED_KEYS.has(key)) {
+    //         let hay = node;
+    //         if (key === 'body') hay = bodySearchHaystack(node); // parse HTML, ignore href
+    //         if (hay.toLowerCase().includes(q)) {
+    //           matched = true;
+    //           place = stepCtx || 'starter';
+    //         }
+    //       }
+    //     } else if (Array.isArray(node)) {
+    //       for (const item of node) walk(item, '', stepCtx);
+    //     } else if (typeof node === 'object') {
+    //       for (const k in node) {
+    //         if (SKIP_KEYS.has(k)) continue;
+    //         walk(node[k], k, stepCtx);
+    //       }
+    //     }
+    //   })(st, '', null);
+
+    //   return { matched, place };
+    // }
+
     function findSearchPlaceStepId(st, q) {
       q = (q || '').trim().toLowerCase();
       if (!q) return { matched: true, place: null };
@@ -6384,10 +6945,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       let matched = false;
       let place = null; // first hit wins
 
-      // Build a searchable string from rich HTML:
-      // - include visible text (between tags)
-      // - include title="" attribute values
-      // - ignore href entirely (so data:… base64 doesn’t match)
+      // Parse rich HTML safely:
+      // - include visible text + human-facing attrs
+      // - ignore href/src (so data:… base64 doesn’t match)
       function bodySearchHaystack(html) {
         if (!html || typeof html !== 'string') return '';
         const tpl = document.createElement('template');
@@ -6407,13 +6967,51 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
             if (t && t.trim()) parts.push(t);
           } else if (n.nodeType === Node.ELEMENT_NODE) {
             const el = /** @type {HTMLElement} */(n);
-            // collect useful attributes that are human-facing
-            const title = el.getAttribute && el.getAttribute('title');
+            const title = el.getAttribute?.('title');
+            const alt = el.getAttribute?.('alt');
+            const aria = el.getAttribute?.('aria-label');
             if (title && title.trim()) parts.push(title);
-            // NOTE: intentionally do NOT read href/src/etc.
+            if (alt && alt.trim()) parts.push(alt);
+            if (aria && aria.trim()) parts.push(aria);
+            // intentionally skip href/src/etc. (avoid matching base64/data:)
           }
         }
         return parts.join(' ').trim();
+      }
+
+      // Look inside a single embed.html (skip scripts/styles/images + data: urls)
+      function embedContainsQuery(html, q) {
+        if (!html || !q) return false;
+        try {
+          const doc = new DOMParser().parseFromString(String(html), 'text/html');
+
+          // strip noisy/non-text nodes
+          doc.querySelectorAll('script, style, img, svg, image').forEach(n => n.remove());
+
+          // drop any data: URLs so they don't match
+          doc.querySelectorAll('[src],[href]').forEach(el => {
+            ['src', 'href'].forEach(a => {
+              const v = el.getAttribute(a);
+              if (v && /^data:/i.test(v)) el.removeAttribute(a);
+            });
+          });
+
+          // text content + a few human-facing attrs
+          const text = (doc.body?.textContent || '').toLowerCase();
+          if (text.includes(q)) return true;
+
+          let found = false;
+          doc.querySelectorAll('*').forEach(el => {
+            if (found) return;
+            for (const a of ['title', 'alt', 'aria-label']) {
+              const v = el.getAttribute(a);
+              if (v && v.toLowerCase().includes(q)) { found = true; break; }
+            }
+          });
+          return found;
+        } catch {
+          return false;
+        }
       }
 
       (function walk(node, key, stepCtx) {
@@ -6426,10 +7024,22 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
         if (SKIP_KEYS.has(key)) return;
 
+        // NEW: search embeds[] html, but don't recurse into it further
+        if (key === 'embeds' && Array.isArray(node)) {
+          for (const emb of node) {
+            if (emb && typeof emb.html === 'string' && embedContainsQuery(emb.html, q)) {
+              matched = true;
+              place = stepCtx || 'starter';
+              return;
+            }
+          }
+          return;
+        }
+
         if (typeof node === 'string') {
           if (!key || ALLOWED_KEYS.has(key)) {
             let hay = node;
-            if (key === 'body') hay = bodySearchHaystack(node); // parse HTML, ignore href
+            if (key === 'body') hay = bodySearchHaystack(node); // parse HTML, ignore href/src
             if (hay.toLowerCase().includes(q)) {
               matched = true;
               place = stepCtx || 'starter';
@@ -6447,6 +7057,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       return { matched, place };
     }
+
 
 
 
@@ -7813,13 +8424,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
                         ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
                         <input id="vw_inp" type="text" class="text-input"
                               placeholder="${viewEscape(step.placeholder || '')}">
-                        ${step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : ''}
                       `;
 
         box.appendChild(node);
 
         const inp = node.querySelector('#vw_inp');
-        console.log(`inp`, inp);
         const img = node.querySelector('.thumb');
         inp.value = viewState.answers[step.id] || '';
 
@@ -7891,7 +8500,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           const res = validateValueForStep(step, viewState.answers[step.id]);
           err.textContent = res.ok ? '' : res.msg;
           err.style.display = res.ok ? 'none' : '';
-          console.log(`res`, res);
           setNextEnabled(res.ok);
         }
         refreshSelect();
@@ -7961,420 +8569,583 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           return;
         }
 
-
-
         renderViewStep(); renderGraph(); renderInspector();
       };
     }
+
+    function refreshMiniMap(fit = true) {
+      const dlg  = document.getElementById('vwMapDlg');
+      const host = document.getElementById('vwMiniGraph');
+      if (!dlg || dlg.hidden || !host) return;
+
+      // const hadContent = !!host.firstChild;
+      host.innerHTML = '';
+      renderGraphInto(host, {
+        onNodeClick(id) { if (typeof navigateToStepId === 'function') navigateToStepId(id); }
+      });
+    }
+
+    // 1) render on state change
+(function miniMapAutoSync() {
+  if (window.__miniSync) return;
+
+  function scheduleMiniRefresh(fitFirst=false) {
+    // let main UI settle a frame, then refresh
+    requestAnimationFrame(() => { try { refreshMiniMap(fitFirst); } catch {} });
+  }
+
+  // Hook viewState.selectedStepId (source of truth)
+  const st = (window.viewState ||= {});
+  let _sel = st.selectedStepId;
+  try {
+    Object.defineProperty(st, 'selectedStepId', {
+      configurable: true,
+      enumerable: true,
+      get() { return _sel; },
+      set(v) { _sel = v; scheduleMiniRefresh(false); },
+    });
+  } catch { /* if already accessor, we still have the other hooks below */ }
+
+  // 2) also hook navigateToStepId (covers viewers/other code paths)
+  const origNav = window.navigateToStepId;
+  if (typeof origNav === 'function') {
+    window.navigateToStepId = function (...args) {
+      const out = origNav.apply(this, args);
+      scheduleMiniRefresh(false);
+      return out;
+    };
+  }
+
+  // 3) listen to common Next/Prev UI (broad selectors; harmless if absent)
+  const navSelectors = [
+    '#vwNext', '#vwPrev',
+    '[data-action="next"]', '[data-action="prev"]',
+    'button[aria-label="Next"]', 'button[aria-label="Prev"]'
+  ];
+  document.addEventListener('click', (e) => {
+    if (navSelectors.some(sel => e.target.closest(sel))) scheduleMiniRefresh(false);
+  });
+
+  // 4) last resort: watch the main graph for selection/attribute changes
+  const graphRoot =
+    document.querySelector('.graph-canvas') ||
+    document.getElementById('graphSvg') ||
+    document.querySelector('#graph svg');
+  if (graphRoot) {
+    const mo = new MutationObserver(() => scheduleMiniRefresh(false));
+    mo.observe(graphRoot, { subtree: true, attributes: true, attributeFilter: ['class', 'data-selected', 'data-step-id'] });
+    window.__miniMo = mo;
+  }
+
+  window.__miniSync = true;
+})();
+
+
+    (function initMapDialog() {
+  const openBtn  = document.getElementById('vwOpenMap');
+  const dlg      = document.getElementById('vwMapDlg');
+  const closeBtn = document.getElementById('vwMapClose');
+  const dragBar  = document.getElementById('vwMapDrag');
+  const miniWrap = document.getElementById('vwMiniGraph');
+
+  if (!openBtn || !dlg || !closeBtn || !dragBar || !miniWrap) return;
+
+  function renderMini() {
+    // Reuse your shared renderer
+    renderGraphInto(miniWrap, {
+      onNodeClick(id) {
+        // match the main graph behavior
+        navigateToStepId(id);
+      }
+    });
+  }
+
+  openBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    dlg.hidden = false;
+    refreshMiniMap(true);
+
+    // center on first open
+    if (!dlg.__posSet) {
+      dlg.style.left = Math.max(24, (window.innerWidth  - dlg.offsetWidth ) / 2) + 'px';
+      dlg.style.top  = Math.max(24, (window.innerHeight - dlg.offsetHeight) / 2) + 'px';
+      dlg.style.right = 'auto';
+      dlg.style.bottom = 'auto';
+      dlg.__posSet = true;
+    }
+    miniWrap.innerHTML = '';
+    renderMini(true); // fit initially
+  });
+
+  closeBtn.addEventListener('click', () => { dlg.hidden = true; });
+
+  // simple draggable header
+  (function makeDraggable(box, handle) {
+    let sx = 0, sy = 0, sl = 0, st = 0, moving = false;
+
+    handle.addEventListener('mousedown', (e) => {
+      moving = true;
+      sx = e.clientX; sy = e.clientY;
+      const rect = box.getBoundingClientRect();
+      sl = rect.left; st = rect.top;
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp, { once: true });
+      e.preventDefault();
+    });
+
+    function onMove(e) {
+      if (!moving) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      box.style.left = Math.max(0, sl + dx) + 'px';
+      box.style.top  = Math.max(0, st + dy) + 'px';
+      box.style.right = 'auto'; box.style.bottom = 'auto';
+    }
+    function onUp() { moving = false; document.removeEventListener('mousemove', onMove); }
+  })(dlg, dragBar);
+
+  // zoom buttons in the dialog
+  dlg.querySelectorAll('.btn-sm[data-zoom]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const v = btn.getAttribute('data-zoom');
+      if (v === 'fit') renderMini(true);
+      else renderMini(false); // renderer reads your stored layout and viewBox
+    });
+  });
+
+})();
 
     function buildEmbedSrcdoc(emb) {
       const raw = String(emb.html || '');
 
-      const autosize = `
-                        <script>
-                        (function(){
-                          function send(){
-                            var h = Math.max(
-                              document.documentElement.scrollHeight,
-                              document.body ? document.body.scrollHeight : 0
-                            );
-                            parent.postMessage({__sop_embed_resize:1,h:h}, '*');
-                          }
-                          new ResizeObserver(send).observe(document.documentElement);
-                          window.addEventListener('load', send);
-                          setTimeout(send, 80);
-                        })();
-                        <\/script>`;
+      // const autosize = `
+      //                   <script>
+          //                   (function(){
+          //                     function send(){
+          //                       var h = Math.max(
+          //                         document.documentElement.scrollHeight,
+          //                         document.body ? document.body.scrollHeight : 0
+          //                       );
+          //                       parent.postMessage({__sop_embed_resize:1,h:h}, '*');
+          //                     }
+          //                     new ResizeObserver(send).observe(document.documentElement);
+          //                     window.addEventListener('load', send);
+          //                     setTimeout(send, 80);
+          //                   })();
+          //                   <\/script>`;
 
-      if (/<head[\s>]/i.test(raw)) {
-        return raw.replace(/<head(\b[^>]*)>/i, (m, attrs) => `<head${attrs}>${autosize}`);
-      }
-      return `<!doctype html><html><head>${autosize}</head><body>${raw}</body></html>`;
-    }
+          // const autosize =
+          //   '<script>(function(){' +
+          //   'function send(){var h=Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0);parent.postMessage({__sop_embed_resize:1,h:h},"*");}' +
+          //   'new ResizeObserver(send).observe(document.documentElement);window.addEventListener("load",send);setTimeout(send,80);' +
+          //   '})();<' + '/script>';
 
-
-    function reconcileEmbeds(step, editorEl) {
-      const idsInBody = new Set(
-        [...editorEl.querySelectorAll('.embed-chip[data-embed-id]')]
-          .map(el => el.getAttribute('data-embed-id'))
-      );
-      if (!Array.isArray(step.embeds)) step.embeds = [];
-      step.embeds = step.embeds.filter(e => idsInBody.has(e.id)); // remove orphans
-    }
-
-
-    function getFirstPredecessorId(starter, stepId) {
-      if (!starter || !stepId) return null;
-      const pred = buildPredecessors(starter);           // you already have this
-      const set = pred[stepId];
-      if (!set || set.size === 0) return null;
-      const order = starter.steps.map(s => s.id);
-      return [...set].sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
-    }
-
-    // Map: nextId -> prevId (last traversed prev for that node)
-    function recordTransition(prevId, nextId) {
-      if (!prevId || !nextId || prevId === nextId) return;
-      (viewState.prev ||= Object.create(null))[nextId] = prevId; // overwrite if path changes
-    }
-
-    // Is `from` a valid predecessor of `to` in the current graph?
-    function isValidPredecessor(starter, from, to) {
-      if (!starter || !from || !to) return false;
-      const pred = buildPredecessors(starter);       // you already use this util
-      return !!(pred[to] && pred[to].has(from));
-    }
-
-
-    function buildPredecessors(starter) {
-      const pred = Object.create(null);
-      const add = (from, to) => { if (to) (pred[to] ||= new Set()).add(from); };
-      for (const s of starter.steps) {
-        add(s.id, s.next);
-        if (Array.isArray(s.options)) for (const o of s.options) add(s.id, o?.next);
-      }
-      return pred;
-    }
-
-    // function pushToHistory() {
-    //   // save current position before moving forward
-    //   viewState.history.push(viewState.stepIdx);
-
-    //   // branch via single-select option
-    //   if (currentStep && currentStep.type === 'select' && currentStep.mode === 'single') {
-    //     const choice = viewState.answers[currentStep.id];
-    //     if (choice && choice.next) {
-    //       const to = steps.findIndex(x => x.id === choice.next);
-    //       if (to >= 0) {
-    //         viewState.stepIdx = to;
-    //         viewState.selectedStepId = steps[to]?.id;   // ← id, not index
-    //         renderViewStep();
-    //         return;
-    //       }
-    //     }
-    //   }
-
-    //   // step-level next
-    //   if (currentStep && currentStep.next) {
-    //     const to = steps.findIndex(x => x.id === currentStep.next);
-    //     if (to >= 0) {
-    //       viewState.stepIdx = to;
-    //       viewState.selectedStepId = steps[to]?.id;     // ← id, not index
-    //       renderViewStep();
-    //       return;
-    //     }
-    //   }
-
-    //   // default: linear advance
-    //   if (viewState.stepIdx < steps.length - 1) {
-    //     viewState.stepIdx++;
-    //     viewState.selectedStepId = steps[viewState.stepIdx]?.id;  // ← id
-    //   }
-    //   renderViewStep();
-
-    // }
-
-    function getStarter() {
-      return sop.starters[viewState.starterIdx];
-    }
-
-    function getSteps() {
-      return getStarter()?.steps || [];
-    }
-
-    // get step by stepId 
-    function getStepById(stepId) {
-      const steps = getSteps();
-      return steps.find(s => s.id === stepId) || null;
-    }
-
-    // Set selection by **ID** and mirror stepIdx
-    function setSelectedStepById(id) {
-      const steps = getSteps();
-      viewState.selectedStepId = id || null;
-      // viewState.stepIdx = (id != null) ? steps.findIndex(s => s.id === id) : -1;
-      // if (viewState.stepIdx < 0) viewState.stepIdx = 0; // fallback to first if missing
-    }
-
-    // Set selection by **index** and mirror selectedStepId
-    function setSelectedStepByIdx(idx) {
-      const steps = getSteps();
-      const i = Math.max(0, Math.min(idx | 0, steps.length - 1));
-      // viewState.stepIdx = i;
-      viewState.selectedStepId = steps[i]?.id || null;
-    }
-
-    // Select a step by id. If record=true, push the previous id into history.
-    // function navigateToStepId(nextId, { record = true } = {}) {
-    //   const curId = viewState.selectedStepId || null;
-    //   if (!nextId || nextId === curId) return;
-
-    //   if (record && curId) {
-    //     viewState.history ||= [];
-    //     viewState.history.push(curId);
-    //   }
-    //   setSelectedStepById(nextId);     // your existing helper: syncs ID + index
-    //   renderViewStep();
-    //   renderGraph();
-    //   renderInspector();
-    // }
-
-    function navigateToStepId(nextId) {
-      const curId = viewState.selectedStepId || null;
-      if (!nextId || nextId === curId) return;
-
-      setSelectedStepById(nextId);   // sync id + idx
-      renderViewStep();
-      renderGraph();
-      renderInspector();
-    }
-
-
-    // Go back in history (no re-recording)
-    // function goPrevious() {
-    //   const st = getStarter();
-    //   const hasHist = (viewState.history?.length || 0) > 0;
-
-    //   if (hasHist) {
-    //     const prevStepId = viewState.history.pop();
-    //     setSelectedStepById(prevStepId);
-    //     renderViewStep();
-    //     renderGraph();
-    //     renderInspector();
-    //     return;
-    //   }
-
-    //   // No history → treat the nearest parent as "Prev"
-    //   const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
-    //   if (parentId) {
-    //     setSelectedStepById(parentId);
-    //     renderViewStep();
-    //     renderGraph();
-    //     renderInspector();
-    //   }
-    // }
-
-    // function goPrevious() {
-    //   const st = getStarter();
-    //   const hist = (viewState.history ||= []);
-
-    //   if (hist.length > 0) {
-    //     const prevStepId = hist.pop();
-    //     if (prevStepId && prevStepId !== viewState.selectedStepId) {
-    //       setSelectedStepById(prevStepId);
-    //       renderViewStep(); renderGraph(); renderInspector();
-    //     }
-    //     return;
-    //   }
-
-    //   // No history → fall back to first predecessor (don’t record history)
-    //   const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
-    //   if (parentId && parentId !== viewState.selectedStepId) {
-    //     setSelectedStepById(parentId);
-    //     renderViewStep(); renderGraph(); renderInspector();
-    //   }
-    // }
-
-    function goPrevious() {
-      const st = getStarter();
-      const cur = viewState.selectedStepId;
-      const prevMap = viewState.prev || Object.create(null);
-
-      // 1) Prefer the last traversed predecessor if still valid
-      let target = prevMap[cur];
-      if (target && !isValidPredecessor(st, target, cur)) {
-        target = null; // path changed; don't trust stale link
-      }
-
-      // 2) Fallback: first predecessor in the current graph
-      if (!target) {
-        target = getFirstPredecessorId(st, cur);
-      }
-
-      if (target && target !== cur) {
-        setSelectedStepById(target);
-        renderViewStep(); renderGraph(); renderInspector();
-      }
-      // If no predecessor at all, do nothing (button can be disabled upstream)
-    }
+          const autosize = `
+                            <script>
+                            (function () {
+                              function send() {
+                                var h = Math.max(
+                                  document.documentElement.scrollHeight,
+                                  document.body ? document.body.scrollHeight : 0
+                                );
+                                parent.postMessage({ __sop_embed_resize: 1, h: h }, "*");
+                              }
+                              new ResizeObserver(send).observe(document.documentElement);
+                              window.addEventListener("load", send);
+                              setTimeout(send, 80);
+                            })();
+                            <\/script>`;
 
 
 
-    function recordHistoryFromCurrent() {
-      const cur = viewState.selectedStepId;
-      if (!cur) return;
-      const h = (viewState.history ||= []);
-      if (h[h.length - 1] !== cur) h.push(cur);   // avoid consecutive duplicates
-    }
-
-
-
-
-    function makeBlankSOP() {
-      return {
-        version: "1.3",
-        title: "New SOP Library",
-        description: "Describe your library",
-        starters: [{
-          id: "starter_1",
-          label: "Starter 1",
-          summary: "",
-          description: "",
-          steps: [
-            {
-              type: "instruction",
-              id: "welcome",
-              title: "Welcome",
-              body: "Start here.",
-              next: "done",
-              // pos: { x: 200, y: 60 }
-            },
-            {
-              type: "instruction",
-              id: "done",
-              title: "Done",
-              body: "All set.",
-              // pos: { x: 200, y: 200 }
-
-            }
-          ]
-        }]
-      };
-    }
-
-    function getDefaultOption(step) {
-      // debugger;
-      if (!step || step.type !== 'select') return null;
-
-      const len = Array.isArray(step.options) ? step.options.length : 0;
-      const idx = len + 1;
-
-      const opt = {
-        value: 'opt' + idx,
-        label: 'Option ' + idx,
-        hint: '',
-        next: step.next ?? null
-      };
-
-      // ensure unique value even with null holes or user-made names
-      const nextOptionVal = nextOptionValue(step);          // e.g., opt1, opt2, ...
-      if (opt.value == null || String(opt.value).trim() === '' || !step.options || step.options.some(o => o && o.value === opt.value)) {
-        opt.value = nextOptionVal;                   // keep value aligned if you use it as token
-      }
-      return opt;
-    }
-
-    function nextOptionValue(step, prefix = 'opt') {
-      const used = new Set();
-      if (Array.isArray(step.options)) {
-        for (const o of step.options) {
-          if (!o) continue;
-          const k = (o.id ?? o.value ?? '').trim();
-          if (k) used.add(k);
+          if (/<head[\s>]/i.test(raw)) {
+            return raw.replace(/<head(\b[^>]*)>/i, (m, attrs) => `<head${attrs}>${autosize}`);
+          }
+          return `<!doctype html><html><head>${autosize}</head><body>${raw}</body></html>`;
         }
-      }
-      let n = 1;
-      while (used.has(`${prefix}${n}`)) n++;
-      return `${prefix}${n}`;
-    }
 
 
-    // Reusable: remove per-option next links (safe on non-selects / missing arrays)
-    function stripOptionNexts(step) {
-      if (!step || step.type !== 'select' || !Array.isArray(step.options)) return false;
-      let touched = false;
-      step.options.forEach(o => {
-        if (o && 'next' in o) { delete o.next; touched = true; }
-      });
-      return touched;
-    }
-
-    function makeStep(type, starter = getStarter()) {
-      const id = uniqueId(type, starter);
-      if (type === 'instruction') return { type, id, title: "Instruction", body: "" };
-      if (type === 'input') return { type, id, label: "Input", placeholder: "", required: false };
-      if (type === 'select') return { type, id, label: "Choose", display: "cards", mode: "single", required: false, options: [{ value: "opt1", label: "Option 1" }] };
-      // if (type === 'end') return { type, id, title: "End", body: "" };
-      return { type: 'instruction', id, title: "Instruction", body: "" };
-    }
-
-    function uniqueId(base, starter) {
-      const ids = new Set((starter?.steps || []).map(s => s.id));
-      let i = 1, v = slugify(base || 'step');
-
-      let out = v;
-      while (ids.has(out)) {
-        out = v + '_' + (++i);
-      }
-      return out;
-    }
-
-    function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
-    function escapeHtml(str) { return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
-    function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
-    // function nextSummary(step) {
-    //   if (step.type === 'select') {
-    //     const optEdges = (step.options || []).filter(o => o.next).length;
-    //     return (optEdges > 0 ? (optEdges + ' paths') : '') + (step.next ? (optEdges > 0 ? ' + ' : '') + 'after→' + step.next : (optEdges > 0 ? '' : '—'));
-    //   }
-    //   return step.next || '—';
-    // }
-
-    // function nextSelectHtml(steps, cur) {
-    //   const selfId = viewState?.selectedStepId; // current node being edited
-    //   const opts = steps
-    //     .filter(s => s.id !== selfId) // hide itself
-    //     .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
-    //     .join('');
-    //   return `<select id="f_next"><option value="">—</option>${opts}</select>`;
-    // }
-
-    function nextSelectHtml(steps, cur, selfId, withId = true) {
-      const hideId = (typeof selfId === 'string' && selfId) || (viewState?.selectedStepId || null);
-      const opts = (steps || [])
-        .filter(s => s && s.id !== hideId) // hide itself
-        .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
-        .join('');
-      const idAttr = withId ? ' id="f_next"' : ''; // avoid duplicate ids in lists
-      const classAttr = ' class="opt-next"'; // always class for event delegation
-      return `<select${idAttr}${classAttr}>` +
-        `<option value="">—</option>${opts}</select>`;
-    }
+        function reconcileEmbeds(step, editorEl) {
+          const idsInBody = new Set(
+            [...editorEl.querySelectorAll('.embed-chip[data-embed-id]')]
+              .map(el => el.getAttribute('data-embed-id'))
+          );
+          if (!Array.isArray(step.embeds)) step.embeds = [];
+          step.embeds = step.embeds.filter(e => idsInBody.has(e.id)); // remove orphans
+        }
 
 
+        function getFirstPredecessorId(starter, stepId) {
+          if (!starter || !stepId) return null;
+          const pred = buildPredecessors(starter);           // you already have this
+          const set = pred[stepId];
+          if (!set || set.size === 0) return null;
+          const order = starter.steps.map(s => s.id);
+          return [...set].sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
+        }
 
-    //   function optionRowHtml(o, i, steps) {
-    //     return `
-    //   <tr data-opt-idx="${i}">
-    //     <td><input class="f_opt_value" type="text" value="${escapeAttr(o.value || '')}"/></td>
-    //     <td><input class="f_opt_label" type="text" value="${escapeAttr(o.label || '')}"/></td>
-    //     <td><input class="f_opt_hint" type="text" value="${escapeAttr(o.hint || '')}"/></td>
-    //     <td>
-    //       <select class="f_opt_next">
-    //         ${steps.map(s => {
-    //       const text = s.id || s.title || s.label;
-    //       return `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(text)}</option>`;
-    //     }).join('')}
-    //       </select>
-    //     </td>
+        // Map: nextId -> prevId (last traversed prev for that node)
+        function recordTransition(prevId, nextId) {
+          if (!prevId || !nextId || prevId === nextId) return;
+          (viewState.prev ||= Object.create(null))[nextId] = prevId; // overwrite if path changes
+        }
 
-    //     <td class="center"><button class="f_opt_del">🗑️</button></td>
-    //   </tr>
-    // `;
-    //   }
+        // Is `from` a valid predecessor of `to` in the current graph?
+        function isValidPredecessor(starter, from, to) {
+          if (!starter || !from || !to) return false;
+          const pred = buildPredecessors(starter);       // you already use this util
+          return !!(pred[to] && pred[to].has(from));
+        }
 
-    function optionRowHtml(o, i, steps, includeNext, curStepId) {
-      const v = escapeAttr(o?.value || '');
-      const lbl = escapeAttr(o?.label || '');
-      const hint = escapeAttr(o?.hint || '');
-      // const nextCell = includeNext
-      //   ? `<td>${nextSelectHtml(steps, o?.next, curStepId)}</td>`
-      //   : '';
-      const nextCell = includeNext
-        ? `<td>${nextSelectHtml(steps, o?.next, curStepId, /*withId=*/false)}</td>`
-        : '';
 
-      return `
+        function buildPredecessors(starter) {
+          const pred = Object.create(null);
+          const add = (from, to) => { if (to) (pred[to] ||= new Set()).add(from); };
+          for (const s of starter.steps) {
+            add(s.id, s.next);
+            if (Array.isArray(s.options)) for (const o of s.options) add(s.id, o?.next);
+          }
+          return pred;
+        }
+
+        // function pushToHistory() {
+        //   // save current position before moving forward
+        //   viewState.history.push(viewState.stepIdx);
+
+        //   // branch via single-select option
+        //   if (currentStep && currentStep.type === 'select' && currentStep.mode === 'single') {
+        //     const choice = viewState.answers[currentStep.id];
+        //     if (choice && choice.next) {
+        //       const to = steps.findIndex(x => x.id === choice.next);
+        //       if (to >= 0) {
+        //         viewState.stepIdx = to;
+        //         viewState.selectedStepId = steps[to]?.id;   // ← id, not index
+        //         renderViewStep();
+        //         return;
+        //       }
+        //     }
+        //   }
+
+        //   // step-level next
+        //   if (currentStep && currentStep.next) {
+        //     const to = steps.findIndex(x => x.id === currentStep.next);
+        //     if (to >= 0) {
+        //       viewState.stepIdx = to;
+        //       viewState.selectedStepId = steps[to]?.id;     // ← id, not index
+        //       renderViewStep();
+        //       return;
+        //     }
+        //   }
+
+        //   // default: linear advance
+        //   if (viewState.stepIdx < steps.length - 1) {
+        //     viewState.stepIdx++;
+        //     viewState.selectedStepId = steps[viewState.stepIdx]?.id;  // ← id
+        //   }
+        //   renderViewStep();
+
+        // }
+
+        function getStarter() {
+          return sop.starters[viewState.starterIdx];
+        }
+
+        function getSteps() {
+          return getStarter()?.steps || [];
+        }
+
+        // get step by stepId 
+        function getStepById(stepId) {
+          const steps = getSteps();
+          return steps.find(s => s.id === stepId) || null;
+        }
+
+        // Set selection by **ID** and mirror stepIdx
+        function setSelectedStepById(id) {
+          const steps = getSteps();
+          viewState.selectedStepId = id || null;
+          // viewState.stepIdx = (id != null) ? steps.findIndex(s => s.id === id) : -1;
+          // if (viewState.stepIdx < 0) viewState.stepIdx = 0; // fallback to first if missing
+        }
+
+        // Set selection by **index** and mirror selectedStepId
+        function setSelectedStepByIdx(idx) {
+          const steps = getSteps();
+          const i = Math.max(0, Math.min(idx | 0, steps.length - 1));
+          // viewState.stepIdx = i;
+          viewState.selectedStepId = steps[i]?.id || null;
+        }
+
+        // Select a step by id. If record=true, push the previous id into history.
+        // function navigateToStepId(nextId, { record = true } = {}) {
+        //   const curId = viewState.selectedStepId || null;
+        //   if (!nextId || nextId === curId) return;
+
+        //   if (record && curId) {
+        //     viewState.history ||= [];
+        //     viewState.history.push(curId);
+        //   }
+        //   setSelectedStepById(nextId);     // your existing helper: syncs ID + index
+        //   renderViewStep();
+        //   renderGraph();
+        //   renderInspector();
+        // }
+
+        function navigateToStepId(nextId) {
+          const curId = viewState.selectedStepId || null;
+          if (!nextId || nextId === curId) return;
+
+          setSelectedStepById(nextId);   // sync id + idx
+          renderViewStep();
+          renderGraph();
+          renderInspector();
+        }
+
+
+        // Go back in history (no re-recording)
+        // function goPrevious() {
+        //   const st = getStarter();
+        //   const hasHist = (viewState.history?.length || 0) > 0;
+
+        //   if (hasHist) {
+        //     const prevStepId = viewState.history.pop();
+        //     setSelectedStepById(prevStepId);
+        //     renderViewStep();
+        //     renderGraph();
+        //     renderInspector();
+        //     return;
+        //   }
+
+        //   // No history → treat the nearest parent as "Prev"
+        //   const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
+        //   if (parentId) {
+        //     setSelectedStepById(parentId);
+        //     renderViewStep();
+        //     renderGraph();
+        //     renderInspector();
+        //   }
+        // }
+
+        // function goPrevious() {
+        //   const st = getStarter();
+        //   const hist = (viewState.history ||= []);
+
+        //   if (hist.length > 0) {
+        //     const prevStepId = hist.pop();
+        //     if (prevStepId && prevStepId !== viewState.selectedStepId) {
+        //       setSelectedStepById(prevStepId);
+        //       renderViewStep(); renderGraph(); renderInspector();
+        //     }
+        //     return;
+        //   }
+
+        //   // No history → fall back to first predecessor (don’t record history)
+        //   const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
+        //   if (parentId && parentId !== viewState.selectedStepId) {
+        //     setSelectedStepById(parentId);
+        //     renderViewStep(); renderGraph(); renderInspector();
+        //   }
+        // }
+
+        function goPrevious() {
+          const st = getStarter();
+          const cur = viewState.selectedStepId;
+          const prevMap = viewState.prev || Object.create(null);
+
+          // 1) Prefer the last traversed predecessor if still valid
+          let target = prevMap[cur];
+          if (target && !isValidPredecessor(st, target, cur)) {
+            target = null; // path changed; don't trust stale link
+          }
+
+          // 2) Fallback: first predecessor in the current graph
+          if (!target) {
+            target = getFirstPredecessorId(st, cur);
+          }
+
+          if (target && target !== cur) {
+            setSelectedStepById(target);
+            renderViewStep(); renderGraph(); renderInspector();
+          }
+          // If no predecessor at all, do nothing (button can be disabled upstream)
+        }
+
+
+
+        function recordHistoryFromCurrent() {
+          const cur = viewState.selectedStepId;
+          if (!cur) return;
+          const h = (viewState.history ||= []);
+          if (h[h.length - 1] !== cur) h.push(cur);   // avoid consecutive duplicates
+        }
+
+
+
+
+        function makeBlankSOP() {
+          return {
+            version: "1.3",
+            title: "New SOP Library",
+            description: "Describe your library",
+            starters: [{
+              id: "starter_1",
+              label: "Starter 1",
+              summary: "",
+              description: "",
+              steps: [
+                {
+                  type: "instruction",
+                  id: "welcome",
+                  title: "Welcome",
+                  body: "Start here.",
+                  next: "done",
+                  // pos: { x: 200, y: 60 }
+                },
+                {
+                  type: "instruction",
+                  id: "done",
+                  title: "Done",
+                  body: "All set.",
+                  // pos: { x: 200, y: 200 }
+
+                }
+              ]
+            }]
+          };
+        }
+
+        function getDefaultOption(step) {
+          // debugger;
+          if (!step || step.type !== 'select') return null;
+
+          const len = Array.isArray(step.options) ? step.options.length : 0;
+          const idx = len + 1;
+
+          const opt = {
+            value: 'opt' + idx,
+            label: 'Option ' + idx,
+            hint: '',
+            next: step.next ?? null
+          };
+
+          // ensure unique value even with null holes or user-made names
+          const nextOptionVal = nextOptionValue(step);          // e.g., opt1, opt2, ...
+          if (opt.value == null || String(opt.value).trim() === '' || !step.options || step.options.some(o => o && o.value === opt.value)) {
+            opt.value = nextOptionVal;                   // keep value aligned if you use it as token
+          }
+          return opt;
+        }
+
+        function nextOptionValue(step, prefix = 'opt') {
+          const used = new Set();
+          if (Array.isArray(step.options)) {
+            for (const o of step.options) {
+              if (!o) continue;
+              const k = (o.id ?? o.value ?? '').trim();
+              if (k) used.add(k);
+            }
+          }
+          let n = 1;
+          while (used.has(`${prefix}${n}`)) n++;
+          return `${prefix}${n}`;
+        }
+
+
+        // Reusable: remove per-option next links (safe on non-selects / missing arrays)
+        function stripOptionNexts(step) {
+          if (!step || step.type !== 'select' || !Array.isArray(step.options)) return false;
+          let touched = false;
+          step.options.forEach(o => {
+            if (o && 'next' in o) { delete o.next; touched = true; }
+          });
+          return touched;
+        }
+
+        function makeStep(type, starter = getStarter()) {
+          const id = uniqueId(type, starter);
+          if (type === 'instruction') return { type, id, title: "Instruction", body: "" };
+          if (type === 'input') return { type, id, label: "Input", placeholder: "", required: false };
+          if (type === 'select') return { type, id, label: "Choose", display: "cards", mode: "single", required: false, options: [{ value: "opt1", label: "Option 1" }] };
+          // if (type === 'end') return { type, id, title: "End", body: "" };
+          return { type: 'instruction', id, title: "Instruction", body: "" };
+        }
+
+        function uniqueId(base, starter) {
+          const ids = new Set((starter?.steps || []).map(s => s.id));
+          let i = 1, v = slugify(base || 'step');
+
+          let out = v;
+          while (ids.has(out)) {
+            out = v + '_' + (++i);
+          }
+          return out;
+        }
+
+        function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+        function escapeHtml(str) { return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
+        function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
+        // function nextSummary(step) {
+        //   if (step.type === 'select') {
+        //     const optEdges = (step.options || []).filter(o => o.next).length;
+        //     return (optEdges > 0 ? (optEdges + ' paths') : '') + (step.next ? (optEdges > 0 ? ' + ' : '') + 'after→' + step.next : (optEdges > 0 ? '' : '—'));
+        //   }
+        //   return step.next || '—';
+        // }
+
+        // function nextSelectHtml(steps, cur) {
+        //   const selfId = viewState?.selectedStepId; // current node being edited
+        //   const opts = steps
+        //     .filter(s => s.id !== selfId) // hide itself
+        //     .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
+        //     .join('');
+        //   return `<select id="f_next"><option value="">—</option>${opts}</select>`;
+        // }
+
+        function nextSelectHtml(steps, cur, selfId, withId = true) {
+          const hideId = (typeof selfId === 'string' && selfId) || (viewState?.selectedStepId || null);
+          const opts = (steps || [])
+            .filter(s => s && s.id !== hideId) // hide itself
+            .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
+            .join('');
+          const idAttr = withId ? ' id="f_next"' : ''; // avoid duplicate ids in lists
+          const classAttr = ' class="opt-next"'; // always class for event delegation
+          return `<select${idAttr}${classAttr}>` +
+            `<option value="">—</option>${opts}</select>`;
+        }
+
+
+
+        //   function optionRowHtml(o, i, steps) {
+        //     return `
+        //   <tr data-opt-idx="${i}">
+        //     <td><input class="f_opt_value" type="text" value="${escapeAttr(o.value || '')}"/></td>
+        //     <td><input class="f_opt_label" type="text" value="${escapeAttr(o.label || '')}"/></td>
+        //     <td><input class="f_opt_hint" type="text" value="${escapeAttr(o.hint || '')}"/></td>
+        //     <td>
+        //       <select class="f_opt_next">
+        //         ${steps.map(s => {
+        //       const text = s.id || s.title || s.label;
+        //       return `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(text)}</option>`;
+        //     }).join('')}
+        //       </select>
+        //     </td>
+
+        //     <td class="center"><button class="f_opt_del">🗑️</button></td>
+        //   </tr>
+        // `;
+        //   }
+
+        function optionRowHtml(o, i, steps, includeNext, curStepId) {
+          const v = escapeAttr(o?.value || '');
+          const lbl = escapeAttr(o?.label || '');
+          const hint = escapeAttr(o?.hint || '');
+          // const nextCell = includeNext
+          //   ? `<td>${nextSelectHtml(steps, o?.next, curStepId)}</td>`
+          //   : '';
+          const nextCell = includeNext
+            ? `<td>${nextSelectHtml(steps, o?.next, curStepId, /*withId=*/false)}</td>`
+            : '';
+
+          return `
     <tr data-opt-idx="${i}">
       <td><input class="opt-value" type="text" value="${v}"></td>
       <td><input class="opt-label" type="text" value="${lbl}"></td>
@@ -8383,58 +9154,58 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       <td class="center"><button class="iconbtn opt-del">✕</button></td>
     </tr>
   `;
-    }
+        }
 
-    function handleImageToBase64(ev, cb) {
-      const f = ev.target.files?.[0]; if (!f) return;
-      const r = new FileReader();
-      r.onload = () => { cb(String(r.result)); };
-      r.readAsDataURL(f);
-    }
+        function handleImageToBase64(ev, cb) {
+          const f = ev.target.files?.[0]; if (!f) return;
+          const r = new FileReader();
+          r.onload = () => { cb(String(r.result)); };
+          r.readAsDataURL(f);
+        }
 
-    function validateSOP() {
-      const errors = [];
-      if (!Array.isArray(sop.starters) || sop.starters.length === 0) errors.push('No starters');
-      sop.starters.forEach((st, si) => {
-        if (!Array.isArray(st.steps) || st.steps.length === 0) errors.push(`Starter[${si}] has no steps`);
-        const ids = new Set();
-        (st.steps || []).forEach((step, idx) => {
-          if (!step.id) errors.push(`Starter[${si}] step[${idx}] missing id`);
-          if (ids.has(step.id)) errors.push(`Starter[${si}] duplicate id ${step.id}`); ids.add(step.id);
+        function validateSOP() {
+          const errors = [];
+          if (!Array.isArray(sop.starters) || sop.starters.length === 0) errors.push('No starters');
+          sop.starters.forEach((st, si) => {
+            if (!Array.isArray(st.steps) || st.steps.length === 0) errors.push(`Starter[${si}] has no steps`);
+            const ids = new Set();
+            (st.steps || []).forEach((step, idx) => {
+              if (!step.id) errors.push(`Starter[${si}] step[${idx}] missing id`);
+              if (ids.has(step.id)) errors.push(`Starter[${si}] duplicate id ${step.id}`); ids.add(step.id);
 
-          if (step.type === 'input' && step.regex) {
-            try { new RegExp(step.regex); } catch { errors.push(`Invalid regex at ${step.id}`); }
-          }
-          if (step.type === 'select' && step.mode === 'multi') {
-            const c = (Array.isArray(step.options) ? step.options.length : 0);
-            if (step.min != null && step.min > c) errors.push(`min > options at ${step.id}`);
-            if (step.max != null && step.max > c) errors.push(`max > options at ${step.id}`);
-          }
-          if (step.type === 'select' && step.mode === 'single') {
-            // warn if no option.next and no step.next (unreachable continuation)
-            const hasOptNext = (step.options || []).some(o => o.next);
-            if (!hasOptNext && !step.next) errors.push(`No path from single-select ${step.id}`);
-          }
-        });
-      });
-      return { ok: errors.length === 0, errors };
-    }
+              if (step.type === 'input' && step.regex) {
+                try { new RegExp(step.regex); } catch { errors.push(`Invalid regex at ${step.id}`); }
+              }
+              if (step.type === 'select' && step.mode === 'multi') {
+                const c = (Array.isArray(step.options) ? step.options.length : 0);
+                if (step.min != null && step.min > c) errors.push(`min > options at ${step.id}`);
+                if (step.max != null && step.max > c) errors.push(`max > options at ${step.id}`);
+              }
+              if (step.type === 'select' && step.mode === 'single') {
+                // warn if no option.next and no step.next (unreachable continuation)
+                const hasOptNext = (step.options || []).some(o => o.next);
+                if (!hasOptNext && !step.next) errors.push(`No path from single-select ${step.id}`);
+              }
+            });
+          });
+          return { ok: errors.length === 0, errors };
+        }
 
-    function tidyIds() {
-      sop.starters.forEach(st => {
-        st.id = slugify(st.id || 'starter');
-        (st.steps || []).forEach(s => {
-          s.id = slugify(s.id || s.type || 'step');
-          if (s.type === 'select' && Array.isArray(s.options)) {
-            s.options.forEach(o => { o.value = slugify(o.value || o.label || 'opt'); });
-          }
-        });
-      });
-    }
+        function tidyIds() {
+          sop.starters.forEach(st => {
+            st.id = slugify(st.id || 'starter');
+            (st.steps || []).forEach(s => {
+              s.id = slugify(s.id || s.type || 'step');
+              if (s.type === 'select' && Array.isArray(s.options)) {
+                s.options.forEach(o => { o.value = slugify(o.value || o.label || 'opt'); });
+              }
+            });
+          });
+        }
 
 
 
-  </script>
+      </script>
 
 
 </body>
