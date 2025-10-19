@@ -23,8 +23,8 @@
       --line: #cfd6dd;
       --input-bg: #f6f8fa;
       --hl-bg: #F7B733;
-      /* --hl-fg: #0f172a; */
-      --hl-fg: #ff0000;
+      --hl-fg: #0f172a;
+      /* --hl-fg: #ff0000; */
       --content-w: 1240px;
       --gutter: 16px;
 
@@ -46,8 +46,8 @@
       --text: #e5ecf4;
       --input-bg: rgba(255, 255, 255, .06);
       --hl-bg: #F7B733;
-      /* --hl-fg: #0f172a; */
-      --hl-fg: #ff0000;
+      --hl-fg: #0f172a;
+      /* --hl-fg: #ff0000; */
 
       --content-w: 1240px;
       --gutter: 16px;
@@ -1378,6 +1378,29 @@
       color: var(--hl-fg) !important;
     }
 
+    .embed-chip {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: var(--input-bg);
+      border: 1px solid var(--muted);
+    }
+
+    .embed-chip .embed-del {
+      all: unset;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+      opacity: .8;
+    }
+
+    .embed-chip .embed-del:hover {
+      opacity: 1;
+    }
+
+
 
     /* ADD: invalid state + focus */
     #dlgNewStarter input.is-invalid {
@@ -1860,7 +1883,7 @@
     }
 
     .rt-link-pop label {
-      display: grid;
+      /* display: grid; */
       grid-template-columns: 56px 1fr;
       align-items: center;
       gap: 8px;
@@ -1882,6 +1905,11 @@
       justify-content: flex-end;
       flex-wrap: nowrap;
     }
+
+    #rt-embed-pop textarea {
+      font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
 
     .clickable-link {
       color: var(--accent);
@@ -2669,6 +2697,20 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       });
     })();
 
+    // Auto-resize any embed iframe that posts its height
+    (function installEmbedResizeOnce() {
+      if (window.__sopEmbedResizeInstalled) return;
+      window.__sopEmbedResizeInstalled = true;
+      window.addEventListener('message', (e) => {
+        const d = e.data;
+        if (!d || !d.__sop_embed_resize) return;
+        document.querySelectorAll('iframe').forEach(ifr => {
+          try { if (ifr.contentWindow === e.source) ifr.style.height = Math.max(240, d.h | 0) + 'px'; } catch { }
+        });
+      });
+    })();
+
+
     function changeDataMode(newDataMode) {
       if (newDataMode !== 'view' && newDataMode !== 'edit') {
         throw new Error("Invalid mode: must be 'view' or 'edit'");
@@ -2829,6 +2871,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
               <button type="button" class="rt-btn" data-align="left"   title="Align left">⟸</button>
               <button type="button" class="rt-btn" data-align="center" title="Align center">⟺</button>
               <button type="button" class="rt-btn" data-align="right"  title="Align right">⟹</button>
+              <!-- after the link/attach buttons -->
+              <button type="button" class="rt-btn" id="rt-embed-btn" title="Embed runnable HTML">&lt;HTML/&gt;</button>
+
 
 
 
@@ -2844,6 +2889,19 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
                   <button type="button" id="rt-link-insert" class="rt-btn">Insert</button>
                 </div>
               </div>
+              <!-- put this sibling to #rt-link-pop -->
+              <div class="rt-link-pop" id="rt-embed-pop" hidden>
+                <div class="col">
+                  <label class="small">Full HTML (runs in viewer)</label>
+                  <textarea id="rt-embed-html" rows="8" style="width: 420px; max-width: 70vw;"></textarea>
+                </div>
+                <div class="row" style="gap:8px; margin-top:8px;">
+                  <button type="button" id="rt-embed-insert" class="rt-btn">Insert</button>
+                  <button type="button" id="rt-embed-cancel" class="rt-btn">Cancel</button>
+                </div>
+
+              </div>
+
             </div>
         </div>
 
@@ -3019,6 +3077,199 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         setDirty(true);
         renderViewStep();
       });
+
+      document.getElementById('rt-insert-embed')?.addEventListener('click', () => {
+        const html = prompt('Paste FULL HTML (will run in viewer sandbox):');
+        if (!html) return;
+
+        // store raw html off-DOM
+        const embId = addEmbed(step, html);
+
+        // insert a placeholder chip in the editor content
+        const label = (html.match(/<title>([^<]+)<\/title>/i)?.[1] || 'Embedded page');
+        const safeLabel = label.replace(/[<>&]/g, s => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[s]));
+        bodyEl.focus();
+        // document.execCommand('insertHTML', false,
+        //   `<span class="embed-chip" contenteditable="false" data-embed-id="${embId}" title="Will render in viewer">&lt;${safeLabel}&gt;</span>`
+        // );
+        // inside your insert-embed click handler (editor toolbar)
+        document.execCommand(
+          'insertHTML',
+          false,
+          `<span class="embed-chip" contenteditable="false" data-embed-id="${embId}">
+                      <span class="label">&lt;${safeLabel}&gt;</span>
+                      <button class="embed-del" type="button" title="Remove">×</button>
+                    </span>`
+        );
+
+
+        step.body = bodyEl.innerHTML;
+        setDirty(true);
+        renderViewStep();
+      });
+
+
+
+      // Insert raw HTML at the caret (minimal sanitize)
+      // Fully replace your old insertHtmlAtCaret(html)
+      function insertHtmlAtCaret(html) {
+        if (!html) return;
+
+        // 0) light sanitize: strip <script>/<style> and inline event handlers
+        html = String(html)
+          .replace(/<\s*(script|style)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+          .replace(/\s(on\w+)\s*=\s*(["']).*?\2/gi, ''); // onclick=...
+
+        const editor = bodyEl || document.querySelector('.rt-editor');
+        if (!editor) return;
+
+        editor.focus();
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        let range = sel.getRangeAt(0);
+
+        // 1) Parse HTML relative to current context (better than template for nested tags)
+        let frag;
+        if (range.createContextualFragment) {
+          frag = range.createContextualFragment(html);
+        } else {
+          const t = document.createElement('template');
+          t.innerHTML = html.trim();
+          frag = document.createDocumentFragment();
+          while (t.content.firstChild) frag.appendChild(t.content.firstChild);
+        }
+
+        // 2) If selection is inside a <p> and fragment starts with a block, split the block
+        const BLOCK = /^(ADDRESS|ARTICLE|ASIDE|BLOCKQUOTE|DIV|DL|FIELDSET|FIGURE|FOOTER|FORM|H1|H2|H3|H4|H5|H6|HEADER|HR|MAIN|NAV|OL|P|PRE|SECTION|TABLE|UL)$/;
+        const startEl = (range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement);
+        const hostBlock = startEl?.closest('p,div,li,blockquote,pre,section,article');
+
+        const firstNode = frag.firstChild;
+        const startsWithBlock = firstNode && firstNode.nodeType === 1 && BLOCK.test(firstNode.nodeName);
+
+        if (hostBlock && startsWithBlock) {
+          // Split the host block at the caret
+          const before = document.createRange();
+          before.setStartBefore(hostBlock);
+          before.setEnd(range.startContainer, range.startOffset);
+          const beforeFrag = before.extractContents();
+
+          const after = document.createRange();
+          after.setStart(range.endContainer, range.endOffset);
+          after.setEndAfter(hostBlock);
+          const afterFrag = after.extractContents();
+
+          // Rebuild: [beforeFrag][frag][afterFrag]
+          const parent = hostBlock.parentNode;
+          parent.insertBefore(beforeFrag, hostBlock);
+          parent.insertBefore(frag, hostBlock);
+          parent.insertBefore(afterFrag, hostBlock);
+          hostBlock.remove();
+
+          // place caret after the inserted content
+          const last = parent.childNodes[parent.childNodes.length - 1];
+          const place = frag.lastChild || parent;
+          const r = document.createRange();
+          r.setStartAfter(place);
+          r.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(r);
+        } else {
+          // 3) Normal path: replace selection with fragment
+          range.deleteContents();
+          const lastNode = frag.lastChild;
+          range.insertNode(frag);
+
+          // 4) Move caret after inserted content
+          range = document.createRange();
+          if (lastNode && lastNode.parentNode) {
+            range.setStartAfter(lastNode);
+          } else {
+            // fallback: after editor
+            range.setStartAfter(editor.lastChild || editor);
+          }
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+
+        // 5) Persist + your preview
+        step.body = editor.innerHTML;
+        setDirty?.(true);
+        renderViewStep?.();
+      }
+
+      // —— EMBED DIALOG ——
+      const embedBtn = document.getElementById('rt-embed-btn');
+      const embedPop = document.getElementById('rt-embed-pop');
+      const embedHtmlEl = document.getElementById('rt-embed-html');
+      const embedInsBtn = document.getElementById('rt-embed-insert');
+      const embedCanBtn = document.getElementById('rt-embed-cancel');
+
+      // small store helpers (no-ops if already present elsewhere)
+      function ensureEmbeds(step) { if (!Array.isArray(step.embeds)) step.embeds = []; return step.embeds; }
+      function addEmbed(step, html) {
+        const id = 'emb_' + Math.random().toString(36).slice(2, 8);
+        ensureEmbeds(step).push({ id, html }); // no baseUrl
+        return id;
+      }
+
+
+      function closeEmbedPop() { embedPop.hidden = true; }
+
+      embedBtn?.addEventListener('mousedown', e => e.preventDefault());
+      embedBtn?.addEventListener('click', () => {
+        bodyEl.focus();
+        saveSelection();
+        // clear last values
+        embedHtmlEl.value = '';
+        // open near caret
+        showPopupNearSelection(embedPop, wrap, bodyEl);
+        embedPop.hidden = false;
+        embedHtmlEl.focus();
+      });
+
+      embedCanBtn?.addEventListener('click', closeEmbedPop);
+
+      // Insert the embed chip at caret and store raw HTML in step.embeds
+      embedInsBtn?.addEventListener('click', () => {
+        const raw = (embedHtmlEl.value || '').trim();
+        if (!raw) { embedHtmlEl.focus(); return; }
+
+        // store full HTML off-DOM (no baseUrl anymore)
+        const embId = addEmbed(step, raw);
+
+        const label = (raw.match(/<title>([^<]+)<\/title>/i)?.[1] || 'Embedded page')
+          .replace(/[<>&]/g, s => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[s]));
+
+        restoreSelectionOrFocus();
+        document.execCommand('insertHTML', false,
+          `<span class="embed-chip" contenteditable="false" data-embed-id="${embId}">
+       <span class="label">&lt;${label}&gt;</span>
+       <button class="embed-del" type="button" title="Remove">×</button>
+     </span>`
+        );
+
+        step.body = bodyEl.innerHTML;
+        setDirty?.(true);
+        renderViewStep?.();
+        embedPop.hidden = true;
+      });
+
+
+      // click-outside closes popup (mirrors your link popup behavior)
+      document.addEventListener('mousedown', (e) => {
+        if (!embedPop) return;
+        if (!embedPop.hidden && !embedPop.contains(e.target) && e.target !== embedBtn) {
+          closeEmbedPop();
+        }
+      });
+
+
+      // Build an iframe srcdoc that runs the embed + fixes relative URLs + auto-resizes
+
+
+
 
 
 
@@ -4647,6 +4898,28 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       bodyEl?.addEventListener('input', normalizeEditorRoot);
       bodyEl?.addEventListener('paste', () => setTimeout(normalizeEditorRoot, 0));
+      // Click the small × on a chip to remove it and its stored embed
+      bodyEl?.addEventListener('click', (e) => {
+        const del = e.target.closest('.embed-del');
+        if (!del) return;
+        const chip = del.closest('.embed-chip');
+        if (!chip) return;
+
+        chip.remove();                         // remove visual
+        reconcileEmbeds(step, bodyEl);         // drop from step.embeds
+        step.body = bodyEl.innerHTML;          // persist
+        setDirty?.(true);
+        renderViewStep?.();
+      });
+
+      // Anytime the body changes (typing/backspace etc.), keep embeds in sync
+      bodyEl?.addEventListener('input', () => {
+        step.body = bodyEl.innerHTML;
+        reconcileEmbeds(step, bodyEl);
+        setDirty?.(true);
+        renderViewStep?.();
+      });
+
       normalizeEditorRoot(); // once on load
 
 
@@ -4869,6 +5142,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       mapZoom = 2.4;
       mapPan = { x: 0, y: -20 }
     };
+
+
 
     // function clientToWorld(e) {
     //   const bb = graphSvg.getBoundingClientRect();
@@ -7488,6 +7763,46 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       if (step.type === 'instruction') {
         node = document.createElement('div');
         node.innerHTML = `${head}${renderBody(step.body)}${imgHtml}`;
+        // AFTER: node.innerHTML = `${head}${renderBody(step.body)}${imgHtml}`;
+        (function renderRunnableEmbeds() {
+          const embeds = Array.isArray(step.embeds) ? step.embeds : [];
+
+          // collect chip IDs BEFORE we replace them
+          const usedIds = new Set(
+            [...node.querySelectorAll('.embed-chip[data-embed-id]')]
+              .map(c => c.getAttribute('data-embed-id'))
+          );
+
+          // A) Replace chips with iframes
+          node.querySelectorAll('.embed-chip[data-embed-id]').forEach(chip => {
+            const id = chip.getAttribute('data-embed-id');
+            const emb = embeds.find(e => e.id === id);
+            if (!emb) return;
+
+            const ifr = document.createElement('iframe');
+            ifr.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
+            ifr.referrerPolicy = 'no-referrer';
+            ifr.style.width = '100%';
+            ifr.style.border = '1px solid var(--muted)';
+            ifr.style.minHeight = '360px';
+            ifr.srcdoc = buildEmbedSrcdoc(emb);
+
+            chip.replaceWith(ifr);
+          });
+
+          // B) Append embeds that have NO chip reference
+          embeds.filter(e => !usedIds.has(e.id)).forEach(emb => {
+            const ifr = document.createElement('iframe');
+            ifr.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
+            ifr.referrerPolicy = 'no-referrer';
+            ifr.style.width = '100%';
+            ifr.style.border = '1px solid var(--muted)';
+            ifr.style.minHeight = '360px';
+            ifr.srcdoc = buildEmbedSrcdoc(emb);
+            node.appendChild(ifr);
+          });
+        })();
+
         box.appendChild(node);
         setNextEnabled(true);
       }
@@ -7651,6 +7966,42 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         renderViewStep(); renderGraph(); renderInspector();
       };
     }
+
+    function buildEmbedSrcdoc(emb) {
+      const raw = String(emb.html || '');
+
+      const autosize = `
+                        <script>
+                        (function(){
+                          function send(){
+                            var h = Math.max(
+                              document.documentElement.scrollHeight,
+                              document.body ? document.body.scrollHeight : 0
+                            );
+                            parent.postMessage({__sop_embed_resize:1,h:h}, '*');
+                          }
+                          new ResizeObserver(send).observe(document.documentElement);
+                          window.addEventListener('load', send);
+                          setTimeout(send, 80);
+                        })();
+                        <\/script>`;
+
+      if (/<head[\s>]/i.test(raw)) {
+        return raw.replace(/<head(\b[^>]*)>/i, (m, attrs) => `<head${attrs}>${autosize}`);
+      }
+      return `<!doctype html><html><head>${autosize}</head><body>${raw}</body></html>`;
+    }
+
+
+    function reconcileEmbeds(step, editorEl) {
+      const idsInBody = new Set(
+        [...editorEl.querySelectorAll('.embed-chip[data-embed-id]')]
+          .map(el => el.getAttribute('data-embed-id'))
+      );
+      if (!Array.isArray(step.embeds)) step.embeds = [];
+      step.embeds = step.embeds.filter(e => idsInBody.has(e.id)); // remove orphans
+    }
+
 
     function getFirstPredecessorId(starter, stepId) {
       if (!starter || !stepId) return null;
