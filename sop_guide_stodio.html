@@ -23,7 +23,8 @@
       --line: #cfd6dd;
       --input-bg: #f6f8fa;
       --hl-bg: #F7B733;
-      --hl-fg: #0f172a;
+      /* --hl-fg: #0f172a; */
+      --hl-fg: #ff0000;
       --content-w: 1240px;
       --gutter: 16px;
 
@@ -45,7 +46,9 @@
       --text: #e5ecf4;
       --input-bg: rgba(255, 255, 255, .06);
       --hl-bg: #F7B733;
-      --hl-fg: #0f172a;
+      /* --hl-fg: #0f172a; */
+      --hl-fg: #ff0000;
+
       --content-w: 1240px;
       --gutter: 16px;
     }
@@ -1349,17 +1352,17 @@
 
 
     /* Focus state consistent with your fields */
-    .rt-editor:focus {
+    /* .rt-editor:focus {
       outline: none;
       border-color: var(--line-strong, var(--line));
       box-shadow: 0 0 0 2px var(--focus-ring, transparent);
-    }
+    } */
 
     /* Make pasted images/text behave nicely */
-    .rt-editor img {
+    /* .rt-editor img {
       max-width: 100%;
       height: auto;
-    }
+    } */
 
     /* .rt-editor p {
       margin: 0 0 .5rem;
@@ -1369,6 +1372,12 @@
       content: attr(data-placeholder);
       color: var(--muted);
     }
+
+    /* highlight FG marker — uses your root var */
+    .rt-editor .hl-fg {
+      color: var(--hl-fg) !important;
+    }
+
 
     /* ADD: invalid state + focus */
     #dlgNewStarter input.is-invalid {
@@ -3408,6 +3417,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           document.execCommand('styleWithCSS', false, true);
           document.execCommand(HL_CMD, false, color); // background
           document.execCommand('foreColor', false, fg); // text color from :root
+          // document.execCommand('foreColor', false, cssVar('--hl-fg')); // fg via var
+          // tagSelectionWithClass('hl-fg');
 
           if (typeof step !== 'undefined') {
             step.body = bodyEl.innerHTML;
@@ -3416,6 +3427,55 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           }
           cleanup();
         }
+
+        function applyHighlightFg() {
+          const sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+          const range = sel.getRangeAt(0);
+
+          const span = document.createElement('span');
+          span.className = 'hl-fg';
+
+          try {
+            range.surroundContents(span);     // clean split at boundaries
+          } catch {
+            // fallback for mixed/partial selections
+            const frag = range.extractContents();
+            span.appendChild(frag);
+            range.insertNode(span);
+            // place caret after
+            sel.removeAllRanges();
+            const r = document.createRange();
+            r.setStartAfter(span); r.collapse(true);
+            sel.addRange(r);
+          }
+        }
+
+
+        function tagSelectionWithClass(cls) {
+          const sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0) return;
+          const range = sel.getRangeAt(0);
+          if (range.collapsed) return;
+
+          const wrapper = document.createElement('span');
+          wrapper.className = cls;
+
+          try {
+            // cleanly splits wrappers at boundaries
+            range.surroundContents(wrapper);
+          } catch {
+            // robust fallback for partially-selectable ranges
+            const frag = range.extractContents();
+            wrapper.appendChild(frag);
+            range.insertNode(wrapper);
+            // place caret after wrapper
+            sel.removeAllRanges();
+            const after = document.createRange();
+            after.setStartAfter(wrapper); after.collapse(true); sel.addRange(after);
+          }
+        }
+
 
 
 
@@ -3435,18 +3495,24 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
+        // function clearHighlight() {
+
         function clearHighlight() {
           if (!restoreSelection()) { cleanup(); return; }
 
           // clear background
           document.execCommand(HL_CMD, false, 'transparent');
+          const editor = bodyEl || getBodyEditorEl();
+          const def = getComputedStyle(editor).color;   // theme default
+          document.execCommand('styleWithCSS', false, true);
+          document.execCommand('foreColor', false, def);
           // scrubBgInSelection?.();
 
           // clear any forced foreground color (in-range + ancestor chain)
-          const editor = bodyEl || getBodyEditorEl();
-          clearInlineFgInRange(editor);
-          clearColorUpwardsFromRangeEdges(editor);
-          normalizeInlineColorArtifacts(editor);
+          // const editor = bodyEl || getBodyEditorEl();
+          // clearInlineFgInRange(editor);
+          // clearColorUpwardsFromRangeEdges(editor);
+          // normalizeInlineColorArtifacts(editor);
 
           if (typeof step !== 'undefined') {
             step.body = editor.innerHTML;
@@ -3516,6 +3582,383 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
             }
           }
         }
+
+        // Clean up spans/fonts that no longer do anything
+        function normalizeInlineColorArtifacts(editor) {
+          // unwrap <font> without attributes
+          editor.querySelectorAll('font').forEach(f => {
+            if (f.attributes.length === 0) {
+              while (f.firstChild) f.parentNode.insertBefore(f.firstChild, f);
+              f.remove();
+            }
+          });
+          // drop empty style="" attrs
+          editor.querySelectorAll('[style]').forEach(el => {
+            if (el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+          });
+        }
+
+        function cssVar(name, el = document.documentElement) {
+          return getComputedStyle(el).getPropertyValue(name).trim();
+        }
+
+
+        // helper: visit elements intersecting current range within root
+        function walkElementsIntersecting(root, range, fn) {
+          const walker = document.createTreeWalker(
+            range.commonAncestorContainer,
+            NodeFilter.SHOW_ELEMENT,
+            {
+              acceptNode: (el) =>
+                root.contains(el) && range.intersectsNode(el)
+                  ? NodeFilter.FILTER_ACCEPT
+                  : NodeFilter.FILTER_SKIP
+            }
+          );
+          while (walker.nextNode()) fn(walker.currentNode);
+        }
+
+
+        // ---- tiny utilities ----
+        function walkElementsIntersecting(root, range, fn) {
+          const walker = document.createTreeWalker(
+            range.commonAncestorContainer,
+            NodeFilter.SHOW_ELEMENT,
+            {
+              acceptNode: (el) =>
+                root.contains(el) && range.intersectsNode(el)
+                  ? NodeFilter.FILTER_ACCEPT
+                  : NodeFilter.FILTER_SKIP
+            }
+          );
+          while (walker.nextNode()) fn(walker.currentNode);
+        }
+
+        function cssVar(name, el = document.documentElement) {
+          return getComputedStyle(el).getPropertyValue(name).trim();
+        }
+
+        function normalizeColor(val) {
+          if (!val) return '';
+          const probe = document.createElement('span');
+          probe.style.color = val;
+          document.body.appendChild(probe);
+          const out = getComputedStyle(probe).color || '';
+          document.body.removeChild(probe);
+          return out;
+        }
+
+
+        // function clearHighlight() {
+        //   if (!restoreSelection()) return;
+
+        //   const editor = bodyEl || getBodyEditorEl();
+        //   if (!editor) return;
+
+        //   const sel = window.getSelection();
+        //   if (!sel || sel.rangeCount === 0) return;
+        //   const range = sel.getRangeAt(0);
+
+        //   // collapsed: clear inline on nearest inline wrapper only
+        //   if (range.collapsed) {
+        //     console.log('range is collapsed');
+        //     // clearPropsUpwards(editor, range.startContainer, ['backgroundColor', 'color']);
+        //   } else {
+        //     console.log('range is not collapsed');
+
+        //     // 1) nuke execCommand bg if present (harmless if none)
+        //     document.execCommand(HL_CMD, false, 'transparent');
+
+        //     // 2) extract selected HTML
+        //     const frag = range.extractContents();
+
+        //     // 3) scrub only the selected part
+        //     scrubFragmentStyles(frag);     // remove bg/fg inside the selection
+        //     unwrapTrivialSpans(frag);      // drop empty wrappers
+
+        //     // 4) insert a container so we can lift it out of colored parents
+        //     const holder = document.createElement('span');
+        //     holder.appendChild(frag);
+        //     range.insertNode(holder);
+
+        //     // 5) move holder out of any ancestor that forces color/bg
+        //     liftOutOfColoredAncestors(editor, holder);
+
+        //     // 6) replace holder with its children
+        //     while (holder.firstChild) holder.parentNode.insertBefore(holder.firstChild, holder);
+        //     holder.remove();
+        //   }
+
+        //   // tidy + persist
+        //   cleanupInlineArtifacts(editor);
+        //   if (typeof step !== 'undefined') {
+        //     step.body = editor.innerHTML;
+        //     setDirty?.(true);
+        //     renderViewStep?.();
+        //   }
+        // }
+
+        // remove inline bg/fg (and <font color>) within a detached fragment
+        function scrubFragmentStyles(rootFragment) {
+          const walker = document.createTreeWalker(rootFragment, NodeFilter.SHOW_ELEMENT);
+          const nodes = [];
+          while (walker.nextNode()) nodes.push(walker.currentNode);
+
+          nodes.forEach(el => {
+            if (el.style) {
+              if (el.style.backgroundColor) el.style.backgroundColor = '';
+              if (el.style.color) el.style.color = '';
+              if (el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+            }
+            if (el.tagName === 'FONT') el.removeAttribute('color');
+          });
+        }
+
+        // unwrap spans/fonts that became inert inside the fragment
+        function unwrapTrivialSpans(rootFragment) {
+          const candidates = rootFragment.querySelectorAll('span,font');
+          candidates.forEach(el => {
+            if (!el.attributes || el.attributes.length === 0) {
+              const parent = el.parentNode;
+              while (el.firstChild) parent.insertBefore(el.firstChild, el);
+              parent.removeChild(el);
+            }
+          });
+        }
+
+
+        function clearPropsInRange(root, range, props) {
+          const walker = document.createTreeWalker(
+            range.commonAncestorContainer,
+            NodeFilter.SHOW_ELEMENT,
+            {
+              acceptNode: (el) =>
+                root.contains(el) && range.intersectsNode(el)
+                  ? NodeFilter.FILTER_ACCEPT
+                  : NodeFilter.FILTER_SKIP
+            }
+          );
+          while (walker.nextNode()) {
+            const el = walker.currentNode;
+            if (el.style) props.forEach(p => { if (el.style[p]) el.style[p] = ''; });
+            if (el.tagName === 'FONT') el.removeAttribute('color');
+            if (el.getAttribute && el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+          }
+        }
+
+        function liftOutOfColoredAncestors(root, node) {
+          let cur = node;
+          while (cur && cur.parentElement && cur.parentElement !== root && cur.parentElement !== document.body) {
+            const p = cur.parentElement;
+            const styled = (p.style && (p.style.color || p.style.backgroundColor)) || (p.tagName === 'FONT' && p.hasAttribute('color'));
+            if (!styled) break;
+            p.parentNode.insertBefore(cur, p.nextSibling);         // move node after the colored parent
+            if (!p.firstChild) p.remove();                         // drop empty wrappers
+          }
+        }
+
+        // walk up from a boundary and clear inline styles on inline wrappers only
+        function clearPropsUpwards(root, fromNode, props) {
+          let el = fromNode && (fromNode.nodeType === 1 ? fromNode : fromNode.parentElement);
+          while (el && el !== root && el !== document.body) {
+            const disp = getComputedStyle(el).display;
+            if (disp === 'block' || disp === 'list-item' || disp === 'table') break; // stop at blocks
+            if (el.style) {
+              props.forEach(p => { if (el.style[p]) el.style[p] = ''; });
+              if (el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+            }
+            if (el.tagName === 'FONT') el.removeAttribute('color');
+            el = el.parentElement;
+          }
+        }
+
+        function cleanupInlineArtifacts(root) {
+          // unwrap empty <font> tags
+          root.querySelectorAll('font').forEach(f => {
+            if (f.attributes.length === 0) {
+              while (f.firstChild) f.parentNode.insertBefore(f.firstChild, f);
+              f.remove();
+            }
+          });
+          // drop empty style=""
+          root.querySelectorAll('[style]').forEach(el => {
+            if (el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+          });
+        }
+
+
+        function sameColorInline(inlineValue, targetCssColor) {
+          if (!inlineValue) return false;
+          // normalize both to rgb() via a test element
+          const probe = document.createElement('div');
+          document.body.appendChild(probe);
+          probe.style.color = targetCssColor;
+          const want = getComputedStyle(probe).color; // rgb(...)
+          probe.style.color = '';
+          probe.style.color = inlineValue;
+          const got = getComputedStyle(probe).color;  // rgb(...)
+          document.body.removeChild(probe);
+          return got === want;
+        }
+
+        function scrubInlineStyles(editor, range, hlBg, hlFg) {
+          const walker = document.createTreeWalker(
+            range.commonAncestorContainer,
+            NodeFilter.SHOW_ELEMENT,
+            {
+              acceptNode: (el) =>
+                editor.contains(el) && range.intersectsNode(el)
+                  ? NodeFilter.FILTER_ACCEPT
+                  : NodeFilter.FILTER_SKIP
+            }
+          );
+          const toClear = [];
+          while (walker.nextNode()) toClear.push(walker.currentNode);
+
+          toClear.forEach(el => {
+            // clear highlight bg if it matches our applied one
+            if (sameColorInline(el.style.backgroundColor, hlBg)) el.style.backgroundColor = '';
+            // clear fg if it matches our applied highlight fg (dark mode-safe)
+            if (sameColorInline(el.style.color, hlFg)) el.style.color = '';
+            if (el.tagName === 'FONT') el.removeAttribute('color');
+            if (el.getAttribute && el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+          });
+        }
+
+        function clearAncestorHighlight(editor, node, hlBg, hlFg) {
+          let el = node && (node.nodeType === 1 ? node : node.parentElement);
+          while (el && el !== editor && el !== document.body) {
+            // stop at blocks—highlight is inline decoration
+            const disp = getComputedStyle(el).display;
+            if (disp === 'block' || disp === 'list-item' || disp === 'table') break;
+
+            let changed = false;
+            if (sameColorInline(el.style.backgroundColor, hlBg)) {
+              el.style.backgroundColor = ''; changed = true;
+            }
+            if (sameColorInline(el.style.color, hlFg)) {
+              el.style.color = ''; changed = true;
+            }
+            if (changed && el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+            el = el.parentElement;
+          }
+        }
+
+
+        function scrubInlineStylesInSelection(root, styleProps) {
+          const sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0 || !root) return;
+          const range = sel.getRangeAt(0);
+
+          const walker = document.createTreeWalker(
+            range.commonAncestorContainer,
+            NodeFilter.SHOW_ELEMENT,
+            {
+              acceptNode: (el) =>
+                root.contains(el) && range.intersectsNode(el)
+                  ? NodeFilter.FILTER_ACCEPT
+                  : NodeFilter.FILTER_SKIP
+            }
+          );
+
+          const toClear = [];
+          while (walker.nextNode()) {
+            toClear.push(walker.currentNode);
+          }
+
+          toClear.forEach(el => {
+            // strip inline bg/fg so theme defaults take over (dark mode-safe)
+            styleProps.forEach(p => { if (el.style && el.style[p]) el.style[p] = ''; });
+            if (el.tagName === 'FONT') el.removeAttribute('color');
+            if (el.getAttribute && el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+          });
+        }
+
+        // Walk elements intersecting the selection and clear inline color
+        function clearInlineFgInRange(editor) {
+          const sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0) return;
+          const range = sel.getRangeAt(0);
+
+          // helper: is the whole node inside the range?
+          const fullyCovers = (node) => {
+            const r = document.createRange();
+            try { r.selectNodeContents(node); } catch { return false; }
+            return (
+              range.compareBoundaryPoints(Range.START_TO_START, r) <= 0 &&
+              range.compareBoundaryPoints(Range.END_TO_END, r) >= 0
+            );
+          };
+
+          const walker = document.createTreeWalker(
+            range.commonAncestorContainer,
+            NodeFilter.SHOW_ELEMENT,
+            {
+              acceptNode: (el) =>
+                (editor.contains(el) && range.intersectsNode(el) && fullyCovers(el))
+                  ? NodeFilter.FILTER_ACCEPT
+                  : NodeFilter.FILTER_SKIP
+            }
+          );
+
+          const hits = [];
+          while (walker.nextNode()) {
+            const el = walker.currentNode;
+            if (!el) continue;
+            if ((el.style && el.style.color) || (el.tagName === 'FONT' && el.hasAttribute('color'))) {
+              hits.push(el);
+            }
+          }
+
+          hits.forEach(el => {
+            if (el.style) el.style.color = '';
+            if (el.tagName === 'FONT') el.removeAttribute('color');
+            if (el.getAttribute && el.getAttribute('style')?.trim() === '') el.removeAttribute('style');
+          });
+        }
+
+
+        // If a parent (outside the range) holds the color, clear it going upward from both ends
+        function clearColorUpwardsFromRangeEdges(editor) {
+          const sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0) return;
+          const range = sel.getRangeAt(0);
+
+          const fullyCovers = (node) => {
+            const r = document.createRange();
+            try { r.selectNodeContents(node); } catch { return false; }
+            return (
+              range.compareBoundaryPoints(Range.START_TO_START, r) <= 0 &&
+              range.compareBoundaryPoints(Range.END_TO_END, r) >= 0
+            );
+          };
+
+          // Only clear an ancestor if the selection fully covers that element.
+          [range.startContainer, range.endContainer].forEach(startNode => {
+            let el = startNode && (startNode.nodeType === 1 ? startNode : startNode.parentElement);
+            while (el && el !== editor && el !== document.body) {
+              const disp = getComputedStyle(el).display;
+              const isBlockish = disp === 'block' || disp === 'list-item' || disp === 'table';
+              if (isBlockish) break;
+
+              if (fullyCovers(el)) {
+                if (el.style && el.style.color) {
+                  el.style.color = '';
+                  if (!el.getAttribute('style')) el.removeAttribute('style');
+                }
+                if (el.tagName === 'FONT' && el.hasAttribute('color')) {
+                  el.removeAttribute('color');
+                }
+                // continue walking up in case higher inline wrappers are fully covered too
+                el = el.parentElement;
+              } else {
+                // stop at the first partially covered ancestor to avoid stripping neighbors
+                break;
+              }
+            }
+          });
+        }
+
 
         // Clean up spans/fonts that no longer do anything
         function normalizeInlineColorArtifacts(editor) {
