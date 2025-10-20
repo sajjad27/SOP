@@ -1082,6 +1082,10 @@
       border: 1px solid var(--line, #ddd);
       border-radius: 12px;
       box-shadow: var(--shadow, 0 10px 30px rgba(0, 0, 0, .2));
+
+      resize: both;
+      /* user can drag bottom-right */
+      overflow: auto;
     }
 
     .dlg[hidden] {
@@ -2155,7 +2159,7 @@
     }
 
     /* Image lightbox */
-    .imglb-overlay {
+    /* .imglb-overlay {
       position: fixed;
       inset: 0;
       background: color-mix(in srgb, var(--bg) 30%, #000 40%);
@@ -2170,7 +2174,7 @@
     .imglb-overlay.open {
       opacity: 1;
       transform: scale(1);
-    }
+    } */
 
     .imglb-panel {
       max-width: 90vw;
@@ -2233,11 +2237,11 @@
 
 
 
-    @media (prefers-reduced-motion: reduce) {
+    /* @media (prefers-reduced-motion: reduce) {
       .imglb-overlay {
         transition: none;
       }
-    }
+    } */
 
     p.search-place {
       color: var(--hl-bg);
@@ -2353,7 +2357,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
             <div class="graph-zoom">
               <button id="zoomOutBtn">−</button>
               <button id="zoomInBtn">+</button>
-              <button id="zoomResetBtn">Reset position & zoom</button>
+              <button id="zoomResetBtn">Reset position</button>
               <button id="formatBtn" class="graph-action" title="Auto format">Format graph</button>
               <!-- <button id="fullscreenBtn">Full screen</button> -->
             </div>
@@ -2507,7 +2511,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     // Only mark dirty on change if the value actually differs from SOP
     document.addEventListener('change', (e) => {
-      // console.log('e.target', e.target);
 
       const t = e.target;
       if (!t) return;
@@ -4126,10 +4129,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
         //   // collapsed: clear inline on nearest inline wrapper only
         //   if (range.collapsed) {
-        //     console.log('range is collapsed');
         //     // clearPropsUpwards(editor, range.startContainer, ['backgroundColor', 'color']);
         //   } else {
-        //     console.log('range is not collapsed');
 
         //     // 1) nuke execCommand bg if present (harmless if none)
         //     document.execCommand(HL_CMD, false, 'transparent');
@@ -4539,16 +4540,13 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       //   if (!sel || sel.isCollapsed) return; // nothing selected
 
       //   const current = (document.queryCommandValue(HL_CMD) || '').toLowerCase();
-      //   console.log(`current`, current);
       //   const isOn = current.includes('rgb') || current.includes('#'); // any bg set at caret
 
       //   if (isOn) {
-      //     console.log('is on');
       //     document.execCommand(HL_CMD, false, 'transparent'); // remove bg
       //     scrubBgInSelection();                                // you already have this
       //     scrubFgInSelection();                                // NEW: clear inline color in range
       //   } else {
-      //     console.log('is off');
 
       //     const hlBg = getComputedStyle(document.documentElement)
       //       .getPropertyValue('--hl-bg')
@@ -4989,7 +4987,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           const label = selectedText || f.name;
           const safeLabel = label.replace(/[<>&]/g, s => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[s]));
 
-          console.log(`f`, f);
 
           const sizeStr = bytesToHuman(f.size);
           document.execCommand(
@@ -5178,10 +5175,10 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       function openImgLightbox(src) {
         // remove any existing
-        document.querySelector('.imglb-overlay')?.remove();
+        document.querySelector('.cfm-overlay')?.remove();
 
         const ov = document.createElement('div');
-        ov.className = 'imglb-overlay';
+        ov.className = 'cfm-overlay';
         ov.innerHTML = `<div class="imglb-panel"><img alt="" loading="eager"></div>`;
         const img = ov.querySelector('img');
         img.src = src;
@@ -5295,13 +5292,13 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const optTable = document.getElementById('optTable');
       optTable?.addEventListener('input', (e) => {
         const tr = e.target.closest('tr[data-opt-idx]');
-        // console.log(`tr`, tr);
+
         if (!tr) return;
         const i = parseInt(tr.dataset.optIdx, 10);
-        // console.log(`i`, i);
-        // console.log(`e.target`, e.target);
+
+
         const opt = step.options[i];
-        // console.log('opt before edit', opt);
+
         if (!opt) return;
 
 
@@ -5363,7 +5360,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     //   const bb = graphSvg.getBoundingClientRect();
     //   const vw = 1000, vh = 1000; // must match renderGraph() viewBox world size
     //   const x = mapPan.x + (e.clientX - bb.left) * (vw / mapZoom) / bb.width;
-    //   console.log(`x`, x);
     //   const y = mapPan.y + (e.clientY - bb.top) * (vh / mapZoom) / bb.height;
     //   return { x, y };
     // }
@@ -5503,43 +5499,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       });
       // setDirty(true); // enable Save button
     }, true);
-
-
-
-
-    // // detach any old wheel binding we might have left around
-    // try { if (graphSvg._wheelBound) graphSvg.removeEventListener('wheel', graphSvg._wheelBound); } catch { }
-
-    // /* ONE wheel handler: 
-    //    - Ctrl/Cmd + wheel → zoom around viewport center (uses your zoomAroundCenter)
-    //    - Shift + wheel   → horizontal pan (wheel up = left)
-    //    - default         → normal pan (trackpad X/Y) */
-    // function onGraphWheel(e) {
-    //   if (e.ctrlKey || e.metaKey) {
-    //     e.preventDefault();
-    //     const step = Math.pow(1.0018, -e.deltaY); // wheel up => zoom in
-    //     zoomAroundCenter(step);
-    //     return;
-    //   }
-
-    //   e.preventDefault();
-    //   const unit = (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 256 : 1); // line/page → px
-    //   const k = unit / mapZoom;
-
-    //   const dx = e.shiftKey ? (-e.deltaY) : e.deltaX; // Shift+wheel up = left
-    //   const dy = e.shiftKey ? 0 : e.deltaY;
-
-    //   mapPan.x += dx * k;
-    //   mapPan.y += dy * k;
-
-    //   renderGraph();
-    // }
-
-    // graphSvg.addEventListener('wheel', onGraphWheel, { passive: false });
-    // graphSvg._wheelBound = onGraphWheel;
-
-    // ----- ONE wheel handler with mouse-anchored zoom (Figma-style) -----
-    // Requires: graphSvg (your SVG element), mapZoom (number), mapPan = {x,y}, renderGraph()
 
     // Attach (ensure passive:false so preventDefault works)
     try { if (graphSvg._wheelBound) graphSvg.removeEventListener('wheel', graphSvg._wheelBound); } catch { }
@@ -5778,13 +5737,16 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         g.appendChild(grp);
       }
 
+
+      // setSelectedStepById(viewState.selectedStepId);
+      // navigateToStepId(viewState.selectedStepId);
     }
 
     // Shared graph renderer used by editor graph and mini-map dialog.
     // Clone the existing editor graph into `mount`.
     // opts: { readonly = true, compact = true, fit = true, onNodeClick?: (id) => void }
     function renderGraphInto(mount, opts = {}) {
-      const { readonly = true, compact = true, fit = true, onNodeClick = (id) => console.log(id) } = opts;
+      const { readonly = true, compact = true, fit = true, onNodeClick } = opts;
       // if (id && typeof onNodeClick === 'function') onNodeClick(id);
 
       if (!mount) return;
@@ -5867,7 +5829,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       if (readonly) {
         mount.addEventListener('click', (ev) => {
           const n = ev.target.closest('[step-id], g.node, .node');
-          console.log(`n`, n);
           if (!n) return;
 
           // Try a few places for the id
@@ -8352,228 +8313,458 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     // }
 
+    // function renderViewStep() {
+    //   const st = sop.starters[viewState.starterIdx];
+    //   const steps = st.steps || [];
+    //   let i = getStepIndexById(steps, viewState.selectedStepId);
+
+    //   const box = document.getElementById('vwStep');
+    //   box.innerHTML = '';
+    //   const step = steps[i];
+    //   if (!step) { setNextEnabled(false); return; }
+
+    //   // one header everywhere
+    //   // const head = step.title ? `<h3 class="vw-title">${viewEscape(step.title)}</h3>` : '';
+    //   const head = step.title
+    //     ? `<h3 class="vw-title" id="vw-title-${step.id}">${viewEscape(step.title)}</h3><hr class="vw-hr">`
+    //     : '';
+    //   const imgHtml = step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : '';
+
+    //   let node;
+
+    //   if (step.type === 'instruction') {
+    //     node = document.createElement('div');
+    //     node.innerHTML = `${head}${renderBody(step.body)}${imgHtml}`;
+    //     // AFTER: node.innerHTML = `${head}${renderBody(step.body)}${imgHtml}`;
+    //     (function renderRunnableEmbeds() {
+    //       const embeds = Array.isArray(step.embeds) ? step.embeds : [];
+
+    //       // collect chip IDs BEFORE we replace them
+    //       const usedIds = new Set(
+    //         [...node.querySelectorAll('.embed-chip[data-embed-id]')]
+    //           .map(c => c.getAttribute('data-embed-id'))
+    //       );
+
+    //       // A) Replace chips with iframes
+    //       node.querySelectorAll('.embed-chip[data-embed-id]').forEach(chip => {
+    //         const id = chip.getAttribute('data-embed-id');
+    //         const emb = embeds.find(e => e.id === id);
+    //         if (!emb) return;
+
+    //         const ifr = document.createElement('iframe');
+    //         ifr.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
+    //         ifr.referrerPolicy = 'no-referrer';
+    //         ifr.style.width = '100%';
+    //         ifr.style.border = '1px solid var(--muted)';
+    //         ifr.style.minHeight = '360px';
+    //         // ifr.style.maxHeight = '1360px';
+    //         ifr.style.height = 'auto';
+    //         ifr.srcdoc = buildEmbedSrcdoc(emb);
+
+    //         chip.replaceWith(ifr);
+    //       });
+
+    //       // B) Append embeds that have NO chip reference
+    //       embeds.filter(e => !usedIds.has(e.id)).forEach(emb => {
+    //         const ifr = document.createElement('iframe');
+    //         ifr.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
+    //         ifr.referrerPolicy = 'no-referrer';
+    //         ifr.style.width = '100%';
+    //         ifr.style.border = '1px solid var(--muted)';
+    //         ifr.style.minHeight = '360px';
+    //         ifr.srcdoc = buildEmbedSrcdoc(emb);
+    //         node.appendChild(ifr);
+    //       });
+    //     })();
+
+    //     box.appendChild(node);
+    //     setNextEnabled(true);
+    //   }
+
+    //   else if (step.type === 'input') {
+    //     node = document.createElement('div');
+    //     node.innerHTML = `
+    //                     ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
+    //                     <input id="vw_inp" type="text" class="text-input"
+    //                           placeholder="${viewEscape(step.placeholder || '')}">
+    //                   `;
+
+    //     box.appendChild(node);
+
+    //     const inp = node.querySelector('#vw_inp');
+    //     const img = node.querySelector('.thumb');
+    //     inp.value = viewState.answers[step.id] || '';
+
+    //     const err = document.createElement('div');
+    //     err.className = 'error';
+    //     err.style.display = 'none';
+    //     (img ? img : inp).insertAdjacentElement(img ? 'beforebegin' : 'afterend', err);
+
+    //     function refreshInput() {
+    //       const res = validateValueForStep(step, inp.value);
+    //       err.textContent = res.ok ? '' : res.msg;
+    //       err.style.display = res.ok ? 'none' : '';
+    //       setNextEnabled(res.ok);
+    //     }
+    //     inp.addEventListener('input', () => {
+    //       viewState.answers[step.id] = inp.value;
+    //       refreshInput();
+    //     });
+    //     refreshInput();
+    //   }
+
+    //   else if (step.type === 'select') {
+    //     node = document.createElement('div');
+    //     node.innerHTML = `<h3>${viewEscape(step.title)}</h3>`;
+
+    //     const wrap = document.createElement('div');
+    //     wrap.className = 'vw-grid-sel';
+    //     node.appendChild(wrap);
+
+    //     const mode = step.mode === 'multi' ? 'multi' : 'single';
+    //     let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
+
+    //     (step.options || []).forEach(opt => {
+    //       const btn = document.createElement('button');
+    //       btn.className = 'vw-option';
+    //       btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
+
+    //       const isSel = mode === 'multi'
+    //         ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
+    //         : (sel && ((sel?.value ?? sel) === opt.value));
+
+    //       if (isSel) btn.classList.add('selected');
+
+    //       btn.addEventListener('click', () => {
+    //         if (mode === 'multi') {
+    //           sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
+    //           const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
+    //           if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
+    //           else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
+    //           viewState.answers[step.id] = sel;
+    //           refreshSelect();
+    //         } else {
+    //           viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
+    //           wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
+    //           btn.classList.add('selected');
+    //           refreshSelect();
+    //         }
+    //       });
+
+    //       wrap.appendChild(btn);
+    //     });
+
+    //     const err = document.createElement('div');
+    //     err.className = 'error';
+    //     err.style.display = 'none';
+    //     node.appendChild(err);
+
+    //     function refreshSelect() {
+    //       const res = validateValueForStep(step, viewState.answers[step.id]);
+    //       err.textContent = res.ok ? '' : res.msg;
+    //       err.style.display = res.ok ? 'none' : '';
+    //       setNextEnabled(res.ok);
+    //     }
+    //     refreshSelect();
+
+    //     box.appendChild(node);
+
+    //     // const hasSel = mode === 'multi' ? (Array.isArray(sel) && sel.length > 0) : Boolean(sel);
+    //     // console.log(`hasSel`, hasSel);
+    //     // setNextEnabled(hasSel);
+    //   }
+
+    //   else if (isEndStep(step)) {
+    //     node = document.createElement('div');
+    //     node.innerHTML = `${head || '<h3>Completed</h3>'}${viewBodyHtml(step.body)}`;
+    //     box.appendChild(node);
+    //     setNextEnabled(false);
+    //   }
+
+    //   else {
+    //     box.textContent = 'Unknown step type';
+    //     setNextEnabled(false);
+    //   }
+
+    //   // Prev state + handlers
+    //   document.getElementById('vwPrev').disabled =
+    //     !((viewState.history?.length || 0) > 0 || !!getFirstPredecessorId(getStarter(), viewState.selectedStepId));
+
+    //   const nextBtn = document.getElementById('vwNext');
+    //   nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
+    //   if (isEndStep(step)) {
+    //     nextBtn.disabled = true;
+    //   }
+
+    //   document.getElementById('vwPrev').onclick = () => goPrevious();
+
+    //   nextBtn.onclick = () => {
+    //     if (isEndStep(step)) return;
+
+    //     const stepsAll = getSteps();
+    //     const current = getStepById(viewState.selectedStepId);
+
+
+    //     // single-select branch
+    //     if (current?.type === 'select' && current.mode === 'single') {
+    //       const choice = viewState.answers[current.id];
+    //       if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
+    //         const toId = choice.next;
+    //         if (toId !== viewState.selectedStepId) {
+    //           recordTransition(viewState.selectedStepId, toId);   // ← add this
+    //           setSelectedStepById(toId);
+    //           renderViewStep(); renderGraph(); renderInspector();
+    //         }
+    //         return;
+    //       }
+
+    //     }
+
+
+    //     // step-level next
+    //     if (current?.next && stepsAll.find(x => x.id === current.next)) {
+    //       const toId = current.next;
+    //       if (toId !== viewState.selectedStepId) {
+    //         recordTransition(viewState.selectedStepId, toId);   // ← add this
+    //         setSelectedStepById(toId);
+    //         renderViewStep(); renderGraph(); renderInspector();
+    //       }
+    //       return;
+    //     }
+
+    //     renderViewStep(); renderGraph(); renderInspector();
+    //   };
+    // }
+
     function renderViewStep() {
-      const st = sop.starters[viewState.starterIdx];
-      const steps = st.steps || [];
-      let i = getStepIndexById(steps, viewState.selectedStepId);
+  const st = sop.starters[viewState.starterIdx];
+  const steps = st.steps || [];
+  let i = getStepIndexById(steps, viewState.selectedStepId);
+  if (i < 0) i = 0;
 
-      const box = document.getElementById('vwStep');
-      box.innerHTML = '';
-      const step = steps[i];
-      if (!step) { setNextEnabled(false); return; }
+  const box = document.getElementById('vwStep');
+  box.innerHTML = '';
 
-      // one header everywhere
-      // const head = step.title ? `<h3 class="vw-title">${viewEscape(step.title)}</h3>` : '';
-      const head = step.title
-        ? `<h3 class="vw-title" id="vw-title-${step.id}">${viewEscape(step.title)}</h3><hr class="vw-hr">`
-        : '';
-      const imgHtml = step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : '';
+  const step = steps[i];
+  if (!step) { setNextEnabled(false); return; }
 
-      let node;
+  const frag = document.createDocumentFragment();
 
-      if (step.type === 'instruction') {
-        node = document.createElement('div');
-        node.innerHTML = `${head}${renderBody(step.body)}${imgHtml}`;
-        // AFTER: node.innerHTML = `${head}${renderBody(step.body)}${imgHtml}`;
-        (function renderRunnableEmbeds() {
-          const embeds = Array.isArray(step.embeds) ? step.embeds : [];
+  // Header (kept your style; added id for a11y)
+  const headHtml = step.title
+    ? `<h3 class="vw-title" id="vw-title-${step.id}">${viewEscape(step.title)}</h3><hr class="vw-hr">`
+    : '';
+  const imgHtml = step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : '';
 
-          // collect chip IDs BEFORE we replace them
-          const usedIds = new Set(
-            [...node.querySelectorAll('.embed-chip[data-embed-id]')]
-              .map(c => c.getAttribute('data-embed-id'))
-          );
+  // ---------- helpers ----------
+  const EMBED_MIN_H = 360;
+  const EMBED_MAX_H = 1600; // cap to stop runaway growth
+  function createEmbedIframe(emb) {
+    const ifr = document.createElement('iframe');
+    ifr.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
+    ifr.referrerPolicy = 'no-referrer';
+    ifr.style.width = '100%';
+    ifr.style.border = '1px solid var(--muted)';
+    ifr.style.minHeight = EMBED_MIN_H + 'px';
+    ifr.style.maxHeight = EMBED_MAX_H + 'px';
+    ifr.style.height = 'auto';
+    ifr.style.overflow = 'auto'; // internal scroll beyond cap
+    ifr.srcdoc = buildEmbedSrcdoc(emb);
+    return ifr;
+  }
 
-          // A) Replace chips with iframes
-          node.querySelectorAll('.embed-chip[data-embed-id]').forEach(chip => {
-            const id = chip.getAttribute('data-embed-id');
-            const emb = embeds.find(e => e.id === id);
-            if (!emb) return;
+  function renderEmbeds(intoNode) {
+    const embeds = Array.isArray(step.embeds) ? step.embeds : [];
 
-            const ifr = document.createElement('iframe');
-            ifr.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
-            ifr.referrerPolicy = 'no-referrer';
-            ifr.style.width = '100%';
-            ifr.style.border = '1px solid var(--muted)';
-            ifr.style.minHeight = '360px';
-            ifr.srcdoc = buildEmbedSrcdoc(emb);
+    // collect chip IDs BEFORE replacing
+    const usedIds = new Set(
+      [...intoNode.querySelectorAll('.embed-chip[data-embed-id]')]
+        .map(c => c.getAttribute('data-embed-id'))
+    );
 
-            chip.replaceWith(ifr);
-          });
+    // A) Replace chips with iframes
+    intoNode.querySelectorAll('.embed-chip[data-embed-id]').forEach(chip => {
+      const id = chip.getAttribute('data-embed-id');
+      const emb = embeds.find(e => e.id === id);
+      if (!emb) return;
+      const ifr = createEmbedIframe(emb);
+      chip.replaceWith(ifr);
+    });
 
-          // B) Append embeds that have NO chip reference
-          embeds.filter(e => !usedIds.has(e.id)).forEach(emb => {
-            const ifr = document.createElement('iframe');
-            ifr.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
-            ifr.referrerPolicy = 'no-referrer';
-            ifr.style.width = '100%';
-            ifr.style.border = '1px solid var(--muted)';
-            ifr.style.minHeight = '360px';
-            ifr.srcdoc = buildEmbedSrcdoc(emb);
-            node.appendChild(ifr);
-          });
-        })();
+    // B) Append embeds with no chip reference
+    embeds.filter(e => !usedIds.has(e.id)).forEach(emb => {
+      const ifr = createEmbedIframe(emb);
+      intoNode.appendChild(ifr);
+    });
+  }
 
-        box.appendChild(node);
-        setNextEnabled(true);
-      }
+  // ---------- body by type ----------
+  let node;
 
-      else if (step.type === 'input') {
-        node = document.createElement('div');
-        node.innerHTML = `
-                        ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
-                        <input id="vw_inp" type="text" class="text-input"
-                              placeholder="${viewEscape(step.placeholder || '')}">
-                      `;
+  if (step.type === 'instruction') {
+    node = document.createElement('div');
+    node.innerHTML = `${headHtml}${renderBody(step.body)}${imgHtml}`;
+    renderEmbeds(node);
+    frag.appendChild(node);
+    setNextEnabled(true);
+  }
 
-        box.appendChild(node);
+  else if (step.type === 'input') {
+    node = document.createElement('div');
+    node.innerHTML = `
+      ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
+      <input id="vw_inp" type="text" class="text-input"
+             placeholder="${viewEscape(step.placeholder || '')}">
+      ${imgHtml}
+    `;
+    frag.appendChild(node);
 
-        const inp = node.querySelector('#vw_inp');
-        const img = node.querySelector('.thumb');
-        inp.value = viewState.answers[step.id] || '';
+    const inp = node.querySelector('#vw_inp');
+    const img = node.querySelector('.thumb');
+    inp.value = viewState.answers[step.id] || '';
 
-        const err = document.createElement('div');
-        err.className = 'error';
-        err.style.display = 'none';
-        (img ? img : inp).insertAdjacentElement(img ? 'beforebegin' : 'afterend', err);
+    const err = document.createElement('div');
+    err.className = 'error';
+    err.style.display = 'none';
+    (img ? img : inp).insertAdjacentElement(img ? 'beforebegin' : 'afterend', err);
 
-        function refreshInput() {
-          const res = validateValueForStep(step, inp.value);
-          err.textContent = res.ok ? '' : res.msg;
-          err.style.display = res.ok ? 'none' : '';
-          setNextEnabled(res.ok);
+    function refreshInput() {
+      const res = validateValueForStep(step, inp.value);
+      err.textContent = res.ok ? '' : res.msg;
+      err.style.display = res.ok ? 'none' : '';
+      setNextEnabled(res.ok);
+    }
+    inp.addEventListener('input', () => {
+      viewState.answers[step.id] = inp.value;
+      refreshInput();
+    });
+    refreshInput();
+  }
+
+  else if (step.type === 'select') {
+    node = document.createElement('div');
+    node.innerHTML = headHtml || `<h3>${viewEscape(step.title || '')}</h3>`;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'vw-grid-sel';
+    node.appendChild(wrap);
+
+    const mode = step.mode === 'multi' ? 'multi' : 'single';
+    let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
+
+    (step.options || []).forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'vw-option';
+      btn.type = 'button';
+      btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
+
+      const isSel = mode === 'multi'
+        ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
+        : (sel && ((sel?.value ?? sel) === opt.value));
+
+      if (isSel) btn.classList.add('selected');
+
+      btn.addEventListener('click', () => {
+        if (mode === 'multi') {
+          sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
+          const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
+          if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
+          else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
+          viewState.answers[step.id] = sel;
+          refreshSelect();
+        } else {
+          viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
+          wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
+          btn.classList.add('selected');
+          refreshSelect();
         }
-        inp.addEventListener('input', () => {
-          viewState.answers[step.id] = inp.value;
-          refreshInput();
-        });
-        refreshInput();
-      }
+      });
 
-      else if (step.type === 'select') {
-        node = document.createElement('div');
-        node.innerHTML = `<h3>${viewEscape(step.title)}</h3>`;
+      wrap.appendChild(btn);
+    });
 
-        const wrap = document.createElement('div');
-        wrap.className = 'vw-grid-sel';
-        node.appendChild(wrap);
+    const err = document.createElement('div');
+    err.className = 'error';
+    err.style.display = 'none';
+    node.appendChild(err);
 
-        const mode = step.mode === 'multi' ? 'multi' : 'single';
-        let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
+    function refreshSelect() {
+      const res = validateValueForStep(step, viewState.answers[step.id]);
+      err.textContent = res.ok ? '' : res.msg;
+      err.style.display = res.ok ? 'none' : '';
+      setNextEnabled(res.ok);
+    }
+    refreshSelect();
 
-        (step.options || []).forEach(opt => {
-          const btn = document.createElement('button');
-          btn.className = 'vw-option';
-          btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
+    frag.appendChild(node);
+  }
 
-          const isSel = mode === 'multi'
-            ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
-            : (sel && ((sel?.value ?? sel) === opt.value));
+  else if (isEndStep(step)) {
+    node = document.createElement('div');
+    node.innerHTML = `${headHtml || '<h3>Completed</h3>'}${viewBodyHtml(step.body)}`;
+    frag.appendChild(node);
+    setNextEnabled(false);
+  }
 
-          if (isSel) btn.classList.add('selected');
+  else {
+    const warn = document.createElement('div');
+    warn.textContent = 'Unknown step type';
+    frag.appendChild(warn);
+    setNextEnabled(false);
+  }
 
-          btn.addEventListener('click', () => {
-            if (mode === 'multi') {
-              sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
-              const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
-              if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
-              else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
-              viewState.answers[step.id] = sel;
-              refreshSelect();
-            } else {
-              viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
-              wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
-              btn.classList.add('selected');
-              refreshSelect();
-            }
-          });
+  // ---------- mount ----------
+  box.appendChild(frag);
 
-          wrap.appendChild(btn);
-        });
+  // ---------- nav controls ----------
+  const prevBtn = document.getElementById('vwPrev');
+  const nextBtn = document.getElementById('vwNext');
 
-        const err = document.createElement('div');
-        err.className = 'error';
-        err.style.display = 'none';
-        node.appendChild(err);
+  prevBtn.disabled = !((viewState.history?.length || 0) > 0 || !!getFirstPredecessorId(getStarter(), viewState.selectedStepId));
 
-        function refreshSelect() {
-          const res = validateValueForStep(step, viewState.answers[step.id]);
-          err.textContent = res.ok ? '' : res.msg;
-          err.style.display = res.ok ? 'none' : '';
-          setNextEnabled(res.ok);
+  nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
+  nextBtn.disabled = !!isEndStep(step);
+
+  prevBtn.onclick = () => goPrevious();
+
+  nextBtn.onclick = () => {
+    if (isEndStep(step)) return;
+
+    const stepsAll = getSteps();
+    const current = getStepById(viewState.selectedStepId);
+
+    // single-select "branch next"
+    if (current?.type === 'select' && current.mode === 'single') {
+      const choice = viewState.answers[current.id];
+      if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
+        const toId = choice.next;
+        if (toId !== viewState.selectedStepId) {
+          recordTransition(viewState.selectedStepId, toId);
+          setSelectedStepById(toId);
+          renderViewStep(); renderGraph(); renderInspector();
         }
-        refreshSelect();
-
-        box.appendChild(node);
-
-        // const hasSel = mode === 'multi' ? (Array.isArray(sel) && sel.length > 0) : Boolean(sel);
-        // console.log(`hasSel`, hasSel);
-        // setNextEnabled(hasSel);
+        return;
       }
-
-      else if (isEndStep(step)) {
-        node = document.createElement('div');
-        node.innerHTML = `${head || '<h3>Completed</h3>'}${viewBodyHtml(step.body)}`;
-        box.appendChild(node);
-        setNextEnabled(false);
-      }
-
-      else {
-        box.textContent = 'Unknown step type';
-        setNextEnabled(false);
-      }
-
-      // Prev state + handlers
-      document.getElementById('vwPrev').disabled =
-        !((viewState.history?.length || 0) > 0 || !!getFirstPredecessorId(getStarter(), viewState.selectedStepId));
-
-      const nextBtn = document.getElementById('vwNext');
-      nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
-      if (isEndStep(step)) {
-        nextBtn.disabled = true;
-      }
-
-      document.getElementById('vwPrev').onclick = () => goPrevious();
-
-      nextBtn.onclick = () => {
-        if (isEndStep(step)) return;
-
-        const stepsAll = getSteps();
-        const current = getStepById(viewState.selectedStepId);
-
-
-        // single-select branch
-        if (current?.type === 'select' && current.mode === 'single') {
-          const choice = viewState.answers[current.id];
-          if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
-            const toId = choice.next;
-            if (toId !== viewState.selectedStepId) {
-              recordTransition(viewState.selectedStepId, toId);   // ← add this
-              setSelectedStepById(toId);
-              renderViewStep(); renderGraph(); renderInspector();
-            }
-            return;
-          }
-
-        }
-
-
-        // step-level next
-        if (current?.next && stepsAll.find(x => x.id === current.next)) {
-          const toId = current.next;
-          if (toId !== viewState.selectedStepId) {
-            recordTransition(viewState.selectedStepId, toId);   // ← add this
-            setSelectedStepById(toId);
-            renderViewStep(); renderGraph(); renderInspector();
-          }
-          return;
-        }
-
-        renderViewStep(); renderGraph(); renderInspector();
-      };
     }
 
+    // step-level next
+    if (current?.next && stepsAll.find(x => x.id === current.next)) {
+      const toId = current.next;
+      if (toId !== viewState.selectedStepId) {
+        recordTransition(viewState.selectedStepId, toId);
+        setSelectedStepById(toId);
+        renderViewStep(); renderGraph(); renderInspector();
+      }
+      return;
+    }
+
+    renderViewStep(); renderGraph(); renderInspector();
+  };
+}
+
+
     function refreshMiniMap(fit = true) {
+      console.log('refresh mini map');
       const dlg  = document.getElementById('vwMapDlg');
       const host = document.getElementById('vwMiniGraph');
       if (!dlg || dlg.hidden || !host) return;
@@ -8581,67 +8772,503 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       // const hadContent = !!host.firstChild;
       host.innerHTML = '';
       renderGraphInto(host, {
-        onNodeClick(id) { if (typeof navigateToStepId === 'function') navigateToStepId(id); }
+        onNodeClick(id) { if (typeof navigateToStepId === 'function') navigateToStepId(id);   },
       });
     }
 
     // 1) render on state change
-(function miniMapAutoSync() {
-  if (window.__miniSync) return;
+// (function miniMapAutoSync() {
+//   if (window.__miniSync) return;
 
-  function scheduleMiniRefresh(fitFirst=false) {
-    // let main UI settle a frame, then refresh
-    requestAnimationFrame(() => { try { refreshMiniMap(fitFirst); } catch {} });
-  }
+//   function scheduleMiniRefresh(fitFirst=false) {
+//     // let main UI settle a frame, then refresh
+//     requestAnimationFrame(() => { try { refreshMiniMap(fitFirst); } catch {} });
+//   }
 
-  // Hook viewState.selectedStepId (source of truth)
-  const st = (window.viewState ||= {});
-  let _sel = st.selectedStepId;
-  try {
-    Object.defineProperty(st, 'selectedStepId', {
-      configurable: true,
-      enumerable: true,
-      get() { return _sel; },
-      set(v) { _sel = v; scheduleMiniRefresh(false); },
-    });
-  } catch { /* if already accessor, we still have the other hooks below */ }
+//   // Hook viewState.selectedStepId (source of truth)
+//   const st = (window.viewState ||= {});
+//   let _sel = st.selectedStepId;
+//   try {
+//     Object.defineProperty(st, 'selectedStepId', {
+//       configurable: true,
+//       enumerable: true,
+//       get() { return _sel; },
+//       set(v) { _sel = v; scheduleMiniRefresh(false); },
+//     });
+//   } catch { /* if already accessor, we still have the other hooks below */ }
 
-  // 2) also hook navigateToStepId (covers viewers/other code paths)
-  const origNav = window.navigateToStepId;
-  if (typeof origNav === 'function') {
-    window.navigateToStepId = function (...args) {
-      const out = origNav.apply(this, args);
-      scheduleMiniRefresh(false);
-      return out;
-    };
-  }
+//   // 2) also hook navigateToStepId (covers viewers/other code paths)
+//   const origNav = window.navigateToStepId;
+//   if (typeof origNav === 'function') {
+//     window.navigateToStepId = function (...args) {
+//       const out = origNav.apply(this, args);
+//       scheduleMiniRefresh(false);
+//       return out;
+//     };
+//   }
 
-  // 3) listen to common Next/Prev UI (broad selectors; harmless if absent)
-  const navSelectors = [
-    '#vwNext', '#vwPrev',
-    '[data-action="next"]', '[data-action="prev"]',
-    'button[aria-label="Next"]', 'button[aria-label="Prev"]'
-  ];
-  document.addEventListener('click', (e) => {
-    if (navSelectors.some(sel => e.target.closest(sel))) scheduleMiniRefresh(false);
+//   // 3) listen to common Next/Prev UI (broad selectors; harmless if absent)
+//   const navSelectors = [
+//     '#vwNext', '#vwPrev',
+//     '[data-action="next"]', '[data-action="prev"]',
+//     'button[aria-label="Next"]', 'button[aria-label="Prev"]'
+//   ];
+//   document.addEventListener('click', (e) => {
+//     if (navSelectors.some(sel => e.target.closest(sel))) scheduleMiniRefresh(false);
+//   });
+
+//   // 4) last resort: watch the main graph for selection/attribute changes
+//   const graphRoot =
+//     document.querySelector('.graph-canvas') ||
+//     document.getElementById('graphSvg') ||
+//     document.querySelector('#graph svg');
+//   if (graphRoot) {
+//     const mo = new MutationObserver(() => scheduleMiniRefresh(false));
+//     mo.observe(graphRoot, { subtree: true, attributes: true, attributeFilter: ['class', 'data-selected', 'step-id'] });
+//     window.__miniMo = mo;
+//   }
+
+//   window.__miniSync = true;
+// })();
+
+
+
+
+    // (function initMapDialog() {
+    //     const openBtn  = document.getElementById('vwOpenMap');
+    //     const dlg      = document.getElementById('vwMapDlg');
+    //     const closeBtn = document.getElementById('vwMapClose');
+    //     const dragBar  = document.getElementById('vwMapDrag');
+    //     const miniWrap = document.getElementById('vwMiniGraph');
+
+    //     if (!openBtn || !dlg || !closeBtn || !dragBar || !miniWrap) return;
+
+    //     function renderMini() {
+    //       // Reuse your shared renderer
+    //       renderGraphInto(miniWrap, {
+    //         onNodeClick(id) {
+    //           // match the main graph behavior
+    //           navigateToStepId(id);
+    //         }
+    //       });
+    //     }
+
+
+    //     // Replace your entire openBtn click handler with this:
+    //   openBtn.addEventListener('click', (e) => {
+    //     e.preventDefault();
+    //     dlg.hidden = false;
+
+    //     // center once
+    //     if (!dlg.__posSet) {
+    //       dlg.style.left = Math.max(24, (window.innerWidth - dlg.offsetWidth) / 2) + 'px';
+    //       dlg.style.top  = Math.max(24, (window.innerHeight - dlg.offsetHeight) / 2) + 'px';
+    //       dlg.style.right = 'auto'; dlg.style.bottom = 'auto';
+    //       dlg.__posSet = true;
+    //     }
+
+    //     // --- render (no listeners yet) ---
+    //     function renderMiniPreserveVB() {
+    //       const saved = dlg.__miniState ? { ...dlg.__miniState } : null;
+    //       miniWrap.innerHTML = '';
+    //       renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
+    //       let svg = miniWrap.querySelector('svg');
+    //       if (!svg) return null;
+
+    //       // ensure nodes clickable; edges inert
+    //       svg.querySelectorAll('[step-id], g.node, .node').forEach(el => {
+    //         el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
+    //       });
+    //       svg.querySelectorAll('.edge, path.edge, .handle, .connector').forEach(el => {
+    //         el.style.pointerEvents = 'none';
+    //       });
+
+    //       // init/restore viewBox state
+    //       if (!dlg.__miniState) {
+    //         const vb = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+    //         dlg.__miniState = (vb.length === 4 && vb.every(Number.isFinite))
+    //           ? { vx: vb[0], vy: vb[1], vw: vb[2], vh: vb[3] }
+    //           : { vx: 0, vy: 0, vw: 1000, vh: 1000 };
+    //       }
+    //       if (saved) dlg.__miniState = saved;
+    //       applyVB(svg);
+
+    //       return svg;
+    //     }
+
+    //     function getSvgRect(svg) {
+    //       const r = svg.getBoundingClientRect();
+    //       return (r.width >= 1 && r.height >= 1) ? r : null;
+    //     }
+    //     function applyVB(svg) {
+    //       const s = dlg.__miniState;
+    //       if (!s) return;
+    //       if (![s.vx, s.vy, s.vw, s.vh].every(Number.isFinite)) return;
+    //       if (s.vw <= 0 || s.vh <= 0) return;
+    //       svg.setAttribute('viewBox', `${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
+    //     }
+    //     function zoomAtMouseMini(svg, ev, factor) {
+    //       const s = dlg.__miniState, rect = getSvgRect(svg); if (!s || !rect) return;
+    //       const sx = ev.clientX - rect.left, sy = ev.clientY - rect.top;
+    //       const wx = s.vx + sx * (s.vw / rect.width);
+    //       const wy = s.vy + sy * (s.vh / rect.height);
+
+    //       const minScale = 0.1, maxScale = 8;
+    //       const cur = 1000 / s.vw;
+    //       const nxt = Math.min(maxScale, Math.max(minScale, cur * factor));
+    //       const eff = nxt / cur; if (eff === 1) return;
+
+    //       const vw2 = s.vw / eff, vh2 = s.vh / eff;
+    //       s.vx = wx - sx * (vw2 / rect.width);
+    //       s.vy = wy - sy * (vh2 / rect.height);
+    //       s.vw = vw2; s.vh = vh2;
+    //       applyVB(svg);
+    //     }
+    //     function panMini(svg, dxPx, dyPx) {
+    //       const s = dlg.__miniState, rect = getSvgRect(svg); if (!s || !rect) return;
+    //       const sx = s.vw / rect.width, sy = s.vh / rect.height;
+    //       s.vx += dxPx * sx; s.vy += dyPx * sy;
+    //       applyVB(svg);
+    //     }
+
+    //     // first render
+    //     let svg = renderMiniPreserveVB();
+    //     if (!svg) return;
+
+    //     // bind once per dialog lifetime (no rebinding on every click)
+    //     const viewport = dlg.querySelector('.mini-viewport') || miniWrap;
+    //     if (!dlg.__wheelBound) {
+    //       const onMiniWheel = (ev) => {
+    //         // Ctrl/Cmd = zoom at mouse
+    //         if (ev.ctrlKey || ev.metaKey) {
+    //           ev.preventDefault();
+    //           const step = Math.pow(1.0018, -ev.deltaY); // up => zoom in
+    //           zoomAtMouseMini(svg, ev, step);
+    //           return;
+    //         }
+    //         // pan (Shift = horizontal; up => left)
+    //         ev.preventDefault();
+    //         const dx = ev.shiftKey ? (-ev.deltaY) : ev.deltaX;
+    //         const dy = ev.shiftKey ? 0 : ev.deltaY;
+    //         panMini(svg, dx, dy);
+    //       };
+    //       viewport.addEventListener('wheel', onMiniWheel, { passive: false });
+    //       dlg.__wheelBound = true;
+    //     }
+
+    //     if (!dlg.__clickBound) {
+    //       let clicking = false; // reentrancy guard to avoid duplicate nav/refresh
+    //       const onMiniClick = (ev) => {
+    //         const hit = ev.target.closest?.('[step-id], g.node, .node'); if (!hit) return;
+    //         const id = hit.getAttribute?.('step-id') || hit.getAttribute?.('data-id') || hit.id; if (!id) return;
+
+    //         if (clicking) return; clicking = true;
+    //         try {
+    //           if (typeof navigateToStepId === 'function') navigateToStepId(id);
+    //           // re-render clone to reflect selection, but keep current VB and listeners
+    //           svg = renderMiniPreserveVB() || svg;
+    //         } finally {
+    //           // let layout settle before allowing another click
+    //           setTimeout(() => { clicking = false; }, 0);
+    //         }
+    //       };
+    //       viewport.addEventListener('click', onMiniClick);
+    //       dlg.__clickBound = true;
+    //     }
+    //   });
+
+
+
+    //     closeBtn.addEventListener('click', () => { dlg.hidden = true; });
+
+    //     // simple draggable header
+    //     (function makeDraggable(box, handle) {
+    //       let sx = 0, sy = 0, sl = 0, st = 0, moving = false;
+
+    //       handle.addEventListener('mousedown', (e) => {
+    //         moving = true;
+    //         sx = e.clientX; sy = e.clientY;
+    //         const rect = box.getBoundingClientRect();
+    //         sl = rect.left; st = rect.top;
+    //         document.addEventListener('mousemove', onMove);
+    //         document.addEventListener('mouseup', onUp, { once: true });
+    //         e.preventDefault();
+    //       });
+
+    //       function onMove(e) {
+    //         if (!moving) return;
+    //         const dx = e.clientX - sx, dy = e.clientY - sy;
+    //         box.style.left = Math.max(0, sl + dx) + 'px';
+    //         box.style.top  = Math.max(0, st + dy) + 'px';
+    //         box.style.right = 'auto'; box.style.bottom = 'auto';
+    //       }
+    //       function onUp() { moving = false; document.removeEventListener('mousemove', onMove); }
+    //     })(dlg, dragBar);
+
+    //     // zoom buttons in the dialog
+    //     dlg.querySelectorAll('.btn-sm[data-zoom]').forEach(btn => {
+    //       btn.addEventListener('click', () => {
+    //         const v = btn.getAttribute('data-zoom');
+    //         if (v === 'fit') renderMini(true);
+    //         else renderMini(false); // renderer reads your stored layout and viewBox
+    //       });
+    //     });
+
+    //   })();
+
+    
+
+    (function ensureCfmOverlay() {
+  if (window.__cfmOverlay) return;
+
+  const el = document.querySelector('.cfm-overlay') || (() => {
+    const d = document.createElement('div');
+    d.className = 'cfm-overlay';
+    d.style.display = 'none';
+    document.body.appendChild(d);
+    return d;
+  })();
+
+  el.style.zIndex = String(Math.max(9999, parseInt(getComputedStyle(el).zIndex || '9999',10)));
+
+  const stack = []; // LIFO of closer functions: (reason) => void
+
+  function show() { el.style.display = 'flex'; }
+  function hideIfEmpty() { if (stack.length === 0) el.style.display = 'none'; }
+
+  el.addEventListener('click', () => {
+    const top = stack[stack.length - 1];
+    if (typeof top === 'function') top('backdrop');
   });
 
-  // 4) last resort: watch the main graph for selection/attribute changes
-  const graphRoot =
-    document.querySelector('.graph-canvas') ||
-    document.getElementById('graphSvg') ||
-    document.querySelector('#graph svg');
-  if (graphRoot) {
-    const mo = new MutationObserver(() => scheduleMiniRefresh(false));
-    mo.observe(graphRoot, { subtree: true, attributes: true, attributeFilter: ['class', 'data-selected', 'data-step-id'] });
-    window.__miniMo = mo;
-  }
+  // block wheel/touch behind
+  const block = (e) => { if (stack.length) { e.preventDefault(); } };
+  el.addEventListener('wheel', block, { passive: false });
+  el.addEventListener('touchmove', block, { passive: false });
 
-  window.__miniSync = true;
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const top = stack[stack.length - 1];
+    if (!top) return;
+    e.preventDefault();
+    if (typeof top === 'function') top('esc');
+  });
+
+  window.__cfmOverlay = {
+    push(closerFn) { if (typeof closerFn === 'function') { stack.push(closerFn); show(); } },
+    remove(closerFn) {
+      const i = stack.lastIndexOf(closerFn);
+      if (i !== -1) stack.splice(i, 1);
+      hideIfEmpty();
+    },
+    bringToFront() { show(); },
+    _debugCount() { return stack.length; }
+  };
 })();
 
+/* ---------------- your dialog init (uses overlay manager) ---------------- */
+// (function initMapDialog() {
+//   const openBtn  = document.getElementById('vwOpenMap');
+//   const dlg      = document.getElementById('vwMapDlg');
+//   const closeBtn = document.getElementById('vwMapClose');
+//   const dragBar  = document.getElementById('vwMapDrag');
+//   const miniWrap = document.getElementById('vwMiniGraph');
 
-    (function initMapDialog() {
+//   if (!openBtn || !dlg || !closeBtn || !dragBar || !miniWrap) return;
+
+//   dlg.style.zIndex = String((parseInt(getComputedStyle(dlg).zIndex || '0',10) || 0) + 1 || 10000);
+//   dlg.setAttribute('role', 'dialog');
+//   dlg.setAttribute('aria-hidden', 'true');
+
+//   let lastFocus = null;
+
+//   // closer function stored in the overlay stack
+//   const closer = (reason) => {
+//     if (dlg.hidden) return;
+//     dlg.hidden = true;
+//     dlg.setAttribute('aria-hidden', 'true');
+//     dlg.removeAttribute('aria-modal');
+//     window.__cfmOverlay.remove(closer);
+//     if (lastFocus && typeof lastFocus.focus === 'function') setTimeout(() => lastFocus.focus(), 0);
+//   };
+
+//   function openDialog() {
+//     lastFocus = document.activeElement;
+//     dlg.hidden = false;
+//     dlg.removeAttribute('aria-hidden');
+//     dlg.setAttribute('aria-modal', 'true');
+
+//     if (!dlg.__posSet) {
+//       dlg.style.left   = Math.max(24, (window.innerWidth  - dlg.offsetWidth)  / 2) + 'px';
+//       dlg.style.top    = Math.max(24, (window.innerHeight - dlg.offsetHeight) / 2) + 'px';
+//       dlg.style.right  = 'auto';
+//       dlg.style.bottom = 'auto';
+//       dlg.__posSet = true;
+//     }
+
+//     setTimeout(() => {
+//       (closeBtn || dlg.querySelector('button,[href],[tabindex]:not([tabindex="-1"])'))?.focus?.();
+//     }, 0);
+
+//     window.__cfmOverlay.push(closer);
+//     window.__cfmOverlay.bringToFront();
+
+//     function renderMiniPreserveVB() {
+//       const saved = dlg.__miniState ? { ...dlg.__miniState } : null;
+//       miniWrap.innerHTML = '';
+//       renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
+//       let svg = miniWrap.querySelector('svg');
+//       console.log(`svg`, svg);
+//       if (!svg) return null;
+
+//       svg.querySelectorAll('[step-id], g.node, .node').forEach(el => {
+//         el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
+//       });
+//       svg.querySelectorAll('.edge, path.edge, .handle, .connector').forEach(el => {
+//         el.style.pointerEvents = 'none';
+//       });
+
+//       if (!dlg.__miniState) {
+//         const vb = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+//         dlg.__miniState = (vb.length === 4 && vb.every(Number.isFinite))
+//           ? { vx: vb[0], vy: vb[1], vw: vb[2], vh: vb[3] }
+//           : { vx: 0, vy: 0, vw: 1000, vh: 1000 };
+//       }
+//       if (saved) dlg.__miniState = saved;
+//       applyVB(svg);
+//       return svg;
+//     }
+
+//     function getSvgRect(svg) {
+//       const r = svg.getBoundingClientRect();
+//       return (r.width >= 1 && r.height >= 1) ? r : null;
+//     }
+    
+//     function zoomAtMouseMini(svg, ev, factor) {
+//       const s = dlg.__miniState, rect = getSvgRect(svg); if (!s || !rect) return;
+//       const sx = ev.clientX - rect.left, sy = ev.clientY - rect.top;
+//       const wx = s.vx + sx * (s.vw / rect.width);
+//       const wy = s.vy + sy * (s.vh / rect.height);
+
+//       const minScale = 0.1, maxScale = 8;
+//       const cur = 1000 / s.vw;
+//       const nxt = Math.min(maxScale, Math.max(minScale, cur * factor));
+//       const eff = nxt / cur; if (eff === 1) return;
+
+//       const vw2 = s.vw / eff, vh2 = s.vh / eff;
+//       s.vx = wx - sx * (vw2 / rect.width);
+//       s.vy = wy - sy * (vh2 / rect.height);
+//       s.vw = vw2; s.vh = vh2;
+//       applyVB(svg);
+//     }
+//     function panMini(svg, dxPx, dyPx) {
+//       // console.log(`dxPx`, dxPx);
+//       debugger;
+//       console.log('panMini is called ?');
+//       const s = dlg.__miniState, rect = getSvgRect(svg); 
+//       console.log(`s`, s);
+//       if (!s || !rect) return;
+//       const sx = s.vw / rect.width, sy = s.vh / rect.height;
+//       s.vx += dxPx * sx; s.vy += dyPx * sy;
+//       console.log('end of panMini');
+//       applyVB(svg);
+//     }
+
+//     function applyVB(svg) {
+//       console.log('applyVB is called');
+//       const s = dlg.__miniState;
+//       console.log(`s`, s);
+//       if (!s) return;
+//       console.log('111');
+//       if (![s.vx, s.vy, s.vw, s.vh].every(Number.isFinite)) return;
+//       console.log('222');
+//       if (s.vw <= 0 || s.vh <= 0) return;
+//       console.log(`svg`, svg);
+//       console.log(`${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
+//       svg.setAttribute('viewBox', `${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
+//     }
+
+//     let svg = renderMiniPreserveVB();
+//     if (!svg) return;
+
+//     const viewport = dlg.querySelector('.mini-viewport') || miniWrap;
+//     if (!dlg.__wheelBound) {
+//       const onMiniWheel = (ev) => {
+//         if (ev.ctrlKey || ev.metaKey) {
+//           ev.preventDefault();
+//           const step = Math.pow(1.0018, -ev.deltaY);
+//           zoomAtMouseMini(svg, ev, step);
+//           return;
+//         }
+//         ev.preventDefault();
+//         const dx = ev.shiftKey ? (-ev.deltaY) : ev.deltaX;
+//         const dy = ev.shiftKey ? 0 : ev.deltaY;
+//         panMini(svg, dx, dy);
+//       };
+//       viewport.addEventListener('wheel', onMiniWheel, { passive: false });
+//       dlg.__wheelBound = true;
+//     }
+
+//     if (!dlg.__clickBound) {
+//       let clicking = false;
+//       const onMiniClick = (ev) => {
+//         const hit = ev.target.closest?.('[step-id], g.node, .node'); if (!hit) return;
+//         const id = hit.getAttribute?.('step-id') || hit.getAttribute?.('data-id') || hit.id; if (!id) return;
+//         if (clicking) return; clicking = true;
+//         try {
+//           if (typeof navigateToStepId === 'function') navigateToStepId(id);
+//           svg = renderMiniPreserveVB() || svg;
+//         } finally {
+//           setTimeout(() => { clicking = false; }, 0);
+//         }
+//       };
+//       viewport.addEventListener('click', onMiniClick);
+//       dlg.__clickBound = true;
+//     }
+//   }
+
+//   openBtn.addEventListener('click', (e) => { e.preventDefault(); openDialog(); });
+//   closeBtn.addEventListener('click', () => closer('button'));
+
+//   (function makeDraggable(box, handle) {
+//     let sx = 0, sy = 0, sl = 0, st = 0, moving = false;
+
+//     handle.addEventListener('mousedown', (e) => {
+//       moving = true;
+//       sx = e.clientX; sy = e.clientY;
+//       const rect = box.getBoundingClientRect();
+//       sl = rect.left; st = rect.top;
+//       document.addEventListener('mousemove', onMove);
+//       document.addEventListener('mouseup', onUp, { once: true });
+//       e.preventDefault();
+//     });
+
+//     function onMove(e) {
+//       if (!moving) return;
+//       const dx = e.clientX - sx, dy = e.clientY - sy;
+//       box.style.left = Math.max(0, sl + dx) + 'px';
+//       box.style.top  = Math.max(0, st + dy) + 'px';
+//       box.style.right = 'auto'; box.style.bottom = 'auto';
+//     }
+//     function onUp() { moving = false; document.removeEventListener('mousemove', onMove); }
+//   })(dlg, dragBar);
+
+//   dlg.querySelectorAll('.btn-sm[data-zoom]').forEach(btn => {
+//     btn.addEventListener('click', () => {
+//       const v = btn.getAttribute('data-zoom');
+//       if (v === 'fit') {
+//         miniWrap.innerHTML = '';
+//         renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
+//       } else {
+//         miniWrap.innerHTML = '';
+//         renderGraphInto(miniWrap, { readonly: true, compact: true, fit: false });
+//       }
+//     });
+//   });
+
+// })();
+
+(function initMapDialog() {
   const openBtn  = document.getElementById('vwOpenMap');
   const dlg      = document.getElementById('vwMapDlg');
   const closeBtn = document.getElementById('vwMapClose');
@@ -8650,94 +9277,244 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
   if (!openBtn || !dlg || !closeBtn || !dragBar || !miniWrap) return;
 
-  function renderMini() {
-    // Reuse your shared renderer
-    renderGraphInto(miniWrap, {
-      onNodeClick(id) {
-        // match the main graph behavior
-        navigateToStepId(id);
-      }
-    });
-  }
+  dlg.style.zIndex = String((parseInt(getComputedStyle(dlg).zIndex || '0',10) || 0) + 1 || 10000);
+  dlg.setAttribute('role', 'dialog');
+  dlg.setAttribute('aria-hidden', 'true');
 
-  openBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+  let lastFocus = null;
+
+  // ---------- overlay-backed closer ----------
+  const closer = (reason) => {
+    if (dlg.hidden) return;
+    dlg.hidden = true;
+    dlg.setAttribute('aria-hidden', 'true');
+    dlg.removeAttribute('aria-modal');
+    dlg.__miniSvg = null; // important—avoid stale refs on reopen
+    window.__cfmOverlay?.remove?.(closer);
+    if (lastFocus && typeof lastFocus.focus === 'function') setTimeout(() => lastFocus.focus(), 0);
+  };
+
+  function openDialog() {
+    lastFocus = document.activeElement;
     dlg.hidden = false;
-    refreshMiniMap(true);
+    dlg.removeAttribute('aria-hidden');
+    dlg.setAttribute('aria-modal', 'true');
 
-    // center on first open
     if (!dlg.__posSet) {
-      dlg.style.left = Math.max(24, (window.innerWidth  - dlg.offsetWidth ) / 2) + 'px';
-      dlg.style.top  = Math.max(24, (window.innerHeight - dlg.offsetHeight) / 2) + 'px';
-      dlg.style.right = 'auto';
+      dlg.style.left   = Math.max(24, (window.innerWidth  - dlg.offsetWidth)  / 2) + 'px';
+      dlg.style.top    = Math.max(24, (window.innerHeight - dlg.offsetHeight) / 2) + 'px';
+      dlg.style.right  = 'auto';
       dlg.style.bottom = 'auto';
       dlg.__posSet = true;
     }
-    miniWrap.innerHTML = '';
-    renderMini(true); // fit initially
-  });
 
-  closeBtn.addEventListener('click', () => { dlg.hidden = true; });
+    setTimeout(() => {
+      (closeBtn || dlg.querySelector('button,[href],[tabindex]:not([tabindex="-1"])'))?.focus?.();
+    }, 0);
 
-  // simple draggable header
+    window.__cfmOverlay?.push?.(closer);
+    window.__cfmOverlay?.bringToFront?.();
+
+    // ---- render mini (and store live svg) ----
+    const svg = renderMiniPreserveVB();
+    if (!svg) return;
+
+    const viewport = dlg.querySelector('.mini-viewport') || miniWrap;
+
+    // -------- geometry helpers (use viewport, not svg) --------
+    function getViewportRect() {
+      const r = viewport.getBoundingClientRect();
+      return (r.width >= 1 && r.height >= 1) ? r : null;
+    }
+    function getLiveSvg() { return dlg.__miniSvg || miniWrap.querySelector('svg'); }
+
+    function applyVB(svgEl) {
+      // const s = dlg.__miniState;
+      const s = dlg.__miniState;
+
+      if (!s) return;
+      if (![s.vx, s.vy, s.vw, s.vh].every(Number.isFinite)) return;
+      if (s.vw <= 0 || s.vh <= 0) return;
+      svgEl.setAttribute('viewBox', `${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
+    }
+
+    function zoomAtMouseMini(ev, factor) {
+      const s = dlg.__miniState, rect = getViewportRect(); if (!s || !rect) return;
+      // const svgEl = getLiveSvg(); if (!svgEl) return;
+      // const s = dlg.__miniState; if (!s) return;
+      // const rect = getViewportRect();
+      if (!rect) { requestAnimationFrame(() => zoomAtMouseMini(ev, factor)); return; }
+
+      const sx = ev.clientX - rect.left, sy = ev.clientY - rect.top;
+      const wx = s.vx + sx * (s.vw / rect.width);
+      const wy = s.vy + sy * (s.vh / rect.height);
+
+      const minScale = 0.1, maxScale = 8;
+      const cur = 1000 / s.vw;
+      const nxt = Math.min(maxScale, Math.max(minScale, cur * factor));
+      const eff = nxt / cur; if (eff === 1) return;
+
+      const vw2 = s.vw / eff, vh2 = s.vh / eff;
+      s.vx = wx - sx * (vw2 / rect.width);
+      s.vy = wy - sy * (vh2 / rect.height);
+      s.vw = vw2; s.vh = vh2;
+      // applyVB(svgEl);
+      applyVB(getLiveSvg());
+    }
+
+    // function zoomAtMouseMini(ev, factor) {
+    //   const s = dlg.__miniState, rect = getViewportRect(); if (!s || !rect) return;
+    //   // ... compute new vw/vh and vx/vy
+    //   s.vx = /* ... */; s.vy = /* ... */; s.vw = vw2; s.vh = vh2;  // starterId stays
+    // }
+
+function isMiniForCurrentStarter() {
+  return !!(dlg.__miniState && dlg.__miniState.starterId === viewState.starterIdx);
+}
+
+
+    // function panMini(dxPx, dyPx) {
+    //   const svgEl = getLiveSvg(); if (!svgEl) return;
+    //   const s = dlg.__miniState; if (!s) return;
+    //   const rect = getViewportRect();
+    //   if (!rect) { requestAnimationFrame(() => panMini(dxPx, dyPx)); return; }
+
+    //   const sx = s.vw / rect.width, sy = s.vh / rect.height;
+    //   s.vx += dxPx * sx; s.vy += dyPx * sy;
+    //   applyVB(svgEl);
+    // }
+    function panMini(dxPx, dyPx) {
+      const s = dlg.__miniState, rect = getViewportRect(); if (!s || !rect) return;
+      const sx = s.vw / rect.width, sy = s.vh / rect.height;
+      s.vx += dxPx * sx; s.vy += dyPx * sy;       // starterId stays untouched
+      applyVB(getLiveSvg());
+    }
+
+    // -------- bind once; use live svg + viewport rect each time --------
+    if (!dlg.__wheelBound) {
+      const onMiniWheel = (ev) => {
+        // Ctrl/Cmd => zoom at mouse; otherwise pan (Shift forces horizontal)
+        ev.preventDefault();
+        if (ev.ctrlKey || ev.metaKey) {
+          const step = Math.pow(1.0018, -ev.deltaY);
+          zoomAtMouseMini(ev, step);
+          return;
+        }
+        const dx = ev.shiftKey ? (-ev.deltaY) : ev.deltaX;
+        const dy = ev.shiftKey ? 0 : ev.deltaY;
+        panMini(dx, dy);
+      };
+      viewport.addEventListener('wheel', onMiniWheel, { passive: false });
+      dlg.__wheelBound = true;
+    }
+
+    if (!dlg.__clickBound) {
+      let clicking = false;
+      const onMiniClick = (ev) => {
+        const hit = ev.target.closest?.('[step-id], g.node, .node'); if (!hit) return;
+        const id = hit.getAttribute?.('step-id') || hit.getAttribute?.('data-id') || hit.id; if (!id) return;
+        if (clicking) return; clicking = true;
+        try {
+          if (typeof navigateToStepId === 'function') navigateToStepId(id);
+          renderMiniPreserveVB(); // refresh + keep viewBox
+        } finally {
+          setTimeout(() => { clicking = false; }, 0);
+        }
+      };
+      viewport.addEventListener('click', onMiniClick);
+      dlg.__clickBound = true;
+    }
+  }
+
+  // ---------- open/close ----------
+  openBtn.addEventListener('click', (e) => { e.preventDefault(); openDialog(); });
+  closeBtn.addEventListener('click', () => closer('button'));
+
+  // ---------- drag header ----------
   (function makeDraggable(box, handle) {
-    let sx = 0, sy = 0, sl = 0, st = 0, moving = false;
-
+    let sx=0, sy=0, sl=0, st=0, moving=false;
     handle.addEventListener('mousedown', (e) => {
       moving = true;
       sx = e.clientX; sy = e.clientY;
-      const rect = box.getBoundingClientRect();
-      sl = rect.left; st = rect.top;
+      const rect = box.getBoundingClientRect(); sl = rect.left; st = rect.top;
       document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp, { once: true });
+      document.addEventListener('mouseup', onUp, { once:true });
       e.preventDefault();
     });
-
-    function onMove(e) {
+    function onMove(e){
       if (!moving) return;
       const dx = e.clientX - sx, dy = e.clientY - sy;
       box.style.left = Math.max(0, sl + dx) + 'px';
       box.style.top  = Math.max(0, st + dy) + 'px';
-      box.style.right = 'auto'; box.style.bottom = 'auto';
+      box.style.right='auto'; box.style.bottom='auto';
     }
-    function onUp() { moving = false; document.removeEventListener('mousemove', onMove); }
+    function onUp(){ moving=false; document.removeEventListener('mousemove', onMove); }
   })(dlg, dragBar);
 
-  // zoom buttons in the dialog
+  // ---------- zoom buttons ----------
   dlg.querySelectorAll('.btn-sm[data-zoom]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const v = btn.getAttribute('data-zoom');
-      if (v === 'fit') renderMini(true);
-      else renderMini(false); // renderer reads your stored layout and viewBox
+      const fit = btn.getAttribute('data-zoom') === 'fit';
+      miniWrap.innerHTML = '';
+      renderGraphInto(miniWrap, { readonly:true, compact:true, fit });
+      const svg = miniWrap.querySelector('svg');
+      if (svg) dlg.__miniSvg = svg;
     });
   });
+
+  // ---------- renderer (stores live svg + preserves VB) ----------
+  // function renderMiniPreserveVB() {
+  
+  function renderMiniPreserveVB(reset = false) {
+  const curStarterId = viewState.starterIdx;
+
+  // If we have a state but it's for a different starter, drop it and force reset
+  if (dlg.__miniState && dlg.__miniState.starterId !== curStarterId) {
+    dlg.__miniState = null;
+    reset = true;
+  }
+
+  const saved = (!reset && dlg.__miniState) ? { ...dlg.__miniState } : null;
+
+  miniWrap.innerHTML = '';
+  renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
+
+  const svg = miniWrap.querySelector('svg');
+  if (!svg) return null;
+
+  // nodes clickable; edges inert
+  svg.querySelectorAll('[step-id], g.node, .node').forEach(el => {
+    el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
+  });
+  svg.querySelectorAll('.edge, path.edge, .handle, .connector').forEach(el => {
+    el.style.pointerEvents = 'none';
+  });
+
+  // Base VB from SVG (or default)
+  const vb = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+  const base = (vb.length === 4 && vb.every(Number.isFinite))
+    ? { vx: vb[0], vy: vb[1], vw: vb[2], vh: vb[3] }
+    : { vx: 0, vy: 0, vw: 1000, vh: 1000 };
+
+  // Reuse saved if allowed, else start fresh — and always attach starterId
+  dlg.__miniState = saved ? { ...saved, starterId: curStarterId }
+                          : { ...base,  starterId: curStarterId };
+
+  // Apply & stash live svg
+  svg.setAttribute('viewBox', `${dlg.__miniState.vx} ${dlg.__miniState.vy} ${dlg.__miniState.vw} ${dlg.__miniState.vh}`);
+  dlg.__miniSvg = svg;
+
+  return svg;
+}
+
 
 })();
 
     function buildEmbedSrcdoc(emb) {
       const raw = String(emb.html || '');
 
-      // const autosize = `
-      //                   <script>
-          //                   (function(){
-          //                     function send(){
-          //                       var h = Math.max(
-          //                         document.documentElement.scrollHeight,
-          //                         document.body ? document.body.scrollHeight : 0
-          //                       );
-          //                       parent.postMessage({__sop_embed_resize:1,h:h}, '*');
-          //                     }
-          //                     new ResizeObserver(send).observe(document.documentElement);
-          //                     window.addEventListener('load', send);
-          //                     setTimeout(send, 80);
-          //                   })();
-          //                   <\/script>`;
+      //<script>
 
-          // const autosize =
-          //   '<script>(function(){' +
-          //   'function send(){var h=Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0);parent.postMessage({__sop_embed_resize:1,h:h},"*");}' +
-          //   'new ResizeObserver(send).observe(document.documentElement);window.addEventListener("load",send);setTimeout(send,80);' +
-          //   '})();<' + '/script>';
 
           const autosize = `
                             <script>
@@ -8807,44 +9584,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           return pred;
         }
 
-        // function pushToHistory() {
-        //   // save current position before moving forward
-        //   viewState.history.push(viewState.stepIdx);
-
-        //   // branch via single-select option
-        //   if (currentStep && currentStep.type === 'select' && currentStep.mode === 'single') {
-        //     const choice = viewState.answers[currentStep.id];
-        //     if (choice && choice.next) {
-        //       const to = steps.findIndex(x => x.id === choice.next);
-        //       if (to >= 0) {
-        //         viewState.stepIdx = to;
-        //         viewState.selectedStepId = steps[to]?.id;   // ← id, not index
-        //         renderViewStep();
-        //         return;
-        //       }
-        //     }
-        //   }
-
-        //   // step-level next
-        //   if (currentStep && currentStep.next) {
-        //     const to = steps.findIndex(x => x.id === currentStep.next);
-        //     if (to >= 0) {
-        //       viewState.stepIdx = to;
-        //       viewState.selectedStepId = steps[to]?.id;     // ← id, not index
-        //       renderViewStep();
-        //       return;
-        //     }
-        //   }
-
-        //   // default: linear advance
-        //   if (viewState.stepIdx < steps.length - 1) {
-        //     viewState.stepIdx++;
-        //     viewState.selectedStepId = steps[viewState.stepIdx]?.id;  // ← id
-        //   }
-        //   renderViewStep();
-
-        // }
-
         function getStarter() {
           return sop.starters[viewState.starterIdx];
         }
@@ -8863,8 +9602,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         function setSelectedStepById(id) {
           const steps = getSteps();
           viewState.selectedStepId = id || null;
-          // viewState.stepIdx = (id != null) ? steps.findIndex(s => s.id === id) : -1;
-          // if (viewState.stepIdx < 0) viewState.stepIdx = 0; // fallback to first if missing
         }
 
         // Set selection by **index** and mirror selectedStepId
@@ -8875,22 +9612,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           viewState.selectedStepId = steps[i]?.id || null;
         }
 
-        // Select a step by id. If record=true, push the previous id into history.
-        // function navigateToStepId(nextId, { record = true } = {}) {
-        //   const curId = viewState.selectedStepId || null;
-        //   if (!nextId || nextId === curId) return;
-
-        //   if (record && curId) {
-        //     viewState.history ||= [];
-        //     viewState.history.push(curId);
-        //   }
-        //   setSelectedStepById(nextId);     // your existing helper: syncs ID + index
-        //   renderViewStep();
-        //   renderGraph();
-        //   renderInspector();
-        // }
 
         function navigateToStepId(nextId) {
+          console.log('navigateToStepId', nextId);
           const curId = viewState.selectedStepId || null;
           if (!nextId || nextId === curId) return;
 
@@ -8899,52 +9623,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           renderGraph();
           renderInspector();
         }
-
-
-        // Go back in history (no re-recording)
-        // function goPrevious() {
-        //   const st = getStarter();
-        //   const hasHist = (viewState.history?.length || 0) > 0;
-
-        //   if (hasHist) {
-        //     const prevStepId = viewState.history.pop();
-        //     setSelectedStepById(prevStepId);
-        //     renderViewStep();
-        //     renderGraph();
-        //     renderInspector();
-        //     return;
-        //   }
-
-        //   // No history → treat the nearest parent as "Prev"
-        //   const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
-        //   if (parentId) {
-        //     setSelectedStepById(parentId);
-        //     renderViewStep();
-        //     renderGraph();
-        //     renderInspector();
-        //   }
-        // }
-
-        // function goPrevious() {
-        //   const st = getStarter();
-        //   const hist = (viewState.history ||= []);
-
-        //   if (hist.length > 0) {
-        //     const prevStepId = hist.pop();
-        //     if (prevStepId && prevStepId !== viewState.selectedStepId) {
-        //       setSelectedStepById(prevStepId);
-        //       renderViewStep(); renderGraph(); renderInspector();
-        //     }
-        //     return;
-        //   }
-
-        //   // No history → fall back to first predecessor (don’t record history)
-        //   const parentId = getFirstPredecessorId(st, viewState.selectedStepId);
-        //   if (parentId && parentId !== viewState.selectedStepId) {
-        //     setSelectedStepById(parentId);
-        //     renderViewStep(); renderGraph(); renderInspector();
-        //   }
-        // }
 
         function goPrevious() {
           const st = getStarter();

@@ -77,7 +77,7 @@
 bodyEl.addEventListener('blur', () => {
   renderViewStep();
 });
-
+- for rendering html in body, if the html is height 100% it will remain growing 
 - Undo and redo    
 - on click enter should go the next step on view guide
 - Zoom on cursor (not general zoom probably on shift + scroll) 
