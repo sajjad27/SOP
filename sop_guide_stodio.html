@@ -222,8 +222,10 @@
 
     .btn-accent {
       background: var(--accent);
-      color: #fff;
+      /* color: #fff; */
+      color: var(--bg);
       border-color: transparent;
+
     }
 
     button:active {
@@ -862,13 +864,13 @@
     /* automatic active states via data-mode */
     [data-mode="view"] #modeView {
       background: var(--accent);
-      color: #fff;
+      color: var(--bg);
       box-shadow: none;
     }
 
     [data-mode="edit"] #modeEdit {
       background: var(--accent);
-      color: #fff;
+      color: var(--bg);
       box-shadow: none;
     }
 
@@ -1049,16 +1051,33 @@
       margin: 10px 0;
     }
 
+    /* base link style */
+    .vw-crumbs a,
+    .drop-zone a {
+      color: var(--accent);
+      text-decoration: none;
+
+    }
+
+    /* keep visited links the same blue */
+    .vw-crumbs a:link,
+    .vw-crumbs a:visited,
+    .drop-zone a:link,
+    .drop-zone a:visited {
+      color: var(--accent);
+    }
+
+    /* underline on hover */
+    .vw-crumbs a:hover,
+    .drop-zone a:hover {
+      text-decoration: underline;
+    }
+
     .vw-crumbs a {
       flex: 1;
       text-align: end;
-      color: var(--accent);
-      text-decoration: none;
     }
 
-    .vw-crumbs a:hover {
-      text-decoration: underline;
-    }
 
 
     /* === Map Dialog ========================================================= */
@@ -1270,6 +1289,7 @@
 
     .vw-option.selected {
       outline: 2px solid var(--accent);
+      color: var(--accent);
     }
 
     .thumb {
@@ -1609,6 +1629,140 @@
       justify-content: flex-end;
       margin-top: 16px;
     }
+
+    /* Same overlay + panel behavior as New */
+    #dlgImport.hidden {
+      display: none;
+    }
+
+    #dlgImport {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      padding: 4vh 16px;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, .45);
+    }
+
+    #dlgImport .vw-dialog__panel {
+      width: min(var(--content-w)*0.85);
+      background: var(--card);
+      color: var(--fg);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .35);
+    }
+
+    /* Fields & inputs (identical look to New) */
+    #dlgImport .vw-field {
+      display: grid;
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    #dlgImport input,
+    #dlgImport textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--fg);
+    }
+
+    #dlgImport input::placeholder,
+    #dlgImport textarea::placeholder {
+      color: var(--muted);
+    }
+
+    #dlgImport input:focus,
+    #dlgImport textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-weak);
+    }
+
+    #dlgImport .vw-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    #dlgImport input.is-invalid {
+      border-color: var(--warn);
+    }
+
+    #dlgImport input.is-invalid+.vw-error {
+      display: block;
+    }
+
+    /* Import dialog: drop-zone size */
+    #dlgImport .drop-zone {
+      border: 2px dashed var(--line);
+      border-radius: 10px;
+      padding: 20px;
+      min-height: 30vh;
+      /* bigger drop area */
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      text-align: center;
+      background: transparent;
+      /* color: var(--fg); */
+      color: color-mix(in srgb, var(--fg) 50%, transparent);
+    }
+
+    #dlgImport .drop-zone.drag {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-weak) inset;
+      background-color: var(--accent-weak);
+    }
+
+    /* Normal text (not bold) */
+    #dlgImport .drop-zone .dz-text,
+    .drop-zone a {
+      font-weight: 400;
+      font-size: medium;
+    }
+
+    /* centered horizontal separator with "or" */
+    #dlgImport .vw-sep {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 12px 0;
+      color: var(--muted);
+      user-select: none;
+    }
+
+    #dlgImport .vw-sep::before,
+    #dlgImport .vw-sep::after {
+      content: "";
+      flex: 1 1 auto;
+      height: 1px;
+      background: var(--line);
+    }
+
+    #dlgImport .vw-sep>span {
+      line-height: 1;
+      padding: 0 6px;
+    }
+
+    /* colorize the icon */
+    #dlgImport .drop-zone .dz-icon {
+      color: var(--accent);
+      /* turns the SVG blue */
+    }
+
+
+
+
 
     /* Confirm dialog — uses your CSS vars */
     .cfm-overlay {
@@ -2341,7 +2495,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         <div id="vwStep"></div>
         <div class="vw-nav">
           <button id="vwPrev" class="btn">Previous</button>
-          <button id="vwNext" class="btn btn-accent">Next</button>
+          <button id="vwNext" class="btn-accent">Next</button>
         </div>
       </div>
       <div id="editStarter" class="layout">
@@ -2436,6 +2590,61 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       </div>
     </div>
+
+    <!-- Import Dialog (same shell as New) -->
+    <div id="dlgImport" class="vw-dialog hidden">
+      <div class="vw-dialog__panel" role="dialog" aria-labelledby="imHeading">
+        <h3 id="imHeading">Import SOP</h3>
+
+        <div class="vw-field">
+          <div id="imDrop" class="drop-zone" tabindex="0" aria-label="Drop .html here">
+            <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="32.000000pt" height="32.000000pt"
+              viewBox="0 0 512.000000 512.000000" preserveAspectRatio="xMidYMid meet">
+
+              <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)" fill="var(--accent)"
+                stroke="none">
+                <path d="M2380 4954 c-160 -18 -230 -29 -330 -51 -900 -197 -1601 -880 -1820
+                  -1775 -52 -213 -64 -322 -64 -568 0 -246 13 -358 64 -568 92 -375 262 -706
+                  515 -1000 382 -445 916 -731 1515 -814 123 -17 478 -16 600 1 697 96 1288 457
+                  1678 1024 206 299 339 639 398 1019 25 157 25 518 1 675 -82 521 -313 985
+                  -671 1347 -369 374 -830 607 -1363 691 -93 15 -448 28 -523 19z m243 -968 c18
+                  -8 172 -155 349 -332 306 -308 316 -321 323 -365 17 -118 -91 -214 -202 -179
+                  -28 9 -82 56 -205 178 l-168 166 -2 -731 c-3 -724 -3 -732 -24 -760 -73 -98
+                  -195 -98 -268 0 -21 28 -21 36 -24 760 l-2 731 -168 -166 c-135 -135 -175
+                  -168 -210 -179 -114 -33 -226 79 -193 194 11 36 60 90 324 356 172 172 326
+                  319 342 327 39 17 88 17 128 0z m-1003 -1798 c80 -41 85 -55 88 -254 l3 -174
+                  850 0 849 0 0 160 c0 181 8 212 62 254 79 60 188 35 235 -54 22 -42 23 -51 23
+                  -294 0 -282 -6 -311 -71 -357 l-34 -24 -1055 -2 -1055 -3 -40 23 c-26 14 -48
+                  37 -62 67 -22 42 -23 55 -23 295 0 240 1 253 23 295 24 48 88 90 137 90 14 0
+                  46 -10 70 -22z" />
+              </g>
+            </svg>
+            <div class="row">
+
+              <span class="dz-text">Drop .html file here — or</span>
+              <a href="#" id="imBrowse" class="link">browse</a>
+              <span class="dz-text">to upload.</span>
+            </div>
+          </div>
+          <input id="imFile" type="file" accept=".html,text/html" hidden>
+          <p id="imErrFile" class="vw-error"></p>
+        </div>
+
+        <div class="vw-sep"><span>or</span></div>
+
+
+        <div class="vw-field">
+          <div class="row" style="gap:8px; align-items:center;">
+            <input id="imUrl" type="url" placeholder="https://example.com/sop.html" style="flex:1;">
+            <button id="imFetch" type="button" class="btn-accent">Import</button>
+          </div>
+          <p id="imErrUrl" class="vw-error"></p>
+        </div>
+      </div>
+    </div>
+
+
+
 
 
 
@@ -6700,6 +6909,465 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
 
+    // --- helpers reused by both file + URL paths ---
+    async function parseApplyImportedHtml(htmlText, sourceName) {
+      // unescape if entity-escaped html (same as your current logic)
+      if (/&lt;html\b/i.test(htmlText) && !/<html\b/i.test(htmlText)) {
+        htmlText = htmlText
+          .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+          .replace(/&amp;/g, '&');
+      }
+
+      const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+      let jsonText = '';
+
+      const slotPlain = doc.querySelector('script#jsonEmbedded');
+      if (slotPlain?.textContent.trim()) jsonText = slotPlain.textContent.trim();
+
+      if (!jsonText) {
+        const slotDefault = doc.querySelector('script#default-sop[type="application/json"]');
+        if (slotDefault?.textContent.trim()) jsonText = slotDefault.textContent.trim();
+      }
+
+      if (!jsonText) {
+        const anyJson = Array.from(doc.querySelectorAll('script[type="application/json"]'))
+          .find(s => /\bstarters\b/.test(s.textContent || ''));
+        if (anyJson) jsonText = anyJson.textContent.trim();
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonText);
+        if (!parsed || !Array.isArray(parsed.starters)) throw new Error('Missing starters[]');
+      } catch (err) {
+        alert('Could not import this file.\n\n' + (err?.message || 'Invalid or missing SOP JSON.'));
+        return false;
+      }
+
+      // Confirm
+      const ok = await confirmDialog({
+        title: 'Import SOP?',
+        message: `Replace the current SOP with “${sourceName}”?`,
+        confirmText: 'Import',
+        cancelText: 'Cancel',
+        variant: 'subtleDanger'
+      });
+      if (!ok) return false;
+
+      // Apply + save + refresh (same flow you already do)
+      sop = parsed;
+      ensureSop();
+      viewState.starterIdx = 0;
+      setSelectedStepById(sop.starters[0]?.steps?.[0]?.id);
+
+      setDirty(true);
+      const saved = await performSave();
+      if (!saved) return false;
+
+      renderViewAndEditLanding();
+      changeScreen('landing');
+      changeDataMode('edit');
+      updateSaveBtn?.();
+      return true;
+    }
+
+    // async function extractSopFromHtml_viaIframe(htmlText) {
+    //   return new Promise((resolve, reject) => {
+    //     const iframe = document.createElement('iframe');
+    //     iframe.style.display = 'none';
+    //     iframe.setAttribute('sandbox', 'allow-same-origin'); // scripts won't run
+    //     iframe.srcdoc = htmlText;
+    //     iframe.onload = () => {
+    //       try {
+    //         const doc = iframe.contentDocument;
+    //         let jsonText = '';
+
+    //         const slot1 = doc.querySelector('script#jsonEmbedded');
+    //         if (slot1?.textContent.trim()) jsonText = slot1.textContent.trim();
+
+    //         if (!jsonText) {
+    //           const slot2 = doc.querySelector('script#default-sop[type="application/json"]');
+    //           if (slot2?.textContent.trim()) jsonText = slot2.textContent.trim();
+    //         }
+
+    //         if (!jsonText) {
+    //           const anyJson = Array.from(doc.querySelectorAll('script[type="application/json"]'))
+    //             .find(s => /\bstarters\b/.test(s.textContent || ''));
+    //           if (anyJson) jsonText = anyJson.textContent.trim();
+    //         }
+
+    //         if (!jsonText) throw new Error('No embedded SOP JSON found.');
+    //         const parsed = JSON.parse(jsonText);
+    //         if (!parsed || !Array.isArray(parsed.starters)) throw new Error('Invalid SOP JSON (missing starters[]).');
+    //         resolve(parsed);
+    //       } catch (err) {
+    //         reject(err);
+    //       } finally {
+    //         iframe.remove();
+    //       }
+    //     };
+    //     iframe.onerror = () => { iframe.remove(); reject(new Error('Failed to load iframe.')); };
+    //     document.body.appendChild(iframe);
+    //   });
+    // }
+
+    async function applyImportedSop(parsed, sourceName) {
+      const ok = await confirmDialog({
+        title: 'Import SOP?',
+        message: `Replace the current SOP with “${sourceName}”?`,
+        confirmText: 'Import',
+        cancelText: 'Cancel',
+        variant: 'subtleDanger'
+      });
+      if (!ok) return false;
+
+      sop = parsed;
+      ensureSop();
+      viewState.starterIdx = 0;
+      setSelectedStepById(sop.starters[0]?.steps?.[0]?.id);
+      setDirty(true);
+      const saved = await performSave();
+      if (!saved) return false;
+
+      renderViewAndEditLanding();
+      changeScreen('landing');
+      changeDataMode('edit');
+      updateSaveBtn?.();
+      return true;
+    }
+
+    // async function fetchImportFromUrl(u) {
+    //   let text;
+    //   const res = await fetch(u, { mode: 'cors', credentials: 'omit' });
+    //   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    //   text = await res.text();
+
+    //   if (/&lt;html\b/i.test(text) && !/<html\b/i.test(text)) {
+    //     text = text
+    //       .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    //       .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    //       .replace(/&amp;/g, '&');
+    //   }
+    //   const parsed = await extractSopFromHtml_viaIframe(text);
+    //   return applyImportedSop(parsed, u);
+    // }
+
+
+    // Call this when the user clicks "Import" in your menu
+    function openImportDialog() {
+      const dlg = document.getElementById('dlgImport');
+      if (!dlg) return;
+      resetImportDialog();
+      dlg.classList.remove('hidden');
+
+      // close on clicking outside the panel
+      const onBackdropClick = (e) => {
+        if (e.target === dlg) close();
+      };
+      dlg.addEventListener('click', onBackdropClick);
+
+      const onEsc = (e) => { if (e.key === 'Escape') close(); };
+      document.addEventListener('keydown', onEsc);
+
+
+      function close() {
+        dlg.classList.add('hidden');
+        dlg.removeEventListener('click', onBackdropClick);
+        document.removeEventListener('keydown', onEsc);
+      }
+
+
+      // const onEsc = (e) => { if (e.key === 'Escape') close(); };
+      // document.addEventListener('keydown', onEsc);
+      // document.getElementById('imCancel').onclick = close;
+
+      function close() {
+        dlg.classList.add('hidden');
+        document.removeEventListener('keydown', onEsc);
+        teardownDnD();
+      }
+    }
+
+    //— Wire once on app init
+    (function wireImportDialog() {
+      const drop = document.getElementById('imDrop');
+      const browse = document.getElementById('imBrowse');
+      const fileI = document.getElementById('imFile');
+      const urlI = document.getElementById('imUrl');
+      const fetchB = document.getElementById('imFetch');
+      const errF = document.getElementById('imErrFile');
+      const errU = document.getElementById('imErrUrl');
+      if (!drop || !browse || !fileI || !urlI || !fetchB) return;
+
+      // — browse
+      browse.addEventListener('click', (e) => { e.preventDefault(); fileI.click(); });
+      fileI.addEventListener('change', async () => {
+        const f = fileI.files?.[0];
+        if (!f) return;
+        if (!/\.html?$/i.test(f.name)) { errF.textContent = 'Please choose a .html file.'; return; }
+        errF.textContent = '';
+        const text = await f.text();
+        await applyImportedHtml(text, f.name);
+      });
+
+      // — drag & drop
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
+      const enter = (e) => { stop(e); drop.classList.add('drag'); };
+      const leave = (e) => { stop(e); drop.classList.remove('drag'); };
+      const dropH = async (e) => {
+        stop(e); drop.classList.remove('drag');
+        const f = e.dataTransfer?.files?.[0];
+        if (!f) return;
+        if (!/\.html?$/i.test(f.name)) { errF.textContent = 'Please drop a .html file.'; return; }
+        errF.textContent = '';
+        const text = await f.text();
+        await applyImportedHtml(text, f.name);
+      };
+      drop.addEventListener('dragenter', enter);
+      drop.addEventListener('dragover', enter);
+      drop.addEventListener('dragleave', leave);
+      drop.addEventListener('drop', dropH);
+      drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileI.click(); } });
+
+      // — URL validate + enable button
+      const isValidUrl = (v) => {
+        try { const u = new URL(v, location.origin); return /^(https?:)$/i.test(u.protocol); }
+        catch { return false; }
+      };
+      urlI.addEventListener('input', () => {
+        // errU.textContent = '';
+        // fetchB.disabled = !isValidUrl(urlI.value.trim());
+      });
+
+      // fetchB.addEventListener('click', async () => {
+      //   const u = urlI.value.trim();
+      //   if (!isValidUrl(u)) { errU.textContent = 'Enter a valid http(s) URL.'; return; }
+      //   try {
+      //     const res = await fetch(u, { mode: 'cors', credentials: 'omit' });
+      //     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      //     const text = await res.text();
+      //     await applyImportedHtml(text, u);
+      //   } catch (e) {
+      //     errU.textContent = 'Could not fetch that URL.';
+      //   }
+      // });
+
+      // document.getElementById('imFetch')?.addEventListener('click', async () => {
+      //   const btn = document.getElementById('imFetch');
+      //   const input = document.getElementById('imUrl');
+      //   const err = document.getElementById('imErrUrl');
+      //   err.textContent = '';
+      //   btn.disabled = true;
+      //   try {
+      //     await fetchImportFromUrl(input.value.trim());
+      //     document.getElementById('dlgImport')?.classList.add('hidden'); // close on success, optional
+      //   } catch (e) {
+      //     err.textContent = e.message || 'Import failed.';
+      //     console.error(e);
+      //   } finally {
+      //     btn.disabled = false;
+      //   }
+      // });
+
+      // --- small helpers -----------------------------------------------------------
+
+      function isValidHttpUrl(v) {
+        try {
+          const u = new URL(v, location.href);
+          return u.protocol === 'http:' || u.protocol === 'https:';
+        } catch { return false; }
+      }
+
+      function isMixedContent(u) {
+        try {
+          const url = new URL(u, location.href);
+          return location.protocol === 'https:' && url.protocol === 'http:';
+        } catch { return false; }
+      }
+
+      async function fetchWithTimeout(url, options = {}, ms = 15000) {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), ms);
+        try {
+          const res = await fetch(url, { ...options, signal: ctrl.signal });
+          return res;
+        } finally {
+          clearTimeout(t);
+        }
+      }
+
+      // --- existing iframe extractor (unchanged) -----------------------------------
+      async function extractSopFromHtml_viaIframe(htmlText) {
+        return new Promise((resolve, reject) => {
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.setAttribute('sandbox', 'allow-same-origin'); // scriptless, readable DOM
+          iframe.srcdoc = htmlText;
+
+          iframe.onload = () => {
+            try {
+              const doc = iframe.contentDocument;
+              let jsonText = '';
+
+              const slot1 = doc.querySelector('script#jsonEmbedded');
+              if (slot1?.textContent.trim()) jsonText = slot1.textContent.trim();
+
+              if (!jsonText) {
+                const slot2 = doc.querySelector('script#default-sop[type="application/json"]');
+                if (slot2?.textContent.trim()) jsonText = slot2.textContent.trim();
+              }
+
+              if (!jsonText) {
+                const anyJson = Array.from(doc.querySelectorAll('script[type="application/json"]'))
+                  .find(s => /\bstarters\b/.test(s.textContent || ''));
+                if (anyJson) jsonText = anyJson.textContent.trim();
+              }
+
+              if (!jsonText) throw new Error('No embedded SOP JSON found.');
+              const parsed = JSON.parse(jsonText);
+              if (!parsed || !Array.isArray(parsed.starters)) throw new Error('Invalid SOP JSON (missing starters[]).');
+              resolve(parsed);
+            } catch (err) {
+              reject(err);
+            } finally {
+              iframe.remove();
+            }
+          };
+
+          iframe.onerror = () => {
+            iframe.remove();
+            reject(new Error('Failed to load iframe.'));
+          };
+
+          document.body.appendChild(iframe);
+        });
+      }
+
+      // --- enhanced importer --------------------------------------------------------
+      async function fetchImportFromUrl(rawUrl) {
+        // 1) Basic input checks
+        if (!rawUrl) throw new Error('URL is required.');
+        if (!isValidHttpUrl(rawUrl)) throw new Error('Enter a valid http(s) URL.');
+
+        // 2) Mixed content
+        if (isMixedContent(rawUrl)) {
+          throw new Error('Blocked: cannot fetch http from an https page (mixed content). Use an https link or open the app over http.');
+        }
+
+        // 3) Fetch with timeout; surface common cases cleanly
+        let res;
+        try {
+          res = await fetchWithTimeout(rawUrl, { mode: 'cors', credentials: 'omit' }, 15000);
+        } catch (e) {
+          if (e.name === 'AbortError') throw new Error('Timed out fetching the URL. Try again.');
+          // Chrome/Firefox use TypeError for network-level failures / DNS issues / CORS preflight blocks
+          if (e instanceof TypeError) throw new Error('Failed to fetch. The host may be unreachable or blocked by CORS.');
+          throw e;
+        }
+
+        // 4) HTTP status handling
+        if (!res.ok) {
+          const status = `${res.status} ${res.statusText || ''}`.trim();
+          if (res.status === 404) throw new Error('404: File not found at the URL.');
+          if (res.status === 403) throw new Error('403: Access denied. Check permissions or CORS.');
+          if (res.status === 500) throw new Error('Server error (500). Try again later.');
+          throw new Error(`HTTP error: ${status}`);
+        }
+
+        // 5) Content-type sanity (warn but don’t block if missing)
+        const ctype = res.headers.get('Content-Type') || '';
+        if (ctype && !/text\/html|application\/xhtml\+xml/i.test(ctype)) {
+          // Some hosts send text/plain for static files; allow but message if it fails later
+          // We won't throw yet.
+        }
+
+        // 6) Read the HTML text
+        let text = await res.text();
+
+        // 7) Unescape if HTML-entity encoded
+        if (/&lt;html\b/i.test(text) && !/<html\b/i.test(text)) {
+          text = text
+            .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+            .replace(/&amp;/g, '&');
+        }
+
+        // 8) Extract SOP JSON via iframe + apply
+        let parsed;
+        try {
+          parsed = await extractSopFromHtml_viaIframe(text);
+        } catch (e) {
+          // Add hint if likely CORS/opaque or wrong file
+          const hint = ctype && !/html/i.test(ctype) ? ' (response is not HTML)' : '';
+          throw new Error((e && e.message) ? e.message + hint : 'Could not read embedded SOP JSON' + hint);
+        }
+
+        // 9) Confirm + apply (reuse your existing logic)
+        return applyImportedSop(parsed, rawUrl);
+      }
+
+      // --- hardened click handler ---------------------------------------------------
+      document.getElementById('imFetch')?.addEventListener('click', async () => {
+        const btn = document.getElementById('imFetch');
+        const input = document.getElementById('imUrl');
+        const err = document.getElementById('imErrUrl');
+
+        // UI reset
+        if (err) { err.textContent = ''; err.style.display = 'block'; }
+        btn.disabled = true;
+        btn.dataset.label = btn.dataset.label || btn.textContent;
+        btn.textContent = 'Fetching…';
+
+        try {
+          const url = (input?.value || '').trim();
+          // Pre-validate to avoid firing a request for nothing
+          if (!url) throw new Error('URL is required.');
+          if (!isValidHttpUrl(url)) throw new Error('Enter a valid http(s) URL.');
+          if (isMixedContent(url)) throw new Error('Blocked: cannot fetch http from an https page.');
+
+          await fetchImportFromUrl(url);
+
+          // Close dialog on success (optional)
+          document.getElementById('dlgImport')?.classList.add('hidden');
+        } catch (e) {
+          if (err) err.textContent = (e && e.message) ? e.message : 'Import failed.';
+          // console.error(e);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = btn.dataset.label || 'Fetch / Import';
+        }
+      });
+
+
+
+      // expose teardown so open/close can remove DnD styles if needed
+      window.teardownDnD = () => drop.classList.remove('drag');
+
+      function resetImportDialog() {
+        if (errF) errF.textContent = '';
+        if (errU) errU.textContent = '';
+        if (urlI) { urlI.value = ''; }
+        // if (fetchB) { fetchB.disabled = true; }
+      }
+      window.resetImportDialog = resetImportDialog;
+    })();
+
+    //— Hook to your CURRENT import logic.
+    // If you already have a function like parseApplyImportedHtml(text, sourceName), it will be used.
+    // Otherwise this shows a one-time alert so you can wire it later.
+    async function applyImportedHtml(htmlText, sourceName) {
+      if (typeof window.parseApplyImportedHtml === 'function') {
+        await window.parseApplyImportedHtml(htmlText, sourceName);
+      } else if (typeof window.handleImportHtml === 'function') {
+        await window.handleImportHtml(htmlText, sourceName);
+      } else {
+        alert('Import UI is ready. Connect it to your existing import parser (e.g., parseApplyImportedHtml).');
+      }
+      // Close dialog on success (optional): document.getElementById('dlgImport')?.classList.add('hidden');
+    }
+
+
 
 
     async function handleImportSop() {
@@ -6773,6 +7441,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       changeDataMode('edit');
       if (typeof updateSaveBtn === 'function') updateSaveBtn();
     }
+
+
 
     // tiny file picker (no permanent DOM needed)
     function pickFile(accept = '') {
@@ -6886,7 +7556,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           createNewSop();
         } else if (action == "import") {
           // importHTML();
-          await handleImportSop();
+          // await handleImportSop();
+          openImportDialog();
         } else if (action == "export") {
           cleanup();
           exportCurrentHTMLAsViewer();
@@ -7124,75 +7795,75 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     // }
 
     function enterViewOrEditStarter(starterId, { doHistory = true, replace = false } = {}) {
-  const idx = typeof starterIdxById === 'function' ? starterIdxById(starterId) : -1;
-  if (idx < 0 || !Array.isArray(sop?.starters) || !sop.starters[idx]) return false;
+      const idx = typeof starterIdxById === 'function' ? starterIdxById(starterId) : -1;
+      if (idx < 0 || !Array.isArray(sop?.starters) || !sop.starters[idx]) return false;
 
-  resetStarterValues(idx);
-  changeScreen('starter');
-  const st = sop.starters[idx];
-  const titleEl = document.getElementById('vwStarterTitle');
-  if (titleEl) titleEl.textContent = st?.label || 'Starter';
-  renderAll?.();
+      resetStarterValues(idx);
+      changeScreen('starter');
+      const st = sop.starters[idx];
+      const titleEl = document.getElementById('vwStarterTitle');
+      if (titleEl) titleEl.textContent = st?.label || 'Starter';
+      renderAll?.();
 
-  // remember last
-  try {
-    viewState.lastStarterId = String(st.id);
-    sessionStorage.setItem('last_starter_id', String(st.id));
-  } catch {}
+      // remember last
+      try {
+        viewState.lastStarterId = String(st.id);
+        sessionStorage.setItem('last_starter_id', String(st.id));
+      } catch { }
 
-  if (doHistory) {
-    const H = window.history;
-    try {
-      const url = new URL(location.href);
-      url.searchParams.set('starter_id', String(starterId));
-      const state = { starter_id: String(starterId) };
-      replace ? H.replaceState(state, '', url) : H.pushState(state, '', url);
-    } catch {}
-  }
-  return true;
-}
-
-function goHome({ doHistory = true } = {}) {
-  changeScreen('landing');
-  // clear any “current” so popstate won’t no-op
-  viewState.starterIdx = -1;
-  viewState.selectedStepId = null;
-
-  if (doHistory) {
-    try {
-      const url = new URL(location.href);
-      const hadStarter = url.searchParams.has('starter_id');
-      url.searchParams.delete('starter_id');
-
-      // Only push a Home entry if we were on a starter; otherwise don't spam history
-      if (hadStarter) {
-        window.history.pushState({}, '', url);
-      } else {
-        // already home — leave history alone
+      if (doHistory) {
+        const H = window.history;
+        try {
+          const url = new URL(location.href);
+          url.searchParams.set('starter_id', String(starterId));
+          const state = { starter_id: String(starterId) };
+          replace ? H.replaceState(state, '', url) : H.pushState(state, '', url);
+        } catch { }
       }
-    } catch {}
-  }
-}
+      return true;
+    }
 
-// URL -> UI (runs for both Back and Forward)
-function applyStarterFromUrl() {
-  const sp = new URLSearchParams(location.search);
-  const id = sp.get('starter_id');
-  if (id) {
-    enterViewOrEditStarter(id, { doHistory: false }); // do not push again
-  } else {
-    goHome({ doHistory: false }); // do not push again
-  }
-}
+    function goHome({ doHistory = true } = {}) {
+      changeScreen('landing');
+      // clear any “current” so popstate won’t no-op
+      viewState.starterIdx = -1;
+      viewState.selectedStepId = null;
 
-// Bind once
-if (!window.__sopPopBound) {
-  window.addEventListener('popstate', applyStarterFromUrl);
-  window.__sopPopBound = true;
-}
+      if (doHistory) {
+        try {
+          const url = new URL(location.href);
+          const hadStarter = url.searchParams.has('starter_id');
+          url.searchParams.delete('starter_id');
 
-// On initial load (after your async SOP init finishes), call once:
-/// applyStarterFromUrl();
+          // Only push a Home entry if we were on a starter; otherwise don't spam history
+          if (hadStarter) {
+            window.history.pushState({}, '', url);
+          } else {
+            // already home — leave history alone
+          }
+        } catch { }
+      }
+    }
+
+    // URL -> UI (runs for both Back and Forward)
+    function applyStarterFromUrl() {
+      const sp = new URLSearchParams(location.search);
+      const id = sp.get('starter_id');
+      if (id) {
+        enterViewOrEditStarter(id, { doHistory: false }); // do not push again
+      } else {
+        goHome({ doHistory: false }); // do not push again
+      }
+    }
+
+    // Bind once
+    if (!window.__sopPopBound) {
+      window.addEventListener('popstate', applyStarterFromUrl);
+      window.__sopPopBound = true;
+    }
+
+    // On initial load (after your async SOP init finishes), call once:
+    /// applyStarterFromUrl();
 
 
 
