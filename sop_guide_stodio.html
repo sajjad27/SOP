@@ -25,7 +25,7 @@
       --hl-bg: #F7B733;
       --hl-fg: #0f172a;
       /* --hl-fg: #ff0000; */
-      --content-w: 1240px;
+      --content-w: 1000px;
       --gutter: 16px;
       --grid-dot: color-mix(in srgb, var(--line) 65%, transparent);
 
@@ -50,7 +50,7 @@
       --hl-fg: #0f172a;
       /* --hl-fg: #ff0000; */
 
-      --content-w: 1240px;
+      --content-w: 1000px;
       --gutter: 16px;
       --grid-dot: color-mix(in srgb, var(--line) 45%, transparent);
 
@@ -460,18 +460,18 @@
 
 
 
-    .edge {
+    /* .edge {
       stroke: #98a2b3;
       stroke-width: 1.2;
       fill: none;
       marker-end: url(#arrow);
-    }
+    } */
 
-    .edge-label {
+    /* .edge-label {
       font-size: 11px;
       fill: #667085;
       pointer-events: none;
-    }
+    } */
 
     .node-label {
       font-size: 12px;
@@ -754,11 +754,11 @@
     }
 
     /* Graph: tie lines/labels to theme vars */
-    .edge {
+    /* .edge {
       stroke: var(--muted);
       stroke-width: 1.2;
       fill: none;
-    }
+    } */
 
     .edge-label {
       fill: var(--muted);
@@ -810,8 +810,7 @@
 
     .edge {
       stroke: var(--muted);
-      /* tie to theme */
-      stroke-width: 1.6;
+      stroke-width: 1;
       fill: none;
       marker-end: url(#arrow);
     }
@@ -2708,6 +2707,20 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           e.returnValue = '';                   // shows the built-in confirmation dialog
         });
 
+
+        // --- deep link: ?starter=<id> or ?starterId=<id>
+        const sp = new URLSearchParams(location.search);
+        const starterId = sp.get('starter_id');
+        if (starterId) {
+          console.log('deep link starterId:', starterId);
+          // only switch if it exists in sop
+          const ok = Array.isArray(sop?.starters) && sop.starters.some(st => String(st?.id) === String(starterId));
+          if (ok && typeof enterViewOrEditStarter === 'function') {
+            enterViewOrEditStarter(starterId);
+          }
+        }
+
+
       })();
     });
 
@@ -2800,10 +2813,26 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     // }
 
 
-    function goHome() {
-      // resetStarterValues();
-      changeScreen('landing');
-    }
+    // function goHome() {
+    //   // resetStarterValues();
+    //   changeScreen('landing');
+    // }
+
+    // function goHome() {
+    //   changeScreen('landing');
+    //   viewState.starterIdx = -1;
+    //   viewState.selectedStepId = null;
+
+    //   try {
+    //     // remove starter id
+    //     const url = new URL(location.href);
+    //     url.searchParams.delete('starter_id');
+    //     history.replaceState({}, document.title, url.pathname + (url.search ? '?' + url.searchParams.toString() : '') + url.hash);
+    //   } catch (_) {
+    //     // silent no-op if URL API isn't available
+    //   }
+    // }
+
 
 
     (function screenInit() {
@@ -3085,6 +3114,9 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
               <button id="variables-select" disabled title="No variables found" class="rt-btn">{{x}}</button>
+
+              <button id="starters-share-select" title="Share starter link" class="rt-btn">Starters ↗</button>
+
 
 
               <button type="button" id="clearFmt" class="push-right rt-btn" title="Clear formatting">✖︎</button>
@@ -3758,6 +3790,145 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         }
       }
 
+      function openStartersMenu(anchorBtn) {
+        // prevent duplicates
+        if (document.getElementById('settingsOverlay')) return;
+
+        // capture caret before menu opens
+        const editor = getBodyEditorEl();
+        let savedRange = null;
+        if (editor) {
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount && editor.contains(sel.anchorNode)) {
+            savedRange = sel.getRangeAt(0).cloneRange();
+          }
+        }
+
+        // build starter list excluding current
+        const all = Array.isArray(sop?.starters) ? sop.starters : [];
+        const cur = getStarter?.();
+        const curId = cur?.id;
+        const list = all.filter(s => s?.id && s.id !== curId);
+
+        // overlay + panel
+        const overlay = document.createElement('div');
+        overlay.id = 'settingsOverlay';
+        overlay.className = 'settings-overlay';
+
+        const panel = document.createElement('div');
+        panel.className = 'settings-panel';
+        panel.style.minWidth = '320px';
+
+        panel.innerHTML = (list.length
+          ? list.map(s => `
+        <div class="settings-item" data-starter-id="${s.id}">
+          <span class="mono" style="min-width:0;overflow-wrap:anywhere;">${s.label || s.id}</span>
+          <span class="small" style="opacity:.7">(${s.id})</span>
+        </div>
+      `).join('')
+          : `<div class="settings-empty" style="padding:8px 10px;opacity:.7">— No other starters —</div>`
+        );
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(panel);
+
+        // position near button
+        const rect = anchorBtn.getBoundingClientRect();
+        const top = rect.bottom + 6 + window.scrollY;
+        const left = Math.min(
+          rect.left + window.scrollX,
+          window.scrollX + document.documentElement.clientWidth - panel.offsetWidth - 12
+        );
+        panel.style.top = `${top}px`;
+        panel.style.left = `${left}px`;
+
+        // item click → insert link
+        panel.addEventListener('click', (e) => {
+          const row = e.target.closest('.settings-item');
+          if (!row) return;
+
+          const sid = row.getAttribute('data-starter-id');
+          if (!sid) return;
+
+          // build full link ?starter_id=<sid>
+          const url = new URL(location.href);
+          url.searchParams.set('starter_id', sid);
+          const full = url.origin + url.pathname + '?' + url.searchParams.toString() + url.hash;
+
+          if (editor) {
+            editor.focus();
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+
+            // restore caret if still valid; else move to end
+            if (savedRange && editor.contains(savedRange.commonAncestorContainer)) {
+              sel.addRange(savedRange);
+            } else {
+              const r = document.createRange();
+              r.selectNodeContents(editor);
+              r.collapse(false);
+              sel.addRange(r);
+            }
+
+            // insert <a> with title showing full URL
+            // const a = document.createElement('a');
+            // a.href = full;
+            // a.className = 'clickable-link';
+            // a.title = full;
+            // a.target = '_blank';
+            // a.rel = 'noopener noreferrer';
+
+            // // label fallback to id
+            // const label = list.find(s => s.id === sid)?.label || sid;
+            // a.textContent = label;
+
+            const a = document.createElement('a');
+            a.className = 'clickable-link';
+            a.dataset.starterId = sid;                  // the dynamic bit you care about
+            a.href = `?starter_id=${encodeURIComponent(sid)}`; // relative, portable
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.title = a.href; // will show "?starter_id=…"
+            const label = list.find(s => s.id === sid)?.label || sid;
+
+            a.textContent = label; // whatever label you want
+
+
+            const r = sel.getRangeAt(0);
+            r.deleteContents();
+            r.insertNode(a);
+            r.setStartAfter(a);
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
+
+            persistEditor?.();
+            // setDirty?.(true);
+          }
+
+          cleanup();
+          setDirty?.(true);
+        });
+
+        const onOutside = (e) => { if (e.target === overlay) cleanup(); };
+        const onEsc = (e) => { if (e.key === 'Escape') cleanup(); };
+        overlay.addEventListener('click', onOutside);
+        document.addEventListener('keydown', onEsc);
+
+        function cleanup() {
+          overlay.removeEventListener('click', onOutside);
+          document.removeEventListener('keydown', onEsc);
+          panel.remove();
+          overlay.remove();
+        }
+
+        function getBodyEditorEl() {
+          return document.getElementById('f_body')
+            || document.querySelector('[data-field="body"]')
+            || document.querySelector('.rt-body')
+            || document.querySelector('[contenteditable][data-rich="body"]');
+        }
+      }
 
 
       // Return earlier steps (ancestors) that are input/select
@@ -4610,6 +4781,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const urlInput = document.getElementById('rt-link-url');
       const insertBtn = document.getElementById('rt-link-insert');
       const variablesSelect = document.getElementById('variables-select');
+      const startersSelect = document.getElementById('starters-share-select');
+
 
       let savedRange = null;
       let selectedText = '';
@@ -4676,7 +4849,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           r.insertNode(a);
           r.setStartAfter(a);
           r.collapse(true);
-          sel.removeAllRanges(); sel.addRange(r);
+          sel.removeAllRanges();
+          sel.addRange(r);
 
         } else {
           // No caret inside editor → append at end
@@ -4708,11 +4882,29 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         }
       }
 
+      if (startersSelect) {
+        const otherStartersIds = getOtherStarterIds();
+        // console.log(`otherStartersIds`, otherStartersIds);
+        if (otherStartersIds.length > 0) {
+          startersSelect.title = 'Insert other starter reference link';
+          // stash for the click handler if you want to reuse
+          startersSelect._StartersIds = otherStartersIds;
+        } else {
+          startersSelect.title = 'No starters in the current SOP found';
+          startersSelect._StartersIds = [];
+        }
+      }
+
 
       variablesSelect?.addEventListener('click', (e) => {
         if (variablesSelect.hasAttribute('disabled')) return;
         // optional: pass the precomputed list to your menu if you want
         openVariablesMenu(variablesSelect /*, variablesSelect._varsCandidates */);
+      });
+
+      startersSelect?.addEventListener('click', (e) => {
+        // optional: pass the precomputed list to your menu if you want
+        openStartersMenu(variablesSelect /*, variablesSelect._varsCandidates */);
       });
 
 
@@ -5328,6 +5520,19 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       });
     }
 
+    function getOtherStarters() {
+      // const starters = Array.isArray(sop?.starters) ? sop.starters : [];
+      // const curIdx = Number.isInteger(viewState?.starterIdx) ? viewState.starterIdx : -1;
+      const curId = sop?.starters[viewState?.starterIdx]?.id;
+      return curId ? sop?.starters.filter(st => st?.id !== curId) : starters;
+    }
+
+    // ids only (if you need them)
+    function getOtherStarterIds() {
+      return getOtherStarters().map(st => st.id).filter(Boolean);
+    }
+
+
 
     /*** Graph ***/
     let mapZoom = 0;
@@ -5596,6 +5801,149 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
 
+    // function renderGraph() {
+
+    //   const st = getStarter();
+    //   graphStarterTitle.textContent = st ? (st.label || '(no title)') : '(no starter)';
+
+    //   const steps = st?.steps || [];
+    //   if (!steps.length) {
+    //     graphSvg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#98a2b3" font-size="14">No steps in this starter</text>';
+    //     return;
+    //   }
+    //   const { nodes, edges } = buildGraph(st);
+    //   const layout = layoutVertical(nodes, edges);
+    //   lastPositions = layout;
+    //   const svg = graphSvg;
+    //   svg.innerHTML = `
+    //                   <defs>
+    //                     <marker id="arrow" viewBox="0 0 12 12" refX="12" refY="6"
+    //                             markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse"
+    //                             orient="auto">
+    //                       <path d="M0 0 L12 6 L0 12 Z" fill="#98a2b3"></path>
+    //                     </marker>
+    //                   </defs>
+    //                 `;
+
+
+    //   const g = svg; // root
+    //   const vw = 1000, vh = 1000; // world units used by layout
+    //   const viewBox = `${mapPan.x} ${mapPan.y} ${vw / mapZoom} ${vh / mapZoom}`;
+    //   svg.setAttribute('viewBox', viewBox);
+
+
+    //   // edges (orthogonal: down then across)
+    //   edges.forEach(e => {
+    //     const s = layout[e.from], t = layout[e.to];
+    //     if (!s || !t) return;
+    //     const midY = (s.y + t.y) / 2;
+    //     const d = `M ${s.x} ${s.y + 28} L ${s.x} ${midY} L ${t.x} ${midY} L ${t.x} ${t.y - 28}`;
+    //     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    //     path.setAttribute('d', d);
+    //     path.setAttribute('class', 'edge');
+    //     path.setAttribute('marker-end', 'url(#arrow)');
+    //     g.appendChild(path);
+
+    //     if (e.label) {
+    //       const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    //       tx.setAttribute('class', 'edge-label');
+    //       tx.setAttribute('x', (s.x + t.x) / 2);
+    //       tx.setAttribute('y', midY - 4);
+    //       tx.setAttribute('text-anchor', 'middle');
+    //       tx.textContent = e.label;
+    //       g.appendChild(tx);
+    //     }
+    //   });
+
+    //   // nodes
+    //   nodes.forEach(n => {
+    //     const grp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    //     grp.setAttribute('transform', `translate(${layout[n.id].x}, ${layout[n.id].y})`);
+    //     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    //     rect.setAttribute('class', 'node-rect' + (n.id === viewState.selectedStepId ? ' current' : ''));
+    //     rect.setAttribute('x', -80); rect.setAttribute('y', -28); rect.setAttribute('width', 160); rect.setAttribute('height', 56);
+    //     rect.setAttribute('step-id', n.id);
+    //     rect.style.cursor = 'move';
+
+
+    //     grp.appendChild(rect);
+
+    //     // HTML label via foreignObject so long ids wrap
+    //     const svgNS = 'http://www.w3.org/2000/svg';
+    //     const htmlNS = 'http://www.w3.org/1999/xhtml';
+    //     const pad = 8;  // inner padding
+
+    //     const fo = document.createElementNS(svgNS, 'foreignObject');
+    //     fo.classList.add('node-fo');
+    //     fo.setAttribute('x', -80 + pad);
+    //     fo.setAttribute('y', -28 + pad);
+    //     fo.setAttribute('width', 160 - pad * 2);
+    //     fo.setAttribute('height', 56 - pad * 2);
+
+    //     const div = document.createElementNS(htmlNS, 'div');
+    //     div.className = 'label mono';          // keep your mono look
+    //     div.textContent = n.label ?? '';
+    //     fo.appendChild(div);
+
+    //     grp.appendChild(fo);
+
+
+    //     // grp.addEventListener('click', () => {
+    //     //   // viewState.selectedStepId = n.id;
+    //     //   setSelectedStepById(n.id);
+
+    //     //   renderInspector();
+    //     //   renderGraph();
+    //     //   renderViewStep();
+    //     //   // updateAddAfterState(); // disable Add After when 'done' is selected
+    //     // });
+
+    //     grp.addEventListener('click', () => {
+    //       // navigateToStepId(n.id, { record: false });
+    //       navigateToStepId(n.id);
+    //       // setSelectedStepById(n.id);
+    //     });
+
+    //     g.appendChild(grp);
+    //   });
+
+    //   if (placingFree && ghostPos) {
+    //     const grp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    //     grp.setAttribute('transform', `translate(${ghostPos.x}, ${ghostPos.y})`);
+    //     grp.setAttribute('opacity', '0.35');
+    //     grp.setAttribute('pointer-events', 'none');
+
+    //     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    //     rect.setAttribute('x', -80); rect.setAttribute('y', -28);
+    //     rect.setAttribute('width', 160); rect.setAttribute('height', 56);
+    //     rect.setAttribute('rx', 8);
+    //     rect.setAttribute('class', 'node-rect');
+    //     rect.setAttribute('stroke-dasharray', '6,6');
+    //     grp.appendChild(rect);
+
+    //     const svgNS = 'http://www.w3.org/2000/svg';
+    //     const htmlNS = 'http://www.w3.org/1999/xhtml';
+    //     const pad = 8;
+
+    //     const fo = document.createElementNS(svgNS, 'foreignObject');
+    //     fo.classList.add('node-fo');
+    //     fo.setAttribute('x', -80 + pad);
+    //     fo.setAttribute('y', -28 + pad);
+    //     fo.setAttribute('width', 160 - pad * 2);
+    //     fo.setAttribute('height', 56 - pad * 2);
+
+    //     const div = document.createElementNS(htmlNS, 'div');
+    //     div.className = 'label mono';
+    //     div.textContent = 'New step';
+    //     fo.appendChild(div);
+
+    //     grp.appendChild(fo);
+
+
+    //     g.appendChild(grp);
+    //   }
+
+
     function renderGraph() {
       const st = getStarter();
       graphStarterTitle.textContent = st ? (st.label || '(no title)') : '(no starter)';
@@ -5608,40 +5956,48 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       const { nodes, edges } = buildGraph(st);
       const layout = layoutVertical(nodes, edges);
       lastPositions = layout;
+
       const svg = graphSvg;
       svg.innerHTML = `
-                      <defs>
-                        <marker id="arrow" viewBox="0 0 12 12" refX="12" refY="6"
-                                markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse"
-                                orient="auto">
-                          <path d="M0 0 L12 6 L0 12 Z" fill="#98a2b3"></path>
-                        </marker>
-                      </defs>
-                    `;
-
+    <defs>
+      <marker id="arrow" viewBox="0 0 12 12" refX="12" refY="6"
+              markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse"
+              orient="auto">
+        <path d="M0 0 L12 6 L0 12 Z" fill="#98a2b3"></path>
+      </marker>
+    </defs>
+  `;
 
       const g = svg; // root
-      const vw = 1000, vh = 1000; // world units used by layout
+      const vw = 1000, vh = 1000;
       const viewBox = `${mapPan.x} ${mapPan.y} ${vw / mapZoom} ${vh / mapZoom}`;
       svg.setAttribute('viewBox', viewBox);
 
-
-      // edges (orthogonal: down then across)
+      // ===== edges (CURVED) =====
       edges.forEach(e => {
         const s = layout[e.from], t = layout[e.to];
         if (!s || !t) return;
+
+        const startX = s.x, startY = s.y + 28;   // exit source just below node
+        const endX = t.x, endY = t.y - 28;   // enter target just above node
         const midY = (s.y + t.y) / 2;
-        const d = `M ${s.x} ${s.y + 28} L ${s.x} ${midY} L ${t.x} ${midY} L ${t.x} ${t.y - 28}`;
+
+        // smooth cubic: up from source, glide along midY, down into target
+        const d = `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`;
+
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', d);
         path.setAttribute('class', 'edge');
         path.setAttribute('marker-end', 'url(#arrow)');
+        path.setAttribute('fill', 'none');                 // ensure stroke-only
+        path.setAttribute('stroke-linecap', 'round');      // nicer joins
+        path.setAttribute('stroke-linejoin', 'round');
         g.appendChild(path);
 
         if (e.label) {
           const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
           tx.setAttribute('class', 'edge-label');
-          tx.setAttribute('x', (s.x + t.x) / 2);
+          tx.setAttribute('x', (startX + endX) / 2);
           tx.setAttribute('y', midY - 4);
           tx.setAttribute('text-anchor', 'middle');
           tx.textContent = e.label;
@@ -5653,19 +6009,19 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       nodes.forEach(n => {
         const grp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         grp.setAttribute('transform', `translate(${layout[n.id].x}, ${layout[n.id].y})`);
+
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('class', 'node-rect' + (n.id === viewState.selectedStepId ? ' current' : ''));
-        rect.setAttribute('x', -80); rect.setAttribute('y', -28); rect.setAttribute('width', 160); rect.setAttribute('height', 56);
+        rect.setAttribute('x', -80); rect.setAttribute('y', -28);
+        rect.setAttribute('width', 160); rect.setAttribute('height', 56);
         rect.setAttribute('step-id', n.id);
         rect.style.cursor = 'move';
-
-
         grp.appendChild(rect);
 
-        // HTML label via foreignObject so long ids wrap
+        // HTML label via foreignObject
         const svgNS = 'http://www.w3.org/2000/svg';
         const htmlNS = 'http://www.w3.org/1999/xhtml';
-        const pad = 8;  // inner padding
+        const pad = 8;
 
         const fo = document.createElementNS(svgNS, 'foreignObject');
         fo.classList.add('node-fo');
@@ -5675,27 +6031,14 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         fo.setAttribute('height', 56 - pad * 2);
 
         const div = document.createElementNS(htmlNS, 'div');
-        div.className = 'label mono';          // keep your mono look
+        div.className = 'label mono';
         div.textContent = n.label ?? '';
         fo.appendChild(div);
 
         grp.appendChild(fo);
 
-
-        // grp.addEventListener('click', () => {
-        //   // viewState.selectedStepId = n.id;
-        //   setSelectedStepById(n.id);
-
-        //   renderInspector();
-        //   renderGraph();
-        //   renderViewStep();
-        //   // updateAddAfterState(); // disable Add After when 'done' is selected
-        // });
-
         grp.addEventListener('click', () => {
-          // navigateToStepId(n.id, { record: false });
           navigateToStepId(n.id);
-          // setSelectedStepById(n.id);
         });
 
         g.appendChild(grp);
@@ -5732,15 +6075,15 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         fo.appendChild(div);
 
         grp.appendChild(fo);
-
-
         g.appendChild(grp);
       }
-
-
-      // setSelectedStepById(viewState.selectedStepId);
-      // navigateToStepId(viewState.selectedStepId);
     }
+
+
+
+    //   // setSelectedStepById(viewState.selectedStepId);
+    //   // navigateToStepId(viewState.selectedStepId);
+    // }
 
     // Shared graph renderer used by editor graph and mini-map dialog.
     // Clone the existing editor graph into `mount`.
@@ -6261,12 +6604,12 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       return JSON.stringify(obj, null, 2)
         // Escape anything that could prematurely close the script tag
         .replace(/<\/script>/gi, '<\\/script>')
-    // Also neutralize raw "<" so any "</script" variants are safe
-    .replace(/</g, '\\u003C')
-    // Normalize line separators that can break JS/JSON embedding in some engines
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029');
-}
+        // Also neutralize raw "<" so any "<\/script" variants are safe
+        .replace(/</g, '\\u003C')
+        // Normalize line separators that can break JS/JSON embedding in some engines
+        .replace(/\u2028/g, '\\u2028')
+        .replace(/\u2029/g, '\\u2029');
+    }
 
 
     function renderSopTitle() {
@@ -6721,14 +7064,170 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     function isEditMode() { return document.documentElement.getAttribute('data-mode') === 'edit'; }
 
-    function enterViewOrEditStarter(starterId) {
-      const idx = starterIdxById(starterId);
-      resetStarterValues(idx);
-      changeScreen('starter');
-      const st = sop.starters[idx];
-      document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
-      renderAll();
+    // function enterViewOrEditStarter(starterId) {
+    //   const idx = starterIdxById(starterId);
+    //   resetStarterValues(idx);
+    //   changeScreen('starter');
+    //   const st = sop.starters[idx];
+    //   document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
+    //   renderAll();
+    // }
+
+    // function enterViewOrEditStarter(starterId, { replace = false } = {}) {
+    //   const idx = starterIdxById(starterId);
+    //   if (idx < 0) return false;
+
+    //   resetStarterValues(idx);
+    //   changeScreen('starter');
+
+    //   const st = sop.starters[idx];
+    //   document.getElementById('vwStarterTitle').textContent = st?.label || 'Starter';
+    //   renderAll();
+
+    //   // Sync the URL (?starter_id=...)
+    //   try {
+    //     const url = new URL(location.href);
+    //     if (url.searchParams.get('starter_id') !== String(starterId)) {
+    //       url.searchParams.set('starter_id', String(starterId));
+    //       const title = document.title;
+    //       const state = { starter_id: String(starterId) };
+    //       replace ? history.replaceState(state, title, url.toString())
+    //         : history.pushState(state, title, url.toString());
+    //     }
+    //   } catch (_) { /* ignore URL/History edge cases */ }
+
+    //   return true;
+    // }
+
+    // function enterViewOrEditStarter(starterId, { doHistory = true, replace = false } = {}) {
+    //   const idx = starterIdxById(starterId);
+    //   if (idx < 0) return false;
+
+    //   resetStarterValues(idx);
+    //   changeScreen('starter');
+    //   document.getElementById('vwStarterTitle').textContent = sop.starters[idx]?.label || 'Starter';
+    //   renderAll();
+
+    //   // --- URL sync ---
+    //   if (doHistory) {
+    //     const H = window.history;                 // avoid shadowing
+    //     if (H && (H.pushState || H.replaceState)) {
+    //       const url = new URL(location.href);
+    //       if (url.searchParams.get('starter_id') !== String(starterId)) {
+    //         url.searchParams.set('starter_id', String(starterId));
+    //         const state = { starter_id: String(starterId) };
+    //         replace ? H.replaceState(state, '', url) : H.pushState(state, '', url);
+    //       }
+    //     }
+    //   }
+    //   return true;
+    // }
+
+    function enterViewOrEditStarter(starterId, { doHistory = true, replace = false } = {}) {
+  const idx = typeof starterIdxById === 'function' ? starterIdxById(starterId) : -1;
+  if (idx < 0 || !Array.isArray(sop?.starters) || !sop.starters[idx]) return false;
+
+  resetStarterValues(idx);
+  changeScreen('starter');
+  const st = sop.starters[idx];
+  const titleEl = document.getElementById('vwStarterTitle');
+  if (titleEl) titleEl.textContent = st?.label || 'Starter';
+  renderAll?.();
+
+  // remember last
+  try {
+    viewState.lastStarterId = String(st.id);
+    sessionStorage.setItem('last_starter_id', String(st.id));
+  } catch {}
+
+  if (doHistory) {
+    const H = window.history;
+    try {
+      const url = new URL(location.href);
+      url.searchParams.set('starter_id', String(starterId));
+      const state = { starter_id: String(starterId) };
+      replace ? H.replaceState(state, '', url) : H.pushState(state, '', url);
+    } catch {}
+  }
+  return true;
+}
+
+function goHome({ doHistory = true } = {}) {
+  changeScreen('landing');
+  // clear any “current” so popstate won’t no-op
+  viewState.starterIdx = -1;
+  viewState.selectedStepId = null;
+
+  if (doHistory) {
+    try {
+      const url = new URL(location.href);
+      const hadStarter = url.searchParams.has('starter_id');
+      url.searchParams.delete('starter_id');
+
+      // Only push a Home entry if we were on a starter; otherwise don't spam history
+      if (hadStarter) {
+        window.history.pushState({}, '', url);
+      } else {
+        // already home — leave history alone
+      }
+    } catch {}
+  }
+}
+
+// URL -> UI (runs for both Back and Forward)
+function applyStarterFromUrl() {
+  const sp = new URLSearchParams(location.search);
+  const id = sp.get('starter_id');
+  if (id) {
+    enterViewOrEditStarter(id, { doHistory: false }); // do not push again
+  } else {
+    goHome({ doHistory: false }); // do not push again
+  }
+}
+
+// Bind once
+if (!window.__sopPopBound) {
+  window.addEventListener('popstate', applyStarterFromUrl);
+  window.__sopPopBound = true;
+}
+
+// On initial load (after your async SOP init finishes), call once:
+/// applyStarterFromUrl();
+
+
+
+    const QUERY_KEY = 'starter_id';
+    function getQueryStarterId() {
+      const sp = new URLSearchParams(location.search);
+      console.log(`sp`, sp);
+      const v = sp.get(QUERY_KEY);
+      console.log(`v`, v);
+      if (v) return v.trim();
+      return null;
     }
+
+    // function applyStarterFromUrl() {
+    //   const starterId = getQueryStarterId();
+    //   const current = sop?.starters?.[viewState.starterIdx]?.id;
+    //   if (starterId && String(starterId) !== String(current)) enterViewOrEditStarter(starterId, { doHistory: false });
+    //   else if (!starterId) goHome();
+    // }
+
+    function applyStarterFromUrl() {
+      const id = getQueryStarterId();
+      if (id) {
+        enterViewOrEditStarter(id, { doHistory: false }); // no push
+      } else {
+        goHome();
+      }
+    }
+
+
+
+
+    window.addEventListener('popstate', applyStarterFromUrl);
+
+
 
     function starterSearchText(st) {
       const out = [];
@@ -7394,35 +7893,164 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       }
 
       // rows & stable order within row
-      const rows = {};
+      // const rows = {};
+      // nodes.forEach(n => {
+      //   const d = depth[n.id] || 0;
+      //   (rows[d] ||= []).push(n.id);
+      // });
+      // const colIndex = {};
+      // Object.keys(rows).sort((a, b) => a - b).forEach(d => {
+      //   rows[d].forEach((id, i) => colIndex[id] = i);
+      // });
+
+      // // compute lane positions (same constants as layoutVertical)
+      // const colWidth = 200;    // horizontal spacing
+      // const rowGap = 140;     // vertical spacing
+      // const x0 = 200, y0 = 60; // origin
+
+      // // WRITE BACK positions only if missing
+      // let wroteAny = false;
+      // for (const n of nodes) {
+      //   const s = steps.find(x => x.id === n.id);
+      //   const has = s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
+      //   if (!has) {
+      //     const d = depth[n.id] || 0;
+      //     const i = colIndex[n.id] || 0;
+      //     s.pos = { x: x0 + i * colWidth, y: y0 + d * rowGap };
+      //     wroteAny = true;
+      //   }
+      // }
+
+      // if (wroteAny && typeof setDirty === 'function') setDirty(true);
+
+      // --- build lookup for step meta ---
+      const byId = new Map(steps.map(s => [s.id, s]));
+      const isSingleSelect = (id) => {
+        const s = byId.get(id);
+        return s && s.type === 'select' && s.mode === 'single';
+      };
+
+      // --- group nodes by depth ---
+      const depthNodes = {};
       nodes.forEach(n => {
         const d = depth[n.id] || 0;
-        (rows[d] ||= []).push(n.id);
-      });
-      const colIndex = {};
-      Object.keys(rows).sort((a, b) => a - b).forEach(d => {
-        rows[d].forEach((id, i) => colIndex[id] = i);
+        (depthNodes[d] ||= []).push(n.id);
       });
 
-      // compute lane positions (same constants as layoutVertical)
-      const colWidth = 200;    // horizontal spacing
-      const rowGap = 140;     // vertical spacing
-      const x0 = 200, y0 = 60; // origin
+      // --- assign columns per depth with left/right fan-out ---
+      const colIndex = {};           // id -> absolute column (can be negative)
+      let minCol = Infinity;         // track global min to normalize later
+      let maxDepth = Math.max(...Object.values(depth).map(d => d || 0));
 
-      // WRITE BACK positions only if missing
+      // seed depth 0 (start column = 0)
+      (depthNodes[0] || []).forEach((id, i) => {  // usually one node
+        colIndex[id] = 0 + i;                     // if multiple, spread to the right
+        if (colIndex[id] < minCol) minCol = colIndex[id];
+      });
+
+      // process from d=1 to bottom
+      for (let d = 1; d <= maxDepth; d++) {
+        const levelIds = (depthNodes[d] || []).slice(); // shallow copy
+        if (!levelIds.length) continue;
+
+        // desired columns from parents at d-1
+        const occupied = new Set();   // columns already taken at this depth
+        const desiredCol = new Map(); // id -> wished column
+
+        // build reverse adjacency (parents) quickly when needed
+        const parentsOf = (vid) => {
+          const ps = [];
+          for (const e of edges) if (e.to === vid) ps.push(e.from);
+          return ps;
+        };
+
+        // for each parent at d-1 that is single-select, fan its children at d
+        for (const pid of (depthNodes[d - 1] || [])) {
+          if (!isSingleSelect(pid)) continue;
+
+          const pcol = colIndex[pid] ?? 0;
+          const kids = (adj[pid] || []).filter(k => (depth[k] || 0) === d);
+
+          if (!kids.length) continue;
+
+          // offsets pattern: 1 -> [+1], else [-1,+1,-2,+2,...]
+          const offsets = (kids.length === 1)
+            ? [+1]
+            : Array.from({ length: kids.length }, (_, i) =>
+              (i % 2 === 0 ? -(i / 2 + 1) : (Math.floor(i / 2) + 1))
+            );
+
+          kids.forEach((kid, idx) => {
+            const wish = pcol + offsets[idx];
+            if (!desiredCol.has(kid)) desiredCol.set(kid, wish);
+          });
+        }
+
+        // place nodes that have desired columns first (resolve collisions nearest to desired)
+        function placeAtNearestFree(id, wish) {
+          let delta = 0;
+          let chosen = wish;
+          while (occupied.has(chosen)) {
+            delta++;
+            // prefer the side that keeps things compact: try +delta then -delta
+            const rightTry = wish + delta;
+            const leftTry = wish - delta;
+            if (!occupied.has(rightTry)) { chosen = rightTry; break; }
+            if (!occupied.has(leftTry)) { chosen = leftTry; break; }
+          }
+          colIndex[id] = chosen;
+          occupied.add(chosen);
+          if (chosen < minCol) minCol = chosen;
+        }
+
+        // sort to stabilize placement (optional: by desired, then id)
+        const withDesired = levelIds.filter(id => desiredCol.has(id))
+          .sort((a, b) => (desiredCol.get(a) - desiredCol.get(b)) || String(a).localeCompare(String(b)));
+        withDesired.forEach(id => placeAtNearestFree(id, desiredCol.get(id)));
+
+        // place the rest in remaining nearest-to-0 slots (stable order)
+        const rest = levelIds.filter(id => !desiredCol.has(id));
+        let probe = 0;
+        const nextFree = () => {
+          // find nearest free around 0 to keep compact
+          if (!occupied.has(0)) return 0;
+          let k = 1;
+          while (true) {
+            if (!occupied.has(-k)) return -k;
+            if (!occupied.has(+k)) return +k;
+            k++;
+          }
+        };
+        rest.forEach(id => {
+          const c = nextFree();
+          colIndex[id] = c;
+          occupied.add(c);
+          if (c < minCol) minCol = c;
+        });
+      }
+
+      // --- WRITE BACK positions (normalize columns so x >= 0) ---
+
+
+      const colWidth = 200;  // horizontal spacing
+      const rowGap = 140;  // vertical spacing
+      const x0 = 200, y0 = 60;
+
       let wroteAny = false;
       for (const n of nodes) {
         const s = steps.find(x => x.id === n.id);
         const has = s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y);
         if (!has) {
           const d = depth[n.id] || 0;
-          const i = colIndex[n.id] || 0;
-          s.pos = { x: x0 + i * colWidth, y: y0 + d * rowGap };
+          // const ci = colIndex[n.id] ??   0;
+          const ci = colIndex[n.id] ?? 0;
+          const cx = (ci - (Number.isFinite(minCol) ? minCol : 0)); // shift so leftmost is 0
+          s.pos = { x: x0 + ci * colWidth, y: y0 + d * rowGap };
+          // s.pos = { x: x0 + cx * colWidth, y: y0 + d * rowGap };
           wroteAny = true;
         }
       }
 
-      if (wroteAny && typeof setDirty === 'function') setDirty(true);
       return wroteAny;
     }
 
@@ -7909,46 +8537,84 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     function setNextEnabled(enabled) {
       const btn = document.getElementById('vwNext');
       if (!btn) return;
+      // console.log(`btn`, btn);
+      // console.log(`enabled`, enabled);
       btn.disabled = !enabled; // enable when true, disable when false
+      // btn.disabled = true; // enable when true, disable when false
     }
 
 
-    // put this *after* setNextEnabled(...)
+    // function validateValueForStep(step, value) {
+    //   if (step.type === 'input') {
+    //     if (!String(value || '').trim()) return { ok: false, msg: step.requiredMessage || 'This field is required' };
+    //   }
+    //   else if (step.type === 'select' && step.mode === 'single' && !value) {
+    //     return {
+    //       ok: false, msg: step.requiredMessage || 'Please choose an option'
+    //     };
+    //   }
+    //   if (step.type === 'input' && step.regex) {
+    //     if (value.trim() === '') return { ok: false, msg: 'Invalid format' };
+    //     try {
+    //       const re = new RegExp(step.regex);
+    //       if (!re.test(String(value || ''))) return { ok: false, msg: step.error || 'Invalid format' };
+    //     } catch (e) { /* ignore invalid regex */ }
+    //   }
+    //   if (step.type === 'select' && step.mode === 'multi') {
+    //     const count = Array.isArray(value) ? value.length : 0;
+    //     if (typeof step.min === 'number' && count < step.min) return { ok: false, msg: step.minMessage || `Select at least ${step.min}` };
+    //     if (typeof step.max === 'number' && count > step.max) return { ok: false, msg: step.maxMessage || `Select at most ${step.max}` };
+    //   }
+    //   return { ok: true, msg: '' };
+    // }
+
     function validateValueForStep(step, value) {
-      // if (step.required) {
-      if (step.type === 'input') {
-        if (!String(value || '').trim()) return { ok: false, msg: step.requiredMessage || 'This field is required' };
+      // ----- END STEP: always disable -----
+      console.log(`isEndStep(step)`, isEndStep(step));
+      if (typeof isEndStep === 'function' && isEndStep(step)) {
+        return { ok: false, msg: '', end: true }; // end=true helps callers if needed
       }
-      // else if () {
-      // if (step.mode === 'multi') {
-      //   if (!Array.isArray(value) || value.length === 0) return { ok: false, msg: step.requiredMessage || 'Select at least one' };
-      // } else {
-      //   if (!value) return { ok: false, msg: step.requiredMessage || 'Please choose an option' };
-      // }
-      // if single select manda
-      else if (step.type === 'select' && step.mode === 'single' && !value) {
-        return {
-          ok: false, msg: step.requiredMessage || 'Please choose an option'
-        };
-        // }
+
+      const type = step?.type;
+      const mode = step?.mode;
+      const valStr = String(value ?? '');
+      const valTrim = valStr.trim();
+
+      // ----- INPUT -----
+      if (type === 'input') {
+        if (!valTrim) {
+          return { ok: false, msg: step?.requiredMessage || 'This field is required' };
+        }
+        if (step?.regex) {
+          try {
+            const re = step.__re || (step.__re = new RegExp(step.regex)); // cache compiled regex
+            if (!re.test(valStr)) return { ok: false, msg: step?.error || 'Invalid format' };
+          } catch { /* ignore invalid regex */ }
+        }
+        return { ok: true, msg: '' };
       }
-      // }
-      if (step.type === 'input' && step.regex) {
-        // console.log(`validating regex`, step.regex, value);
-        try {
-          const re = new RegExp(step.regex);
-          // console.log(`regex`, re, re.test(String(value || '')));
-          if (!re.test(String(value || ''))) return { ok: false, msg: step.error || 'Invalid format' };
-          // console.log(`passed`);
-        } catch (e) { /* ignore invalid regex */ }
-      }
-      if (step.type === 'select' && step.mode === 'multi') {
+
+      // ----- SELECT -----
+      if (type === 'select') {
+        if (mode === 'single') {
+          if (!value) return { ok: false, msg: step?.requiredMessage || 'Please choose an option' };
+          return { ok: true, msg: '' };
+        }
+        // multi
         const count = Array.isArray(value) ? value.length : 0;
-        if (typeof step.min === 'number' && count < step.min) return { ok: false, msg: step.minMessage || `Select at least ${step.min}` };
-        if (typeof step.max === 'number' && count > step.max) return { ok: false, msg: step.maxMessage || `Select at most ${step.max}` };
+        if (typeof step?.min === 'number' && count < step.min) {
+          return { ok: false, msg: step?.minMessage || `Select at least ${step.min}` };
+        }
+        if (typeof step?.max === 'number' && count > step.max) {
+          return { ok: false, msg: step?.maxMessage || `Select at most ${step.max}` };
+        }
+        return { ok: true, msg: '' };
       }
+
+      // default: pass-through
       return { ok: true, msg: '' };
     }
+
 
     // has no next step implicitly (no indicator)
     // const isEndStep = (s) => !s?.next;
@@ -8537,299 +9203,355 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     // }
 
     function renderViewStep() {
-  const st = sop.starters[viewState.starterIdx];
-  const steps = st.steps || [];
-  let i = getStepIndexById(steps, viewState.selectedStepId);
-  if (i < 0) i = 0;
+      const st = sop.starters[viewState.starterIdx];
+      const steps = st.steps || [];
+      let i = getStepIndexById(steps, viewState.selectedStepId);
+      if (i < 0) i = 0;
 
-  const box = document.getElementById('vwStep');
-  box.innerHTML = '';
+      const box = document.getElementById('vwStep');
+      box.innerHTML = '';
 
-  const step = steps[i];
-  if (!step) { setNextEnabled(false); return; }
+      const step = steps[i];
+      if (!step) { setNextEnabled(false); return; }
 
-  const frag = document.createDocumentFragment();
+      const frag = document.createDocumentFragment();
 
-  // Header (kept your style; added id for a11y)
-  const headHtml = step.title
-    ? `<h3 class="vw-title" id="vw-title-${step.id}">${viewEscape(step.title)}</h3><hr class="vw-hr">`
-    : '';
-  const imgHtml = step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : '';
+      // Header (kept your style; added id for a11y)
+      const headHtml = step.title
+        ? `<h3 class="vw-title" id="vw-title-${step.id}">${viewEscape(step.title)}</h3><hr class="vw-hr">`
+        : '';
+      const imgHtml = step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : '';
 
-  // ---------- helpers ----------
-  const EMBED_MIN_H = 360;
-  const EMBED_MAX_H = 1600; // cap to stop runaway growth
-  function createEmbedIframe(emb) {
-    const ifr = document.createElement('iframe');
-    ifr.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
-    ifr.referrerPolicy = 'no-referrer';
-    ifr.style.width = '100%';
-    ifr.style.border = '1px solid var(--muted)';
-    ifr.style.minHeight = EMBED_MIN_H + 'px';
-    ifr.style.maxHeight = EMBED_MAX_H + 'px';
-    ifr.style.height = 'auto';
-    ifr.style.overflow = 'auto'; // internal scroll beyond cap
-    ifr.srcdoc = buildEmbedSrcdoc(emb);
-    return ifr;
-  }
+      // ---------- helpers ----------
+      const EMBED_MIN_H = 360;
+      const EMBED_MAX_H = 1600; // cap to stop runaway growth
+      function createEmbedIframe(emb) {
+        const ifr = document.createElement('iframe');
+        ifr.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
+        ifr.referrerPolicy = 'no-referrer';
+        ifr.style.width = '100%';
+        ifr.style.border = '1px solid var(--muted)';
+        ifr.style.minHeight = EMBED_MIN_H + 'px';
+        ifr.style.maxHeight = EMBED_MAX_H + 'px';
+        ifr.style.height = 'auto';
+        ifr.style.overflow = 'auto'; // internal scroll beyond cap
+        ifr.srcdoc = buildEmbedSrcdoc(emb);
+        return ifr;
+      }
 
-  function renderEmbeds(intoNode) {
-    const embeds = Array.isArray(step.embeds) ? step.embeds : [];
+      function renderEmbeds(intoNode) {
+        const embeds = Array.isArray(step.embeds) ? step.embeds : [];
 
-    // collect chip IDs BEFORE replacing
-    const usedIds = new Set(
-      [...intoNode.querySelectorAll('.embed-chip[data-embed-id]')]
-        .map(c => c.getAttribute('data-embed-id'))
-    );
+        // collect chip IDs BEFORE replacing
+        const usedIds = new Set(
+          [...intoNode.querySelectorAll('.embed-chip[data-embed-id]')]
+            .map(c => c.getAttribute('data-embed-id'))
+        );
 
-    // A) Replace chips with iframes
-    intoNode.querySelectorAll('.embed-chip[data-embed-id]').forEach(chip => {
-      const id = chip.getAttribute('data-embed-id');
-      const emb = embeds.find(e => e.id === id);
-      if (!emb) return;
-      const ifr = createEmbedIframe(emb);
-      chip.replaceWith(ifr);
-    });
+        // A) Replace chips with iframes
+        intoNode.querySelectorAll('.embed-chip[data-embed-id]').forEach(chip => {
+          const id = chip.getAttribute('data-embed-id');
+          const emb = embeds.find(e => e.id === id);
+          if (!emb) return;
+          const ifr = createEmbedIframe(emb);
+          chip.replaceWith(ifr);
+        });
 
-    // B) Append embeds with no chip reference
-    embeds.filter(e => !usedIds.has(e.id)).forEach(emb => {
-      const ifr = createEmbedIframe(emb);
-      intoNode.appendChild(ifr);
-    });
-  }
+        // B) Append embeds with no chip reference
+        embeds.filter(e => !usedIds.has(e.id)).forEach(emb => {
+          const ifr = createEmbedIframe(emb);
+          intoNode.appendChild(ifr);
+        });
+      }
 
-  // ---------- body by type ----------
-  let node;
+      // ---------- body by type ----------
+      let node;
 
-  if (step.type === 'instruction') {
-    node = document.createElement('div');
-    node.innerHTML = `${headHtml}${renderBody(step.body)}${imgHtml}`;
-    renderEmbeds(node);
-    frag.appendChild(node);
-    setNextEnabled(true);
-  }
+      if (step.type === 'instruction') {
+        node = document.createElement('div');
+        node.innerHTML = `${headHtml}${renderBody(step.body)}${imgHtml}`;
+        renderEmbeds(node);
+        frag.appendChild(node);
+        setNextEnabled(true);
+      }
 
-  else if (step.type === 'input') {
-    node = document.createElement('div');
-    node.innerHTML = `
+      else if (step.type === 'input') {
+        node = document.createElement('div');
+        node.innerHTML = `
       ${step.title ? `<label for="vw_inp">${viewEscape(step.title)}</label>` : ''}
       <input id="vw_inp" type="text" class="text-input"
              placeholder="${viewEscape(step.placeholder || '')}">
       ${imgHtml}
     `;
-    frag.appendChild(node);
+        frag.appendChild(node);
 
-    const inp = node.querySelector('#vw_inp');
-    const img = node.querySelector('.thumb');
-    inp.value = viewState.answers[step.id] || '';
+        const inp = node.querySelector('#vw_inp');
+        const img = node.querySelector('.thumb');
+        inp.value = viewState.answers[step.id] || '';
 
-    const err = document.createElement('div');
-    err.className = 'error';
-    err.style.display = 'none';
-    (img ? img : inp).insertAdjacentElement(img ? 'beforebegin' : 'afterend', err);
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.style.display = 'none';
+        (img ? img : inp).insertAdjacentElement(img ? 'beforebegin' : 'afterend', err);
 
-    function refreshInput() {
-      const res = validateValueForStep(step, inp.value);
-      err.textContent = res.ok ? '' : res.msg;
-      err.style.display = res.ok ? 'none' : '';
-      setNextEnabled(res.ok);
-    }
-    inp.addEventListener('input', () => {
-      viewState.answers[step.id] = inp.value;
-      refreshInput();
-    });
-    refreshInput();
-  }
-
-  else if (step.type === 'select') {
-    node = document.createElement('div');
-    node.innerHTML = headHtml || `<h3>${viewEscape(step.title || '')}</h3>`;
-
-    const wrap = document.createElement('div');
-    wrap.className = 'vw-grid-sel';
-    node.appendChild(wrap);
-
-    const mode = step.mode === 'multi' ? 'multi' : 'single';
-    let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
-
-    (step.options || []).forEach(opt => {
-      const btn = document.createElement('button');
-      btn.className = 'vw-option';
-      btn.type = 'button';
-      btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
-
-      const isSel = mode === 'multi'
-        ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
-        : (sel && ((sel?.value ?? sel) === opt.value));
-
-      if (isSel) btn.classList.add('selected');
-
-      btn.addEventListener('click', () => {
-        if (mode === 'multi') {
-          sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
-          const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
-          if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
-          else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
-          viewState.answers[step.id] = sel;
-          refreshSelect();
-        } else {
-          viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
-          wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
-          btn.classList.add('selected');
-          refreshSelect();
+        function refreshInput() {
+          const res = validateValueForStep(step, inp.value);
+          err.textContent = res.ok ? '' : res.msg;
+          err.style.display = res.ok ? 'none' : '';
+          setNextEnabled(res.ok);
         }
-      });
-
-      wrap.appendChild(btn);
-    });
-
-    const err = document.createElement('div');
-    err.className = 'error';
-    err.style.display = 'none';
-    node.appendChild(err);
-
-    function refreshSelect() {
-      const res = validateValueForStep(step, viewState.answers[step.id]);
-      err.textContent = res.ok ? '' : res.msg;
-      err.style.display = res.ok ? 'none' : '';
-      setNextEnabled(res.ok);
-    }
-    refreshSelect();
-
-    frag.appendChild(node);
-  }
-
-  else if (isEndStep(step)) {
-    node = document.createElement('div');
-    node.innerHTML = `${headHtml || '<h3>Completed</h3>'}${viewBodyHtml(step.body)}`;
-    frag.appendChild(node);
-    setNextEnabled(false);
-  }
-
-  else {
-    const warn = document.createElement('div');
-    warn.textContent = 'Unknown step type';
-    frag.appendChild(warn);
-    setNextEnabled(false);
-  }
-
-  // ---------- mount ----------
-  box.appendChild(frag);
-
-  // ---------- nav controls ----------
-  const prevBtn = document.getElementById('vwPrev');
-  const nextBtn = document.getElementById('vwNext');
-
-  prevBtn.disabled = !((viewState.history?.length || 0) > 0 || !!getFirstPredecessorId(getStarter(), viewState.selectedStepId));
-
-  nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
-  nextBtn.disabled = !!isEndStep(step);
-
-  prevBtn.onclick = () => goPrevious();
-
-  nextBtn.onclick = () => {
-    if (isEndStep(step)) return;
-
-    const stepsAll = getSteps();
-    const current = getStepById(viewState.selectedStepId);
-
-    // single-select "branch next"
-    if (current?.type === 'select' && current.mode === 'single') {
-      const choice = viewState.answers[current.id];
-      if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
-        const toId = choice.next;
-        if (toId !== viewState.selectedStepId) {
-          recordTransition(viewState.selectedStepId, toId);
-          setSelectedStepById(toId);
-          renderViewStep(); renderGraph(); renderInspector();
-        }
-        return;
+        inp.addEventListener('input', () => {
+          viewState.answers[step.id] = inp.value;
+          refreshInput();
+        });
+        refreshInput();
       }
-    }
 
-    // step-level next
-    if (current?.next && stepsAll.find(x => x.id === current.next)) {
-      const toId = current.next;
-      if (toId !== viewState.selectedStepId) {
-        recordTransition(viewState.selectedStepId, toId);
-        setSelectedStepById(toId);
+      else if (step.type === 'select') {
+        node = document.createElement('div');
+        node.innerHTML = headHtml || `<h3>${viewEscape(step.title || '')}</h3>`;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'vw-grid-sel';
+        node.appendChild(wrap);
+
+        const mode = step.mode === 'multi' ? 'multi' : 'single';
+        let sel = viewState.answers[step.id] ?? (mode === 'multi' ? [] : null);
+
+        (step.options || []).forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'vw-option';
+          btn.type = 'button';
+          btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
+
+          const isSel = mode === 'multi'
+            ? (Array.isArray(sel) && sel.some(o => (o?.value ?? o) === opt.value))
+            : (sel && ((sel?.value ?? sel) === opt.value));
+
+          if (isSel) btn.classList.add('selected');
+
+          btn.addEventListener('click', () => {
+            if (mode === 'multi') {
+              sel = Array.isArray(viewState.answers[step.id]) ? [...viewState.answers[step.id]] : [];
+              const k = sel.findIndex(o => (o?.value ?? o) === opt.value);
+              if (k >= 0) { sel.splice(k, 1); btn.classList.remove('selected'); }
+              else { sel.push({ value: opt.value, label: opt.label }); btn.classList.add('selected'); }
+              viewState.answers[step.id] = sel;
+              refreshSelect();
+            } else {
+              viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
+              wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
+              btn.classList.add('selected');
+              refreshSelect();
+            }
+          });
+
+          wrap.appendChild(btn);
+        });
+
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.style.display = 'none';
+        node.appendChild(err);
+
+        function refreshSelect() {
+          const res = validateValueForStep(step, viewState.answers[step.id]);
+          err.textContent = res.ok ? '' : res.msg;
+          err.style.display = res.ok ? 'none' : '';
+          setNextEnabled(res.ok);
+        }
+        refreshSelect();
+
+        frag.appendChild(node);
+      }
+
+      else if (isEndStep(step)) {
+        node = document.createElement('div');
+        node.innerHTML = `${headHtml || '<h3>Completed</h3>'}${viewBodyHtml(step.body)}`;
+        frag.appendChild(node);
+        setNextEnabled(false);
+      }
+
+      else {
+        const warn = document.createElement('div');
+        warn.textContent = 'Unknown step type';
+        frag.appendChild(warn);
+        setNextEnabled(false);
+      }
+
+      // ---------- mount ----------
+      box.appendChild(frag);
+
+      // ---------- nav controls ----------
+      const prevBtn = document.getElementById('vwPrev');
+      const nextBtn = document.getElementById('vwNext');
+
+      prevBtn.disabled = !((viewState.history?.length || 0) > 0 || !!getFirstPredecessorId(getStarter(), viewState.selectedStepId));
+
+      nextBtn.textContent = isEndStep(step) ? 'Finish' : 'Next';
+      if (isEndStep(step)) {
+        setNextEnabled(false);
+      }
+
+      prevBtn.onclick = () => goPrevious();
+
+      nextBtn.onclick = () => {
+        if (isEndStep(step)) return;
+
+        const stepsAll = getSteps();
+        const current = getStepById(viewState.selectedStepId);
+
+        // single-select "branch next"
+        if (current?.type === 'select' && current.mode === 'single') {
+          const choice = viewState.answers[current.id];
+          if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
+            const toId = choice.next;
+            if (toId !== viewState.selectedStepId) {
+              recordTransition(viewState.selectedStepId, toId);
+              setSelectedStepById(toId);
+              renderViewStep(); renderGraph(); renderInspector();
+            }
+            return;
+          }
+        }
+
+        // step-level next
+        if (current?.next && stepsAll.find(x => x.id === current.next)) {
+          const toId = current.next;
+          if (toId !== viewState.selectedStepId) {
+            recordTransition(viewState.selectedStepId, toId);
+            setSelectedStepById(toId);
+            renderViewStep(); renderGraph(); renderInspector();
+          }
+          return;
+        }
+
         renderViewStep(); renderGraph(); renderInspector();
-      }
-      return;
-    }
+      };
 
-    renderViewStep(); renderGraph(); renderInspector();
-  };
-}
+      // --- Keyboard: ArrowLeft / ArrowRight -> Prev / Next (ignore typing fields)
+      if (!document.__vwArrowsBound) {
+        document.addEventListener('keydown', (e) => {
+          if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+          const t = e.target;
+          const isTyping =
+            t && (
+              t.isContentEditable ||
+              /^(input|textarea|select)$/i.test(t.tagName) ||
+              t.getAttribute?.('role') === 'textbox'
+            );
+
+          if (isTyping) return;
+
+          if (e.key === 'ArrowRight') { e.preventDefault(); document.getElementById('vwNext')?.click(); }
+          else if (e.key === 'ArrowLeft') { e.preventDefault(); document.getElementById('vwPrev')?.click(); }
+        });
+        document.__vwArrowsBound = true;
+      }
+
+      // --- Mouse: click left/right side of the step box -> Prev/Next
+      if (!box.__vwSideClickBound) {
+        box.addEventListener('click', (e) => {
+          // don't hijack clicks on real controls or links or inside iframes
+          if (e.target.closest('a, button, input, textarea, select, label, iframe, .vw-option')) return;
+
+          // don't navigate if user is selecting text
+          const sel = window.getSelection?.();
+          if (sel && sel.toString().trim()) return;
+
+          const r = box.getBoundingClientRect();
+          const x = e.clientX - r.left;
+          const ratio = x / r.width;
+
+          if (ratio >= 0.66) { document.getElementById('vwNext')?.click(); }
+          else if (ratio <= 0.34) { document.getElementById('vwPrev')?.click(); }
+          // clicks near the middle do nothing
+        });
+        box.__vwSideClickBound = true;
+      }
+
+      hydrateStarterLinks(node);
+      function hydrateStarterLinks(root = document) {
+        root.querySelectorAll('a[data-starter-id]').forEach(a => {
+          const id = a.dataset.starterId;
+          if (!id) return;
+          const url = new URL(location.href);
+          url.searchParams.set('starter_id', id);
+          a.href = url.toString();
+          a.title = a.href; // nice hover preview
+        });
+      }
+    }
 
 
     function refreshMiniMap(fit = true) {
       console.log('refresh mini map');
-      const dlg  = document.getElementById('vwMapDlg');
+      const dlg = document.getElementById('vwMapDlg');
       const host = document.getElementById('vwMiniGraph');
       if (!dlg || dlg.hidden || !host) return;
 
       // const hadContent = !!host.firstChild;
       host.innerHTML = '';
       renderGraphInto(host, {
-        onNodeClick(id) { if (typeof navigateToStepId === 'function') navigateToStepId(id);   },
+        onNodeClick(id) { if (typeof navigateToStepId === 'function') navigateToStepId(id); },
       });
     }
 
     // 1) render on state change
-// (function miniMapAutoSync() {
-//   if (window.__miniSync) return;
+    // (function miniMapAutoSync() {
+    //   if (window.__miniSync) return;
 
-//   function scheduleMiniRefresh(fitFirst=false) {
-//     // let main UI settle a frame, then refresh
-//     requestAnimationFrame(() => { try { refreshMiniMap(fitFirst); } catch {} });
-//   }
+    //   function scheduleMiniRefresh(fitFirst=false) {
+    //     // let main UI settle a frame, then refresh
+    //     requestAnimationFrame(() => { try { refreshMiniMap(fitFirst); } catch {} });
+    //   }
 
-//   // Hook viewState.selectedStepId (source of truth)
-//   const st = (window.viewState ||= {});
-//   let _sel = st.selectedStepId;
-//   try {
-//     Object.defineProperty(st, 'selectedStepId', {
-//       configurable: true,
-//       enumerable: true,
-//       get() { return _sel; },
-//       set(v) { _sel = v; scheduleMiniRefresh(false); },
-//     });
-//   } catch { /* if already accessor, we still have the other hooks below */ }
+    //   // Hook viewState.selectedStepId (source of truth)
+    //   const st = (window.viewState ||= {});
+    //   let _sel = st.selectedStepId;
+    //   try {
+    //     Object.defineProperty(st, 'selectedStepId', {
+    //       configurable: true,
+    //       enumerable: true,
+    //       get() { return _sel; },
+    //       set(v) { _sel = v; scheduleMiniRefresh(false); },
+    //     });
+    //   } catch { /* if already accessor, we still have the other hooks below */ }
 
-//   // 2) also hook navigateToStepId (covers viewers/other code paths)
-//   const origNav = window.navigateToStepId;
-//   if (typeof origNav === 'function') {
-//     window.navigateToStepId = function (...args) {
-//       const out = origNav.apply(this, args);
-//       scheduleMiniRefresh(false);
-//       return out;
-//     };
-//   }
+    //   // 2) also hook navigateToStepId (covers viewers/other code paths)
+    //   const origNav = window.navigateToStepId;
+    //   if (typeof origNav === 'function') {
+    //     window.navigateToStepId = function (...args) {
+    //       const out = origNav.apply(this, args);
+    //       scheduleMiniRefresh(false);
+    //       return out;
+    //     };
+    //   }
 
-//   // 3) listen to common Next/Prev UI (broad selectors; harmless if absent)
-//   const navSelectors = [
-//     '#vwNext', '#vwPrev',
-//     '[data-action="next"]', '[data-action="prev"]',
-//     'button[aria-label="Next"]', 'button[aria-label="Prev"]'
-//   ];
-//   document.addEventListener('click', (e) => {
-//     if (navSelectors.some(sel => e.target.closest(sel))) scheduleMiniRefresh(false);
-//   });
+    //   // 3) listen to common Next/Prev UI (broad selectors; harmless if absent)
+    //   const navSelectors = [
+    //     '#vwNext', '#vwPrev',
+    //     '[data-action="next"]', '[data-action="prev"]',
+    //     'button[aria-label="Next"]', 'button[aria-label="Prev"]'
+    //   ];
+    //   document.addEventListener('click', (e) => {
+    //     if (navSelectors.some(sel => e.target.closest(sel))) scheduleMiniRefresh(false);
+    //   });
 
-//   // 4) last resort: watch the main graph for selection/attribute changes
-//   const graphRoot =
-//     document.querySelector('.graph-canvas') ||
-//     document.getElementById('graphSvg') ||
-//     document.querySelector('#graph svg');
-//   if (graphRoot) {
-//     const mo = new MutationObserver(() => scheduleMiniRefresh(false));
-//     mo.observe(graphRoot, { subtree: true, attributes: true, attributeFilter: ['class', 'data-selected', 'step-id'] });
-//     window.__miniMo = mo;
-//   }
+    //   // 4) last resort: watch the main graph for selection/attribute changes
+    //   const graphRoot =
+    //     document.querySelector('.graph-canvas') ||
+    //     document.getElementById('graphSvg') ||
+    //     document.querySelector('#graph svg');
+    //   if (graphRoot) {
+    //     const mo = new MutationObserver(() => scheduleMiniRefresh(false));
+    //     mo.observe(graphRoot, { subtree: true, attributes: true, attributeFilter: ['class', 'data-selected', 'step-id'] });
+    //     window.__miniMo = mo;
+    //   }
 
-//   window.__miniSync = true;
-// })();
+    //   window.__miniSync = true;
+    // })();
 
 
 
@@ -9016,499 +9738,575 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     //   })();
 
-    
+
 
     (function ensureCfmOverlay() {
-  if (window.__cfmOverlay) return;
+      if (window.__cfmOverlay) return;
 
-  const el = document.querySelector('.cfm-overlay') || (() => {
-    const d = document.createElement('div');
-    d.className = 'cfm-overlay';
-    d.style.display = 'none';
-    document.body.appendChild(d);
-    return d;
-  })();
+      const el = document.querySelector('.cfm-overlay') || (() => {
+        const d = document.createElement('div');
+        d.className = 'cfm-overlay';
+        d.style.display = 'none';
+        document.body.appendChild(d);
+        return d;
+      })();
 
-  el.style.zIndex = String(Math.max(9999, parseInt(getComputedStyle(el).zIndex || '9999',10)));
+      el.style.zIndex = String(Math.max(9999, parseInt(getComputedStyle(el).zIndex || '9999', 10)));
 
-  const stack = []; // LIFO of closer functions: (reason) => void
+      const stack = []; // LIFO of closer functions: (reason) => void
 
-  function show() { el.style.display = 'flex'; }
-  function hideIfEmpty() { if (stack.length === 0) el.style.display = 'none'; }
+      function show() { el.style.display = 'flex'; }
+      function hideIfEmpty() { if (stack.length === 0) el.style.display = 'none'; }
 
-  el.addEventListener('click', () => {
-    const top = stack[stack.length - 1];
-    if (typeof top === 'function') top('backdrop');
-  });
+      el.addEventListener('click', () => {
+        const top = stack[stack.length - 1];
+        if (typeof top === 'function') top('backdrop');
+      });
 
-  // block wheel/touch behind
-  const block = (e) => { if (stack.length) { e.preventDefault(); } };
-  el.addEventListener('wheel', block, { passive: false });
-  el.addEventListener('touchmove', block, { passive: false });
+      // block wheel/touch behind
+      const block = (e) => { if (stack.length) { e.preventDefault(); } };
+      el.addEventListener('wheel', block, { passive: false });
+      el.addEventListener('touchmove', block, { passive: false });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    const top = stack[stack.length - 1];
-    if (!top) return;
-    e.preventDefault();
-    if (typeof top === 'function') top('esc');
-  });
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const top = stack[stack.length - 1];
+        if (!top) return;
+        e.preventDefault();
+        if (typeof top === 'function') top('esc');
+      });
 
-  window.__cfmOverlay = {
-    push(closerFn) { if (typeof closerFn === 'function') { stack.push(closerFn); show(); } },
-    remove(closerFn) {
-      const i = stack.lastIndexOf(closerFn);
-      if (i !== -1) stack.splice(i, 1);
-      hideIfEmpty();
-    },
-    bringToFront() { show(); },
-    _debugCount() { return stack.length; }
-  };
-})();
-
-/* ---------------- your dialog init (uses overlay manager) ---------------- */
-// (function initMapDialog() {
-//   const openBtn  = document.getElementById('vwOpenMap');
-//   const dlg      = document.getElementById('vwMapDlg');
-//   const closeBtn = document.getElementById('vwMapClose');
-//   const dragBar  = document.getElementById('vwMapDrag');
-//   const miniWrap = document.getElementById('vwMiniGraph');
-
-//   if (!openBtn || !dlg || !closeBtn || !dragBar || !miniWrap) return;
-
-//   dlg.style.zIndex = String((parseInt(getComputedStyle(dlg).zIndex || '0',10) || 0) + 1 || 10000);
-//   dlg.setAttribute('role', 'dialog');
-//   dlg.setAttribute('aria-hidden', 'true');
-
-//   let lastFocus = null;
-
-//   // closer function stored in the overlay stack
-//   const closer = (reason) => {
-//     if (dlg.hidden) return;
-//     dlg.hidden = true;
-//     dlg.setAttribute('aria-hidden', 'true');
-//     dlg.removeAttribute('aria-modal');
-//     window.__cfmOverlay.remove(closer);
-//     if (lastFocus && typeof lastFocus.focus === 'function') setTimeout(() => lastFocus.focus(), 0);
-//   };
-
-//   function openDialog() {
-//     lastFocus = document.activeElement;
-//     dlg.hidden = false;
-//     dlg.removeAttribute('aria-hidden');
-//     dlg.setAttribute('aria-modal', 'true');
-
-//     if (!dlg.__posSet) {
-//       dlg.style.left   = Math.max(24, (window.innerWidth  - dlg.offsetWidth)  / 2) + 'px';
-//       dlg.style.top    = Math.max(24, (window.innerHeight - dlg.offsetHeight) / 2) + 'px';
-//       dlg.style.right  = 'auto';
-//       dlg.style.bottom = 'auto';
-//       dlg.__posSet = true;
-//     }
-
-//     setTimeout(() => {
-//       (closeBtn || dlg.querySelector('button,[href],[tabindex]:not([tabindex="-1"])'))?.focus?.();
-//     }, 0);
-
-//     window.__cfmOverlay.push(closer);
-//     window.__cfmOverlay.bringToFront();
-
-//     function renderMiniPreserveVB() {
-//       const saved = dlg.__miniState ? { ...dlg.__miniState } : null;
-//       miniWrap.innerHTML = '';
-//       renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
-//       let svg = miniWrap.querySelector('svg');
-//       console.log(`svg`, svg);
-//       if (!svg) return null;
-
-//       svg.querySelectorAll('[step-id], g.node, .node').forEach(el => {
-//         el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
-//       });
-//       svg.querySelectorAll('.edge, path.edge, .handle, .connector').forEach(el => {
-//         el.style.pointerEvents = 'none';
-//       });
-
-//       if (!dlg.__miniState) {
-//         const vb = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
-//         dlg.__miniState = (vb.length === 4 && vb.every(Number.isFinite))
-//           ? { vx: vb[0], vy: vb[1], vw: vb[2], vh: vb[3] }
-//           : { vx: 0, vy: 0, vw: 1000, vh: 1000 };
-//       }
-//       if (saved) dlg.__miniState = saved;
-//       applyVB(svg);
-//       return svg;
-//     }
-
-//     function getSvgRect(svg) {
-//       const r = svg.getBoundingClientRect();
-//       return (r.width >= 1 && r.height >= 1) ? r : null;
-//     }
-    
-//     function zoomAtMouseMini(svg, ev, factor) {
-//       const s = dlg.__miniState, rect = getSvgRect(svg); if (!s || !rect) return;
-//       const sx = ev.clientX - rect.left, sy = ev.clientY - rect.top;
-//       const wx = s.vx + sx * (s.vw / rect.width);
-//       const wy = s.vy + sy * (s.vh / rect.height);
-
-//       const minScale = 0.1, maxScale = 8;
-//       const cur = 1000 / s.vw;
-//       const nxt = Math.min(maxScale, Math.max(minScale, cur * factor));
-//       const eff = nxt / cur; if (eff === 1) return;
-
-//       const vw2 = s.vw / eff, vh2 = s.vh / eff;
-//       s.vx = wx - sx * (vw2 / rect.width);
-//       s.vy = wy - sy * (vh2 / rect.height);
-//       s.vw = vw2; s.vh = vh2;
-//       applyVB(svg);
-//     }
-//     function panMini(svg, dxPx, dyPx) {
-//       // console.log(`dxPx`, dxPx);
-//       debugger;
-//       console.log('panMini is called ?');
-//       const s = dlg.__miniState, rect = getSvgRect(svg); 
-//       console.log(`s`, s);
-//       if (!s || !rect) return;
-//       const sx = s.vw / rect.width, sy = s.vh / rect.height;
-//       s.vx += dxPx * sx; s.vy += dyPx * sy;
-//       console.log('end of panMini');
-//       applyVB(svg);
-//     }
-
-//     function applyVB(svg) {
-//       console.log('applyVB is called');
-//       const s = dlg.__miniState;
-//       console.log(`s`, s);
-//       if (!s) return;
-//       console.log('111');
-//       if (![s.vx, s.vy, s.vw, s.vh].every(Number.isFinite)) return;
-//       console.log('222');
-//       if (s.vw <= 0 || s.vh <= 0) return;
-//       console.log(`svg`, svg);
-//       console.log(`${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
-//       svg.setAttribute('viewBox', `${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
-//     }
-
-//     let svg = renderMiniPreserveVB();
-//     if (!svg) return;
-
-//     const viewport = dlg.querySelector('.mini-viewport') || miniWrap;
-//     if (!dlg.__wheelBound) {
-//       const onMiniWheel = (ev) => {
-//         if (ev.ctrlKey || ev.metaKey) {
-//           ev.preventDefault();
-//           const step = Math.pow(1.0018, -ev.deltaY);
-//           zoomAtMouseMini(svg, ev, step);
-//           return;
-//         }
-//         ev.preventDefault();
-//         const dx = ev.shiftKey ? (-ev.deltaY) : ev.deltaX;
-//         const dy = ev.shiftKey ? 0 : ev.deltaY;
-//         panMini(svg, dx, dy);
-//       };
-//       viewport.addEventListener('wheel', onMiniWheel, { passive: false });
-//       dlg.__wheelBound = true;
-//     }
-
-//     if (!dlg.__clickBound) {
-//       let clicking = false;
-//       const onMiniClick = (ev) => {
-//         const hit = ev.target.closest?.('[step-id], g.node, .node'); if (!hit) return;
-//         const id = hit.getAttribute?.('step-id') || hit.getAttribute?.('data-id') || hit.id; if (!id) return;
-//         if (clicking) return; clicking = true;
-//         try {
-//           if (typeof navigateToStepId === 'function') navigateToStepId(id);
-//           svg = renderMiniPreserveVB() || svg;
-//         } finally {
-//           setTimeout(() => { clicking = false; }, 0);
-//         }
-//       };
-//       viewport.addEventListener('click', onMiniClick);
-//       dlg.__clickBound = true;
-//     }
-//   }
-
-//   openBtn.addEventListener('click', (e) => { e.preventDefault(); openDialog(); });
-//   closeBtn.addEventListener('click', () => closer('button'));
-
-//   (function makeDraggable(box, handle) {
-//     let sx = 0, sy = 0, sl = 0, st = 0, moving = false;
-
-//     handle.addEventListener('mousedown', (e) => {
-//       moving = true;
-//       sx = e.clientX; sy = e.clientY;
-//       const rect = box.getBoundingClientRect();
-//       sl = rect.left; st = rect.top;
-//       document.addEventListener('mousemove', onMove);
-//       document.addEventListener('mouseup', onUp, { once: true });
-//       e.preventDefault();
-//     });
-
-//     function onMove(e) {
-//       if (!moving) return;
-//       const dx = e.clientX - sx, dy = e.clientY - sy;
-//       box.style.left = Math.max(0, sl + dx) + 'px';
-//       box.style.top  = Math.max(0, st + dy) + 'px';
-//       box.style.right = 'auto'; box.style.bottom = 'auto';
-//     }
-//     function onUp() { moving = false; document.removeEventListener('mousemove', onMove); }
-//   })(dlg, dragBar);
-
-//   dlg.querySelectorAll('.btn-sm[data-zoom]').forEach(btn => {
-//     btn.addEventListener('click', () => {
-//       const v = btn.getAttribute('data-zoom');
-//       if (v === 'fit') {
-//         miniWrap.innerHTML = '';
-//         renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
-//       } else {
-//         miniWrap.innerHTML = '';
-//         renderGraphInto(miniWrap, { readonly: true, compact: true, fit: false });
-//       }
-//     });
-//   });
-
-// })();
-
-(function initMapDialog() {
-  const openBtn  = document.getElementById('vwOpenMap');
-  const dlg      = document.getElementById('vwMapDlg');
-  const closeBtn = document.getElementById('vwMapClose');
-  const dragBar  = document.getElementById('vwMapDrag');
-  const miniWrap = document.getElementById('vwMiniGraph');
-
-  if (!openBtn || !dlg || !closeBtn || !dragBar || !miniWrap) return;
-
-  dlg.style.zIndex = String((parseInt(getComputedStyle(dlg).zIndex || '0',10) || 0) + 1 || 10000);
-  dlg.setAttribute('role', 'dialog');
-  dlg.setAttribute('aria-hidden', 'true');
-
-  let lastFocus = null;
-
-  // ---------- overlay-backed closer ----------
-  const closer = (reason) => {
-    if (dlg.hidden) return;
-    dlg.hidden = true;
-    dlg.setAttribute('aria-hidden', 'true');
-    dlg.removeAttribute('aria-modal');
-    dlg.__miniSvg = null; // important—avoid stale refs on reopen
-    window.__cfmOverlay?.remove?.(closer);
-    if (lastFocus && typeof lastFocus.focus === 'function') setTimeout(() => lastFocus.focus(), 0);
-  };
-
-  function openDialog() {
-    lastFocus = document.activeElement;
-    dlg.hidden = false;
-    dlg.removeAttribute('aria-hidden');
-    dlg.setAttribute('aria-modal', 'true');
-
-    if (!dlg.__posSet) {
-      dlg.style.left   = Math.max(24, (window.innerWidth  - dlg.offsetWidth)  / 2) + 'px';
-      dlg.style.top    = Math.max(24, (window.innerHeight - dlg.offsetHeight) / 2) + 'px';
-      dlg.style.right  = 'auto';
-      dlg.style.bottom = 'auto';
-      dlg.__posSet = true;
-    }
-
-    setTimeout(() => {
-      (closeBtn || dlg.querySelector('button,[href],[tabindex]:not([tabindex="-1"])'))?.focus?.();
-    }, 0);
-
-    window.__cfmOverlay?.push?.(closer);
-    window.__cfmOverlay?.bringToFront?.();
-
-    // ---- render mini (and store live svg) ----
-    const svg = renderMiniPreserveVB();
-    if (!svg) return;
-
-    const viewport = dlg.querySelector('.mini-viewport') || miniWrap;
-
-    // -------- geometry helpers (use viewport, not svg) --------
-    function getViewportRect() {
-      const r = viewport.getBoundingClientRect();
-      return (r.width >= 1 && r.height >= 1) ? r : null;
-    }
-    function getLiveSvg() { return dlg.__miniSvg || miniWrap.querySelector('svg'); }
-
-    function applyVB(svgEl) {
-      // const s = dlg.__miniState;
-      const s = dlg.__miniState;
-
-      if (!s) return;
-      if (![s.vx, s.vy, s.vw, s.vh].every(Number.isFinite)) return;
-      if (s.vw <= 0 || s.vh <= 0) return;
-      svgEl.setAttribute('viewBox', `${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
-    }
-
-    function zoomAtMouseMini(ev, factor) {
-      const s = dlg.__miniState, rect = getViewportRect(); if (!s || !rect) return;
-      // const svgEl = getLiveSvg(); if (!svgEl) return;
-      // const s = dlg.__miniState; if (!s) return;
-      // const rect = getViewportRect();
-      if (!rect) { requestAnimationFrame(() => zoomAtMouseMini(ev, factor)); return; }
-
-      const sx = ev.clientX - rect.left, sy = ev.clientY - rect.top;
-      const wx = s.vx + sx * (s.vw / rect.width);
-      const wy = s.vy + sy * (s.vh / rect.height);
-
-      const minScale = 0.1, maxScale = 8;
-      const cur = 1000 / s.vw;
-      const nxt = Math.min(maxScale, Math.max(minScale, cur * factor));
-      const eff = nxt / cur; if (eff === 1) return;
-
-      const vw2 = s.vw / eff, vh2 = s.vh / eff;
-      s.vx = wx - sx * (vw2 / rect.width);
-      s.vy = wy - sy * (vh2 / rect.height);
-      s.vw = vw2; s.vh = vh2;
-      // applyVB(svgEl);
-      applyVB(getLiveSvg());
-    }
-
-    // function zoomAtMouseMini(ev, factor) {
-    //   const s = dlg.__miniState, rect = getViewportRect(); if (!s || !rect) return;
-    //   // ... compute new vw/vh and vx/vy
-    //   s.vx = /* ... */; s.vy = /* ... */; s.vw = vw2; s.vh = vh2;  // starterId stays
-    // }
-
-function isMiniForCurrentStarter() {
-  return !!(dlg.__miniState && dlg.__miniState.starterId === viewState.starterIdx);
-}
-
-
-    // function panMini(dxPx, dyPx) {
-    //   const svgEl = getLiveSvg(); if (!svgEl) return;
-    //   const s = dlg.__miniState; if (!s) return;
-    //   const rect = getViewportRect();
-    //   if (!rect) { requestAnimationFrame(() => panMini(dxPx, dyPx)); return; }
-
-    //   const sx = s.vw / rect.width, sy = s.vh / rect.height;
-    //   s.vx += dxPx * sx; s.vy += dyPx * sy;
-    //   applyVB(svgEl);
-    // }
-    function panMini(dxPx, dyPx) {
-      const s = dlg.__miniState, rect = getViewportRect(); if (!s || !rect) return;
-      const sx = s.vw / rect.width, sy = s.vh / rect.height;
-      s.vx += dxPx * sx; s.vy += dyPx * sy;       // starterId stays untouched
-      applyVB(getLiveSvg());
-    }
-
-    // -------- bind once; use live svg + viewport rect each time --------
-    if (!dlg.__wheelBound) {
-      const onMiniWheel = (ev) => {
-        // Ctrl/Cmd => zoom at mouse; otherwise pan (Shift forces horizontal)
-        ev.preventDefault();
-        if (ev.ctrlKey || ev.metaKey) {
-          const step = Math.pow(1.0018, -ev.deltaY);
-          zoomAtMouseMini(ev, step);
-          return;
-        }
-        const dx = ev.shiftKey ? (-ev.deltaY) : ev.deltaX;
-        const dy = ev.shiftKey ? 0 : ev.deltaY;
-        panMini(dx, dy);
+      window.__cfmOverlay = {
+        push(closerFn) { if (typeof closerFn === 'function') { stack.push(closerFn); show(); } },
+        remove(closerFn) {
+          const i = stack.lastIndexOf(closerFn);
+          if (i !== -1) stack.splice(i, 1);
+          hideIfEmpty();
+        },
+        bringToFront() { show(); },
+        _debugCount() { return stack.length; }
       };
-      viewport.addEventListener('wheel', onMiniWheel, { passive: false });
-      dlg.__wheelBound = true;
-    }
+    })();
 
-    if (!dlg.__clickBound) {
-      let clicking = false;
-      const onMiniClick = (ev) => {
-        const hit = ev.target.closest?.('[step-id], g.node, .node'); if (!hit) return;
-        const id = hit.getAttribute?.('step-id') || hit.getAttribute?.('data-id') || hit.id; if (!id) return;
-        if (clicking) return; clicking = true;
-        try {
-          if (typeof navigateToStepId === 'function') navigateToStepId(id);
-          renderMiniPreserveVB(); // refresh + keep viewBox
-        } finally {
-          setTimeout(() => { clicking = false; }, 0);
-        }
+    /* ---------------- your dialog init (uses overlay manager) ---------------- */
+    // (function initMapDialog() {
+    //   const openBtn  = document.getElementById('vwOpenMap');
+    //   const dlg      = document.getElementById('vwMapDlg');
+    //   const closeBtn = document.getElementById('vwMapClose');
+    //   const dragBar  = document.getElementById('vwMapDrag');
+    //   const miniWrap = document.getElementById('vwMiniGraph');
+
+    //   if (!openBtn || !dlg || !closeBtn || !dragBar || !miniWrap) return;
+
+    //   dlg.style.zIndex = String((parseInt(getComputedStyle(dlg).zIndex || '0',10) || 0) + 1 || 10000);
+    //   dlg.setAttribute('role', 'dialog');
+    //   dlg.setAttribute('aria-hidden', 'true');
+
+    //   let lastFocus = null;
+
+    //   // closer function stored in the overlay stack
+    //   const closer = (reason) => {
+    //     if (dlg.hidden) return;
+    //     dlg.hidden = true;
+    //     dlg.setAttribute('aria-hidden', 'true');
+    //     dlg.removeAttribute('aria-modal');
+    //     window.__cfmOverlay.remove(closer);
+    //     if (lastFocus && typeof lastFocus.focus === 'function') setTimeout(() => lastFocus.focus(), 0);
+    //   };
+
+    //   function openDialog() {
+    //     lastFocus = document.activeElement;
+    //     dlg.hidden = false;
+    //     dlg.removeAttribute('aria-hidden');
+    //     dlg.setAttribute('aria-modal', 'true');
+
+    //     if (!dlg.__posSet) {
+    //       dlg.style.left   = Math.max(24, (window.innerWidth  - dlg.offsetWidth)  / 2) + 'px';
+    //       dlg.style.top    = Math.max(24, (window.innerHeight - dlg.offsetHeight) / 2) + 'px';
+    //       dlg.style.right  = 'auto';
+    //       dlg.style.bottom = 'auto';
+    //       dlg.__posSet = true;
+    //     }
+
+    //     setTimeout(() => {
+    //       (closeBtn || dlg.querySelector('button,[href],[tabindex]:not([tabindex="-1"])'))?.focus?.();
+    //     }, 0);
+
+    //     window.__cfmOverlay.push(closer);
+    //     window.__cfmOverlay.bringToFront();
+
+    //     function renderMiniPreserveVB() {
+    //       const saved = dlg.__miniState ? { ...dlg.__miniState } : null;
+    //       miniWrap.innerHTML = '';
+    //       renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
+    //       let svg = miniWrap.querySelector('svg');
+    //       console.log(`svg`, svg);
+    //       if (!svg) return null;
+
+    //       svg.querySelectorAll('[step-id], g.node, .node').forEach(el => {
+    //         el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
+    //       });
+    //       svg.querySelectorAll('.edge, path.edge, .handle, .connector').forEach(el => {
+    //         el.style.pointerEvents = 'none';
+    //       });
+
+    //       if (!dlg.__miniState) {
+    //         const vb = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+    //         dlg.__miniState = (vb.length === 4 && vb.every(Number.isFinite))
+    //           ? { vx: vb[0], vy: vb[1], vw: vb[2], vh: vb[3] }
+    //           : { vx: 0, vy: 0, vw: 1000, vh: 1000 };
+    //       }
+    //       if (saved) dlg.__miniState = saved;
+    //       applyVB(svg);
+    //       return svg;
+    //     }
+
+    //     function getSvgRect(svg) {
+    //       const r = svg.getBoundingClientRect();
+    //       return (r.width >= 1 && r.height >= 1) ? r : null;
+    //     }
+
+    //     function zoomAtMouseMini(svg, ev, factor) {
+    //       const s = dlg.__miniState, rect = getSvgRect(svg); if (!s || !rect) return;
+    //       const sx = ev.clientX - rect.left, sy = ev.clientY - rect.top;
+    //       const wx = s.vx + sx * (s.vw / rect.width);
+    //       const wy = s.vy + sy * (s.vh / rect.height);
+
+    //       const minScale = 0.1, maxScale = 8;
+    //       const cur = 1000 / s.vw;
+    //       const nxt = Math.min(maxScale, Math.max(minScale, cur * factor));
+    //       const eff = nxt / cur; if (eff === 1) return;
+
+    //       const vw2 = s.vw / eff, vh2 = s.vh / eff;
+    //       s.vx = wx - sx * (vw2 / rect.width);
+    //       s.vy = wy - sy * (vh2 / rect.height);
+    //       s.vw = vw2; s.vh = vh2;
+    //       applyVB(svg);
+    //     }
+    //     function panMini(svg, dxPx, dyPx) {
+    //       // console.log(`dxPx`, dxPx);
+    //       debugger;
+    //       console.log('panMini is called ?');
+    //       const s = dlg.__miniState, rect = getSvgRect(svg); 
+    //       console.log(`s`, s);
+    //       if (!s || !rect) return;
+    //       const sx = s.vw / rect.width, sy = s.vh / rect.height;
+    //       s.vx += dxPx * sx; s.vy += dyPx * sy;
+    //       console.log('end of panMini');
+    //       applyVB(svg);
+    //     }
+
+    //     function applyVB(svg) {
+    //       console.log('applyVB is called');
+    //       const s = dlg.__miniState;
+    //       console.log(`s`, s);
+    //       if (!s) return;
+    //       console.log('111');
+    //       if (![s.vx, s.vy, s.vw, s.vh].every(Number.isFinite)) return;
+    //       console.log('222');
+    //       if (s.vw <= 0 || s.vh <= 0) return;
+    //       console.log(`svg`, svg);
+    //       console.log(`${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
+    //       svg.setAttribute('viewBox', `${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
+    //     }
+
+    //     let svg = renderMiniPreserveVB();
+    //     if (!svg) return;
+
+    //     const viewport = dlg.querySelector('.mini-viewport') || miniWrap;
+    //     if (!dlg.__wheelBound) {
+    //       const onMiniWheel = (ev) => {
+    //         if (ev.ctrlKey || ev.metaKey) {
+    //           ev.preventDefault();
+    //           const step = Math.pow(1.0018, -ev.deltaY);
+    //           zoomAtMouseMini(svg, ev, step);
+    //           return;
+    //         }
+    //         ev.preventDefault();
+    //         const dx = ev.shiftKey ? (-ev.deltaY) : ev.deltaX;
+    //         const dy = ev.shiftKey ? 0 : ev.deltaY;
+    //         panMini(svg, dx, dy);
+    //       };
+    //       viewport.addEventListener('wheel', onMiniWheel, { passive: false });
+    //       dlg.__wheelBound = true;
+    //     }
+
+    //     if (!dlg.__clickBound) {
+    //       let clicking = false;
+    //       const onMiniClick = (ev) => {
+    //         const hit = ev.target.closest?.('[step-id], g.node, .node'); if (!hit) return;
+    //         const id = hit.getAttribute?.('step-id') || hit.getAttribute?.('data-id') || hit.id; if (!id) return;
+    //         if (clicking) return; clicking = true;
+    //         try {
+    //           if (typeof navigateToStepId === 'function') navigateToStepId(id);
+    //           svg = renderMiniPreserveVB() || svg;
+    //         } finally {
+    //           setTimeout(() => { clicking = false; }, 0);
+    //         }
+    //       };
+    //       viewport.addEventListener('click', onMiniClick);
+    //       dlg.__clickBound = true;
+    //     }
+    //   }
+
+    //   openBtn.addEventListener('click', (e) => { e.preventDefault(); openDialog(); });
+    //   closeBtn.addEventListener('click', () => closer('button'));
+
+    //   (function makeDraggable(box, handle) {
+    //     let sx = 0, sy = 0, sl = 0, st = 0, moving = false;
+
+    //     handle.addEventListener('mousedown', (e) => {
+    //       moving = true;
+    //       sx = e.clientX; sy = e.clientY;
+    //       const rect = box.getBoundingClientRect();
+    //       sl = rect.left; st = rect.top;
+    //       document.addEventListener('mousemove', onMove);
+    //       document.addEventListener('mouseup', onUp, { once: true });
+    //       e.preventDefault();
+    //     });
+
+    //     function onMove(e) {
+    //       if (!moving) return;
+    //       const dx = e.clientX - sx, dy = e.clientY - sy;
+    //       box.style.left = Math.max(0, sl + dx) + 'px';
+    //       box.style.top  = Math.max(0, st + dy) + 'px';
+    //       box.style.right = 'auto'; box.style.bottom = 'auto';
+    //     }
+    //     function onUp() { moving = false; document.removeEventListener('mousemove', onMove); }
+    //   })(dlg, dragBar);
+
+    //   dlg.querySelectorAll('.btn-sm[data-zoom]').forEach(btn => {
+    //     btn.addEventListener('click', () => {
+    //       const v = btn.getAttribute('data-zoom');
+    //       if (v === 'fit') {
+    //         miniWrap.innerHTML = '';
+    //         renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
+    //       } else {
+    //         miniWrap.innerHTML = '';
+    //         renderGraphInto(miniWrap, { readonly: true, compact: true, fit: false });
+    //       }
+    //     });
+    //   });
+
+    // })();
+
+    (function initMapDialog() {
+      const openBtn = document.getElementById('vwOpenMap');
+      const dlg = document.getElementById('vwMapDlg');
+      const closeBtn = document.getElementById('vwMapClose');
+      const dragBar = document.getElementById('vwMapDrag');
+      const miniWrap = document.getElementById('vwMiniGraph');
+
+      if (!openBtn || !dlg || !closeBtn || !dragBar || !miniWrap) return;
+
+      dlg.style.zIndex = String((parseInt(getComputedStyle(dlg).zIndex || '0', 10) || 0) + 1 || 10000);
+      dlg.setAttribute('role', 'dialog');
+      dlg.setAttribute('aria-hidden', 'true');
+
+      let lastFocus = null;
+
+      // ---------- overlay-backed closer ----------
+      const closer = (reason) => {
+        if (dlg.hidden) return;
+        dlg.hidden = true;
+        dlg.setAttribute('aria-hidden', 'true');
+        dlg.removeAttribute('aria-modal');
+        dlg.__miniSvg = null; // important—avoid stale refs on reopen
+        window.__cfmOverlay?.remove?.(closer);
+        if (lastFocus && typeof lastFocus.focus === 'function') setTimeout(() => lastFocus.focus(), 0);
       };
-      viewport.addEventListener('click', onMiniClick);
-      dlg.__clickBound = true;
-    }
-  }
 
-  // ---------- open/close ----------
-  openBtn.addEventListener('click', (e) => { e.preventDefault(); openDialog(); });
-  closeBtn.addEventListener('click', () => closer('button'));
+      function openDialog() {
+        lastFocus = document.activeElement;
+        dlg.hidden = false;
+        dlg.removeAttribute('aria-hidden');
+        dlg.setAttribute('aria-modal', 'true');
 
-  // ---------- drag header ----------
-  (function makeDraggable(box, handle) {
-    let sx=0, sy=0, sl=0, st=0, moving=false;
-    handle.addEventListener('mousedown', (e) => {
-      moving = true;
-      sx = e.clientX; sy = e.clientY;
-      const rect = box.getBoundingClientRect(); sl = rect.left; st = rect.top;
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp, { once:true });
-      e.preventDefault();
-    });
-    function onMove(e){
-      if (!moving) return;
-      const dx = e.clientX - sx, dy = e.clientY - sy;
-      box.style.left = Math.max(0, sl + dx) + 'px';
-      box.style.top  = Math.max(0, st + dy) + 'px';
-      box.style.right='auto'; box.style.bottom='auto';
-    }
-    function onUp(){ moving=false; document.removeEventListener('mousemove', onMove); }
-  })(dlg, dragBar);
+        if (!dlg.__posSet) {
+          dlg.style.left = Math.max(24, (window.innerWidth - dlg.offsetWidth) / 2) + 'px';
+          dlg.style.top = Math.max(24, (window.innerHeight - dlg.offsetHeight) / 2) + 'px';
+          dlg.style.right = 'auto';
+          dlg.style.bottom = 'auto';
+          dlg.__posSet = true;
+        }
 
-  // ---------- zoom buttons ----------
-  dlg.querySelectorAll('.btn-sm[data-zoom]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const fit = btn.getAttribute('data-zoom') === 'fit';
-      miniWrap.innerHTML = '';
-      renderGraphInto(miniWrap, { readonly:true, compact:true, fit });
-      const svg = miniWrap.querySelector('svg');
-      if (svg) dlg.__miniSvg = svg;
-    });
-  });
+        setTimeout(() => {
+          (closeBtn || dlg.querySelector('button,[href],[tabindex]:not([tabindex="-1"])'))?.focus?.();
+        }, 0);
 
-  // ---------- renderer (stores live svg + preserves VB) ----------
-  // function renderMiniPreserveVB() {
-  
-  function renderMiniPreserveVB(reset = false) {
-  const curStarterId = viewState.starterIdx;
+        window.__cfmOverlay?.push?.(closer);
+        window.__cfmOverlay?.bringToFront?.();
 
-  // If we have a state but it's for a different starter, drop it and force reset
-  if (dlg.__miniState && dlg.__miniState.starterId !== curStarterId) {
-    dlg.__miniState = null;
-    reset = true;
-  }
+        // ---- render mini (and store live svg) ----
+        const svg = renderMiniPreserveVB();
+        if (!svg) return;
 
-  const saved = (!reset && dlg.__miniState) ? { ...dlg.__miniState } : null;
+        const viewport = dlg.querySelector('.mini-viewport') || miniWrap;
 
-  miniWrap.innerHTML = '';
-  renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
+        // -------- geometry helpers (use viewport, not svg) --------
+        function getViewportRect() {
+          const r = viewport.getBoundingClientRect();
+          return (r.width >= 1 && r.height >= 1) ? r : null;
+        }
+        function getLiveSvg() { return dlg.__miniSvg || miniWrap.querySelector('svg'); }
 
-  const svg = miniWrap.querySelector('svg');
-  if (!svg) return null;
+        function applyVB(svgEl) {
+          // const s = dlg.__miniState;
+          const s = dlg.__miniState;
 
-  // nodes clickable; edges inert
-  svg.querySelectorAll('[step-id], g.node, .node').forEach(el => {
-    el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
-  });
-  svg.querySelectorAll('.edge, path.edge, .handle, .connector').forEach(el => {
-    el.style.pointerEvents = 'none';
-  });
+          if (!s) return;
+          if (![s.vx, s.vy, s.vw, s.vh].every(Number.isFinite)) return;
+          if (s.vw <= 0 || s.vh <= 0) return;
+          svgEl.setAttribute('viewBox', `${s.vx} ${s.vy} ${s.vw} ${s.vh}`);
+        }
 
-  // Base VB from SVG (or default)
-  const vb = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
-  const base = (vb.length === 4 && vb.every(Number.isFinite))
-    ? { vx: vb[0], vy: vb[1], vw: vb[2], vh: vb[3] }
-    : { vx: 0, vy: 0, vw: 1000, vh: 1000 };
+        function zoomAtMouseMini(ev, factor) {
+          const s = dlg.__miniState, rect = getViewportRect(); if (!s || !rect) return;
+          // const svgEl = getLiveSvg(); if (!svgEl) return;
+          // const s = dlg.__miniState; if (!s) return;
+          // const rect = getViewportRect();
+          if (!rect) { requestAnimationFrame(() => zoomAtMouseMini(ev, factor)); return; }
 
-  // Reuse saved if allowed, else start fresh — and always attach starterId
-  dlg.__miniState = saved ? { ...saved, starterId: curStarterId }
-                          : { ...base,  starterId: curStarterId };
+          const sx = ev.clientX - rect.left, sy = ev.clientY - rect.top;
+          const wx = s.vx + sx * (s.vw / rect.width);
+          const wy = s.vy + sy * (s.vh / rect.height);
 
-  // Apply & stash live svg
-  svg.setAttribute('viewBox', `${dlg.__miniState.vx} ${dlg.__miniState.vy} ${dlg.__miniState.vw} ${dlg.__miniState.vh}`);
-  dlg.__miniSvg = svg;
+          const minScale = 0.1, maxScale = 8;
+          const cur = 1000 / s.vw;
+          const nxt = Math.min(maxScale, Math.max(minScale, cur * factor));
+          const eff = nxt / cur; if (eff === 1) return;
 
-  return svg;
-}
+          const vw2 = s.vw / eff, vh2 = s.vh / eff;
+          s.vx = wx - sx * (vw2 / rect.width);
+          s.vy = wy - sy * (vh2 / rect.height);
+          s.vw = vw2; s.vh = vh2;
+          // applyVB(svgEl);
+          applyVB(getLiveSvg());
+        }
+
+        // function zoomAtMouseMini(ev, factor) {
+        //   const s = dlg.__miniState, rect = getViewportRect(); if (!s || !rect) return;
+        //   // ... compute new vw/vh and vx/vy
+        //   s.vx = /* ... */; s.vy = /* ... */; s.vw = vw2; s.vh = vh2;  // starterId stays
+        // }
+
+        function isMiniForCurrentStarter() {
+          return !!(dlg.__miniState && dlg.__miniState.starterId === viewState.starterIdx);
+        }
 
 
-})();
+        // function panMini(dxPx, dyPx) {
+        //   const svgEl = getLiveSvg(); if (!svgEl) return;
+        //   const s = dlg.__miniState; if (!s) return;
+        //   const rect = getViewportRect();
+        //   if (!rect) { requestAnimationFrame(() => panMini(dxPx, dyPx)); return; }
+
+        //   const sx = s.vw / rect.width, sy = s.vh / rect.height;
+        //   s.vx += dxPx * sx; s.vy += dyPx * sy;
+        //   applyVB(svgEl);
+        // }
+        function panMini(dxPx, dyPx) {
+          const s = dlg.__miniState, rect = getViewportRect(); if (!s || !rect) return;
+          const sx = s.vw / rect.width, sy = s.vh / rect.height;
+          s.vx += dxPx * sx; s.vy += dyPx * sy;       // starterId stays untouched
+          applyVB(getLiveSvg());
+        }
+
+        // -------- bind once; use live svg + viewport rect each time --------
+        if (!dlg.__wheelBound) {
+          const onMiniWheel = (ev) => {
+            // Ctrl/Cmd => zoom at mouse; otherwise pan (Shift forces horizontal)
+            ev.preventDefault();
+            if (ev.ctrlKey || ev.metaKey) {
+              const step = Math.pow(1.0018, -ev.deltaY);
+              zoomAtMouseMini(ev, step);
+              return;
+            }
+            const dx = ev.shiftKey ? (-ev.deltaY) : ev.deltaX;
+            const dy = ev.shiftKey ? 0 : ev.deltaY;
+            panMini(dx, dy);
+          };
+          viewport.addEventListener('wheel', onMiniWheel, { passive: false });
+          dlg.__wheelBound = true;
+        }
+
+        if (!dlg.__clickBound) {
+          let clicking = false;
+          const onMiniClick = (ev) => {
+            const hit = ev.target.closest?.('[step-id], g.node, .node'); if (!hit) return;
+            const id = hit.getAttribute?.('step-id') || hit.getAttribute?.('data-id') || hit.id; if (!id) return;
+            if (clicking) return; clicking = true;
+            try {
+              if (typeof navigateToStepId === 'function') navigateToStepId(id);
+              renderMiniPreserveVB(); // refresh + keep viewBox
+            } finally {
+              setTimeout(() => { clicking = false; }, 0);
+            }
+          };
+          viewport.addEventListener('click', onMiniClick);
+          dlg.__clickBound = true;
+        }
+      }
+
+      // ---------- open/close ----------
+      openBtn.addEventListener('click', (e) => { e.preventDefault(); openDialog(); });
+      closeBtn.addEventListener('click', () => closer('button'));
+
+      // ---------- drag header ----------
+      (function makeDraggable(box, handle) {
+        let sx = 0, sy = 0, sl = 0, st = 0, moving = false;
+        handle.addEventListener('mousedown', (e) => {
+          moving = true;
+          sx = e.clientX; sy = e.clientY;
+          const rect = box.getBoundingClientRect(); sl = rect.left; st = rect.top;
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp, { once: true });
+          e.preventDefault();
+        });
+        function onMove(e) {
+          if (!moving) return;
+          const dx = e.clientX - sx, dy = e.clientY - sy;
+          box.style.left = Math.max(0, sl + dx) + 'px';
+          box.style.top = Math.max(0, st + dy) + 'px';
+          box.style.right = 'auto'; box.style.bottom = 'auto';
+        }
+        function onUp() { moving = false; document.removeEventListener('mousemove', onMove); }
+      })(dlg, dragBar);
+
+      // ===== Starter deep-linking: ?starter=<id> (or ?starterId=<id>) =====
+      (function initStarterDeepLinking() {
+
+
+        // function findStarterIndexById(id) {
+        //   if (!id || !Array.isArray(window.sop?.starters)) return -1;
+        //   return window.sop.starters.findIndex(st => String(st?.id) === String(id));
+        // }
+
+        // function activateStarter(idx) {
+        //   if (idx < 0) return false;
+        //   // your own reset function (sets startId, clears answers/history, etc.)
+        //   if (typeof resetStarterValues === 'function') resetStarterValues(idx);
+        //   // render AFTER base UI has painted
+        //   requestAnimationFrame(() => {
+        //     if (typeof renderGraph === 'function') renderGraph();
+        //     if (typeof renderViewStep === 'function') renderViewStep();
+        //     if (typeof renderInspector === 'function') renderInspector();
+        //   });
+        //   return true;
+        // }
+
+        // Keep URL updated when user changes starter manually (optional)
+        // function syncUrlToStarter(idx, replace = false) {
+        //   const st = window.sop?.starters?.[idx];
+        //   if (!st?.id) return;
+        //   const url = new URL(location.href);
+        //   url.searchParams.set('starter', st.id);
+        //   const title = document.title;
+        //   if (replace) history.replaceState({ starter: st.id }, title, url.toString());
+        //   else history.pushState({ starter: st.id }, title, url.toString());
+        // }
+
+        // Hook your existing “switch starter” action if you have one
+        // Example: whenever you call resetStarterValues(idx), also do syncUrlToStarter(idx).
+        // If you control that function, add:  try { syncUrlToStarter(viewState.starterIdx); } catch {}
+
+        // Apply query on first load—AFTER your app mounts
+        window.addEventListener('DOMContentLoaded', () => {
+          // Let your initial render happen (landing etc.), then apply deep link
+          requestAnimationFrame(() => {
+            const starterId = getQueryStarterId();
+            console.log(`starterId`, starterId);
+            console.log(`sop`, sop);
+            if (starterId) {
+              // enterViewOrEditStarter(starterId);
+            }
+            // const idx = findStarterIndexById(qid);
+            // if (idx >= 0) {
+            //   activateStarter(idx);
+            //   syncUrlToStarter(idx, true); // normalize to ?starter=<id> in place
+            // }
+          });
+        });
+
+        // Back/forward support
+        // window.addEventListener('popstate', () => {
+        //   const qid = getQueryStarterId();
+        //   const idx = findStarterIndexById(qid);
+        //   if (idx >= 0) {
+        //     activateStarter(idx);
+        //   } else {
+        //     // No query → return to landing (do nothing; your landing stays)
+        //   }
+        // });
+
+        // Expose a tiny helper if you need to programmatically deep-link later
+        // window.SOPNav = Object.assign(window.SOPNav || {}, {
+        //   openStarterById(id) {
+        //     const idx = findStarterIndexById(id);
+        //     if (activateStarter(idx)) syncUrlToStarter(idx);
+        //   }
+        // });
+      })();
+
+
+      // ---------- zoom buttons ----------
+      dlg.querySelectorAll('.btn-sm[data-zoom]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const fit = btn.getAttribute('data-zoom') === 'fit';
+          miniWrap.innerHTML = '';
+          renderGraphInto(miniWrap, { readonly: true, compact: true, fit });
+          const svg = miniWrap.querySelector('svg');
+          if (svg) dlg.__miniSvg = svg;
+        });
+      });
+
+      // ---------- renderer (stores live svg + preserves VB) ----------
+      // function renderMiniPreserveVB() {
+
+      function renderMiniPreserveVB(reset = false) {
+        const curStarterId = viewState.starterIdx;
+
+        // If we have a state but it's for a different starter, drop it and force reset
+        if (dlg.__miniState && dlg.__miniState.starterId !== curStarterId) {
+          dlg.__miniState = null;
+          reset = true;
+        }
+
+        const saved = (!reset && dlg.__miniState) ? { ...dlg.__miniState } : null;
+
+        miniWrap.innerHTML = '';
+        renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
+
+        const svg = miniWrap.querySelector('svg');
+        if (!svg) return null;
+
+        // nodes clickable; edges inert
+        svg.querySelectorAll('[step-id], g.node, .node').forEach(el => {
+          el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
+        });
+        svg.querySelectorAll('.edge, path.edge, .handle, .connector').forEach(el => {
+          el.style.pointerEvents = 'none';
+        });
+
+        // Base VB from SVG (or default)
+        const vb = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+        const base = (vb.length === 4 && vb.every(Number.isFinite))
+          ? { vx: vb[0], vy: vb[1], vw: vb[2], vh: vb[3] }
+          : { vx: 0, vy: 0, vw: 1000, vh: 1000 };
+
+        // Reuse saved if allowed, else start fresh — and always attach starterId
+        dlg.__miniState = saved ? { ...saved, starterId: curStarterId }
+          : { ...base, starterId: curStarterId };
+
+        // Apply & stash live svg
+        svg.setAttribute('viewBox', `${dlg.__miniState.vx} ${dlg.__miniState.vy} ${dlg.__miniState.vw} ${dlg.__miniState.vh}`);
+        dlg.__miniSvg = svg;
+
+        return svg;
+      }
+
+
+    })();
 
     function buildEmbedSrcdoc(emb) {
       const raw = String(emb.html || '');
@@ -9516,7 +10314,7 @@ function isMiniForCurrentStarter() {
       //<script>
 
 
-          const autosize = `
+      const autosize = `
                             <script>
                             (function () {
                               function send() {
@@ -9534,296 +10332,295 @@ function isMiniForCurrentStarter() {
 
 
 
-          if (/<head[\s>]/i.test(raw)) {
-            return raw.replace(/<head(\b[^>]*)>/i, (m, attrs) => `<head${attrs}>${autosize}`);
-          }
-          return `<!doctype html><html><head>${autosize}</head><body>${raw}</body></html>`;
-        }
+      if (/<head[\s>]/i.test(raw)) {
+        return raw.replace(/<head(\b[^>]*)>/i, (m, attrs) => `<head${attrs}>${autosize}`);
+      }
+      return `<!doctype html><html><head>${autosize}</head><body>${raw}</body></html>`;
+    }
 
 
-        function reconcileEmbeds(step, editorEl) {
-          const idsInBody = new Set(
-            [...editorEl.querySelectorAll('.embed-chip[data-embed-id]')]
-              .map(el => el.getAttribute('data-embed-id'))
-          );
-          if (!Array.isArray(step.embeds)) step.embeds = [];
-          step.embeds = step.embeds.filter(e => idsInBody.has(e.id)); // remove orphans
-        }
+    function reconcileEmbeds(step, editorEl) {
+      const idsInBody = new Set(
+        [...editorEl.querySelectorAll('.embed-chip[data-embed-id]')]
+          .map(el => el.getAttribute('data-embed-id'))
+      );
+      if (!Array.isArray(step.embeds)) step.embeds = [];
+      step.embeds = step.embeds.filter(e => idsInBody.has(e.id)); // remove orphans
+    }
 
 
-        function getFirstPredecessorId(starter, stepId) {
-          if (!starter || !stepId) return null;
-          const pred = buildPredecessors(starter);           // you already have this
-          const set = pred[stepId];
-          if (!set || set.size === 0) return null;
-          const order = starter.steps.map(s => s.id);
-          return [...set].sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
-        }
+    function getFirstPredecessorId(starter, stepId) {
+      if (!starter || !stepId) return null;
+      const pred = buildPredecessors(starter);           // you already have this
+      const set = pred[stepId];
+      if (!set || set.size === 0) return null;
+      const order = starter.steps.map(s => s.id);
+      return [...set].sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
+    }
 
-        // Map: nextId -> prevId (last traversed prev for that node)
-        function recordTransition(prevId, nextId) {
-          if (!prevId || !nextId || prevId === nextId) return;
-          (viewState.prev ||= Object.create(null))[nextId] = prevId; // overwrite if path changes
-        }
+    // Map: nextId -> prevId (last traversed prev for that node)
+    function recordTransition(prevId, nextId) {
+      if (!prevId || !nextId || prevId === nextId) return;
+      (viewState.prev ||= Object.create(null))[nextId] = prevId; // overwrite if path changes
+    }
 
-        // Is `from` a valid predecessor of `to` in the current graph?
-        function isValidPredecessor(starter, from, to) {
-          if (!starter || !from || !to) return false;
-          const pred = buildPredecessors(starter);       // you already use this util
-          return !!(pred[to] && pred[to].has(from));
-        }
-
-
-        function buildPredecessors(starter) {
-          const pred = Object.create(null);
-          const add = (from, to) => { if (to) (pred[to] ||= new Set()).add(from); };
-          for (const s of starter.steps) {
-            add(s.id, s.next);
-            if (Array.isArray(s.options)) for (const o of s.options) add(s.id, o?.next);
-          }
-          return pred;
-        }
-
-        function getStarter() {
-          return sop.starters[viewState.starterIdx];
-        }
-
-        function getSteps() {
-          return getStarter()?.steps || [];
-        }
-
-        // get step by stepId 
-        function getStepById(stepId) {
-          const steps = getSteps();
-          return steps.find(s => s.id === stepId) || null;
-        }
-
-        // Set selection by **ID** and mirror stepIdx
-        function setSelectedStepById(id) {
-          const steps = getSteps();
-          viewState.selectedStepId = id || null;
-        }
-
-        // Set selection by **index** and mirror selectedStepId
-        function setSelectedStepByIdx(idx) {
-          const steps = getSteps();
-          const i = Math.max(0, Math.min(idx | 0, steps.length - 1));
-          // viewState.stepIdx = i;
-          viewState.selectedStepId = steps[i]?.id || null;
-        }
+    // Is `from` a valid predecessor of `to` in the current graph?
+    function isValidPredecessor(starter, from, to) {
+      if (!starter || !from || !to) return false;
+      const pred = buildPredecessors(starter);       // you already use this util
+      return !!(pred[to] && pred[to].has(from));
+    }
 
 
-        function navigateToStepId(nextId) {
-          console.log('navigateToStepId', nextId);
-          const curId = viewState.selectedStepId || null;
-          if (!nextId || nextId === curId) return;
+    function buildPredecessors(starter) {
+      const pred = Object.create(null);
+      const add = (from, to) => { if (to) (pred[to] ||= new Set()).add(from); };
+      for (const s of starter.steps) {
+        add(s.id, s.next);
+        if (Array.isArray(s.options)) for (const o of s.options) add(s.id, o?.next);
+      }
+      return pred;
+    }
 
-          setSelectedStepById(nextId);   // sync id + idx
-          renderViewStep();
-          renderGraph();
-          renderInspector();
-        }
+    function getStarter() {
+      return sop.starters[viewState.starterIdx];
+    }
 
-        function goPrevious() {
-          const st = getStarter();
-          const cur = viewState.selectedStepId;
-          const prevMap = viewState.prev || Object.create(null);
+    function getSteps() {
+      return getStarter()?.steps || [];
+    }
 
-          // 1) Prefer the last traversed predecessor if still valid
-          let target = prevMap[cur];
-          if (target && !isValidPredecessor(st, target, cur)) {
-            target = null; // path changed; don't trust stale link
-          }
+    // get step by stepId 
+    function getStepById(stepId) {
+      const steps = getSteps();
+      return steps.find(s => s.id === stepId) || null;
+    }
 
-          // 2) Fallback: first predecessor in the current graph
-          if (!target) {
-            target = getFirstPredecessorId(st, cur);
-          }
+    // Set selection by **ID** and mirror stepIdx
+    function setSelectedStepById(id) {
+      const steps = getSteps();
+      viewState.selectedStepId = id || null;
+    }
 
-          if (target && target !== cur) {
-            setSelectedStepById(target);
-            renderViewStep(); renderGraph(); renderInspector();
-          }
-          // If no predecessor at all, do nothing (button can be disabled upstream)
-        }
-
+    // Set selection by **index** and mirror selectedStepId
+    function setSelectedStepByIdx(idx) {
+      const steps = getSteps();
+      const i = Math.max(0, Math.min(idx | 0, steps.length - 1));
+      // viewState.stepIdx = i;
+      viewState.selectedStepId = steps[i]?.id || null;
+    }
 
 
-        function recordHistoryFromCurrent() {
-          const cur = viewState.selectedStepId;
-          if (!cur) return;
-          const h = (viewState.history ||= []);
-          if (h[h.length - 1] !== cur) h.push(cur);   // avoid consecutive duplicates
-        }
+    function navigateToStepId(nextId) {
+      console.log('navigateToStepId', nextId);
+      const curId = viewState.selectedStepId || null;
+      if (!nextId || nextId === curId) return;
+
+      setSelectedStepById(nextId);   // sync id + idx
+      renderViewStep();
+      renderGraph();
+      renderInspector();
+    }
+
+    function goPrevious() {
+      const st = getStarter();
+      const cur = viewState.selectedStepId;
+      const prevMap = viewState.prev || Object.create(null);
+
+      // 1) Prefer the last traversed predecessor if still valid
+      let target = prevMap[cur];
+      if (target && !isValidPredecessor(st, target, cur)) {
+        target = null; // path changed; don't trust stale link
+      }
+
+      // 2) Fallback: first predecessor in the current graph
+      if (!target) {
+        target = getFirstPredecessorId(st, cur);
+      }
+
+      if (target && target !== cur) {
+        setSelectedStepById(target);
+        renderViewStep(); renderGraph(); renderInspector();
+      }
+      // If no predecessor at all, do nothing (button can be disabled upstream)
+    }
 
 
 
+    function recordHistoryFromCurrent() {
+      const cur = viewState.selectedStepId;
+      if (!cur) return;
+      const h = (viewState.history ||= []);
+      if (h[h.length - 1] !== cur) h.push(cur);   // avoid consecutive duplicates
+    }
 
-        function makeBlankSOP() {
-          return {
-            version: "1.3",
-            title: "New SOP Library",
-            description: "Describe your library",
-            starters: [{
-              id: "starter_1",
-              label: "Starter 1",
-              summary: "",
-              description: "",
-              steps: [
-                {
-                  type: "instruction",
-                  id: "welcome",
-                  title: "Welcome",
-                  body: "Start here.",
-                  next: "done",
-                  // pos: { x: 200, y: 60 }
-                },
-                {
-                  type: "instruction",
-                  id: "done",
-                  title: "Done",
-                  body: "All set.",
-                  // pos: { x: 200, y: 200 }
 
-                }
-              ]
-            }]
-          };
-        }
 
-        function getDefaultOption(step) {
-          // debugger;
-          if (!step || step.type !== 'select') return null;
 
-          const len = Array.isArray(step.options) ? step.options.length : 0;
-          const idx = len + 1;
+    function makeBlankSOP() {
+      return {
+        title: "New SOP Library",
+        description: "Describe your library",
+        starters: [{
+          id: "starter_1",
+          label: "Starter 1",
+          summary: "",
+          description: "",
+          steps: [
+            {
+              type: "instruction",
+              id: "welcome",
+              title: "Welcome",
+              body: "Start here.",
+              next: "done",
+              // pos: { x: 200, y: 60 }
+            },
+            {
+              type: "instruction",
+              id: "done",
+              title: "Done",
+              body: "All set.",
+              // pos: { x: 200, y: 200 }
 
-          const opt = {
-            value: 'opt' + idx,
-            label: 'Option ' + idx,
-            hint: '',
-            next: step.next ?? null
-          };
-
-          // ensure unique value even with null holes or user-made names
-          const nextOptionVal = nextOptionValue(step);          // e.g., opt1, opt2, ...
-          if (opt.value == null || String(opt.value).trim() === '' || !step.options || step.options.some(o => o && o.value === opt.value)) {
-            opt.value = nextOptionVal;                   // keep value aligned if you use it as token
-          }
-          return opt;
-        }
-
-        function nextOptionValue(step, prefix = 'opt') {
-          const used = new Set();
-          if (Array.isArray(step.options)) {
-            for (const o of step.options) {
-              if (!o) continue;
-              const k = (o.id ?? o.value ?? '').trim();
-              if (k) used.add(k);
             }
-          }
-          let n = 1;
-          while (used.has(`${prefix}${n}`)) n++;
-          return `${prefix}${n}`;
+          ]
+        }]
+      };
+    }
+
+    function getDefaultOption(step) {
+      // debugger;
+      if (!step || step.type !== 'select') return null;
+
+      const len = Array.isArray(step.options) ? step.options.length : 0;
+      const idx = len + 1;
+
+      const opt = {
+        value: 'opt' + idx,
+        label: 'Option ' + idx,
+        hint: '',
+        next: step.next ?? null
+      };
+
+      // ensure unique value even with null holes or user-made names
+      const nextOptionVal = nextOptionValue(step);          // e.g., opt1, opt2, ...
+      if (opt.value == null || String(opt.value).trim() === '' || !step.options || step.options.some(o => o && o.value === opt.value)) {
+        opt.value = nextOptionVal;                   // keep value aligned if you use it as token
+      }
+      return opt;
+    }
+
+    function nextOptionValue(step, prefix = 'opt') {
+      const used = new Set();
+      if (Array.isArray(step.options)) {
+        for (const o of step.options) {
+          if (!o) continue;
+          const k = (o.id ?? o.value ?? '').trim();
+          if (k) used.add(k);
         }
+      }
+      let n = 1;
+      while (used.has(`${prefix}${n}`)) n++;
+      return `${prefix}${n}`;
+    }
 
 
-        // Reusable: remove per-option next links (safe on non-selects / missing arrays)
-        function stripOptionNexts(step) {
-          if (!step || step.type !== 'select' || !Array.isArray(step.options)) return false;
-          let touched = false;
-          step.options.forEach(o => {
-            if (o && 'next' in o) { delete o.next; touched = true; }
-          });
-          return touched;
-        }
+    // Reusable: remove per-option next links (safe on non-selects / missing arrays)
+    function stripOptionNexts(step) {
+      if (!step || step.type !== 'select' || !Array.isArray(step.options)) return false;
+      let touched = false;
+      step.options.forEach(o => {
+        if (o && 'next' in o) { delete o.next; touched = true; }
+      });
+      return touched;
+    }
 
-        function makeStep(type, starter = getStarter()) {
-          const id = uniqueId(type, starter);
-          if (type === 'instruction') return { type, id, title: "Instruction", body: "" };
-          if (type === 'input') return { type, id, label: "Input", placeholder: "", required: false };
-          if (type === 'select') return { type, id, label: "Choose", display: "cards", mode: "single", required: false, options: [{ value: "opt1", label: "Option 1" }] };
-          // if (type === 'end') return { type, id, title: "End", body: "" };
-          return { type: 'instruction', id, title: "Instruction", body: "" };
-        }
+    function makeStep(type, starter = getStarter()) {
+      const id = uniqueId(type, starter);
+      if (type === 'instruction') return { type, id, title: "Instruction", body: "" };
+      if (type === 'input') return { type, id, label: "Input", placeholder: "", required: false };
+      if (type === 'select') return { type, id, label: "Choose", display: "cards", mode: "single", required: false, options: [{ value: "opt1", label: "Option 1" }] };
+      // if (type === 'end') return { type, id, title: "End", body: "" };
+      return { type: 'instruction', id, title: "Instruction", body: "" };
+    }
 
-        function uniqueId(base, starter) {
-          const ids = new Set((starter?.steps || []).map(s => s.id));
-          let i = 1, v = slugify(base || 'step');
+    function uniqueId(base, starter) {
+      const ids = new Set((starter?.steps || []).map(s => s.id));
+      let i = 1, v = slugify(base || 'step');
 
-          let out = v;
-          while (ids.has(out)) {
-            out = v + '_' + (++i);
-          }
-          return out;
-        }
+      let out = v;
+      while (ids.has(out)) {
+        out = v + '_' + (++i);
+      }
+      return out;
+    }
 
-        function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
-        function escapeHtml(str) { return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
-        function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
-        // function nextSummary(step) {
-        //   if (step.type === 'select') {
-        //     const optEdges = (step.options || []).filter(o => o.next).length;
-        //     return (optEdges > 0 ? (optEdges + ' paths') : '') + (step.next ? (optEdges > 0 ? ' + ' : '') + 'after→' + step.next : (optEdges > 0 ? '' : '—'));
-        //   }
-        //   return step.next || '—';
-        // }
+    function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+    function escapeHtml(str) { return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
+    function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
+    // function nextSummary(step) {
+    //   if (step.type === 'select') {
+    //     const optEdges = (step.options || []).filter(o => o.next).length;
+    //     return (optEdges > 0 ? (optEdges + ' paths') : '') + (step.next ? (optEdges > 0 ? ' + ' : '') + 'after→' + step.next : (optEdges > 0 ? '' : '—'));
+    //   }
+    //   return step.next || '—';
+    // }
 
-        // function nextSelectHtml(steps, cur) {
-        //   const selfId = viewState?.selectedStepId; // current node being edited
-        //   const opts = steps
-        //     .filter(s => s.id !== selfId) // hide itself
-        //     .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
-        //     .join('');
-        //   return `<select id="f_next"><option value="">—</option>${opts}</select>`;
-        // }
+    // function nextSelectHtml(steps, cur) {
+    //   const selfId = viewState?.selectedStepId; // current node being edited
+    //   const opts = steps
+    //     .filter(s => s.id !== selfId) // hide itself
+    //     .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
+    //     .join('');
+    //   return `<select id="f_next"><option value="">—</option>${opts}</select>`;
+    // }
 
-        function nextSelectHtml(steps, cur, selfId, withId = true) {
-          const hideId = (typeof selfId === 'string' && selfId) || (viewState?.selectedStepId || null);
-          const opts = (steps || [])
-            .filter(s => s && s.id !== hideId) // hide itself
-            .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
-            .join('');
-          const idAttr = withId ? ' id="f_next"' : ''; // avoid duplicate ids in lists
-          const classAttr = ' class="opt-next"'; // always class for event delegation
-          return `<select${idAttr}${classAttr}>` +
-            `<option value="">—</option>${opts}</select>`;
-        }
+    function nextSelectHtml(steps, cur, selfId, withId = true) {
+      const hideId = (typeof selfId === 'string' && selfId) || (viewState?.selectedStepId || null);
+      const opts = (steps || [])
+        .filter(s => s && s.id !== hideId) // hide itself
+        .map(s => `<option value="${s.id}" ${s.id === cur ? 'selected' : ''}>${escapeHtml(s.id)}</option>`)
+        .join('');
+      const idAttr = withId ? ' id="f_next"' : ''; // avoid duplicate ids in lists
+      const classAttr = ' class="opt-next"'; // always class for event delegation
+      return `<select${idAttr}${classAttr}>` +
+        `<option value="">—</option>${opts}</select>`;
+    }
 
 
 
-        //   function optionRowHtml(o, i, steps) {
-        //     return `
-        //   <tr data-opt-idx="${i}">
-        //     <td><input class="f_opt_value" type="text" value="${escapeAttr(o.value || '')}"/></td>
-        //     <td><input class="f_opt_label" type="text" value="${escapeAttr(o.label || '')}"/></td>
-        //     <td><input class="f_opt_hint" type="text" value="${escapeAttr(o.hint || '')}"/></td>
-        //     <td>
-        //       <select class="f_opt_next">
-        //         ${steps.map(s => {
-        //       const text = s.id || s.title || s.label;
-        //       return `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(text)}</option>`;
-        //     }).join('')}
-        //       </select>
-        //     </td>
+    //   function optionRowHtml(o, i, steps) {
+    //     return `
+    //   <tr data-opt-idx="${i}">
+    //     <td><input class="f_opt_value" type="text" value="${escapeAttr(o.value || '')}"/></td>
+    //     <td><input class="f_opt_label" type="text" value="${escapeAttr(o.label || '')}"/></td>
+    //     <td><input class="f_opt_hint" type="text" value="${escapeAttr(o.hint || '')}"/></td>
+    //     <td>
+    //       <select class="f_opt_next">
+    //         ${steps.map(s => {
+    //       const text = s.id || s.title || s.label;
+    //       return `<option value="${s.id}" ${s.id === (o.next || '') ? 'selected' : ''}>${escapeHtml(text)}</option>`;
+    //     }).join('')}
+    //       </select>
+    //     </td>
 
-        //     <td class="center"><button class="f_opt_del">🗑️</button></td>
-        //   </tr>
-        // `;
-        //   }
+    //     <td class="center"><button class="f_opt_del">🗑️</button></td>
+    //   </tr>
+    // `;
+    //   }
 
-        function optionRowHtml(o, i, steps, includeNext, curStepId) {
-          const v = escapeAttr(o?.value || '');
-          const lbl = escapeAttr(o?.label || '');
-          const hint = escapeAttr(o?.hint || '');
-          // const nextCell = includeNext
-          //   ? `<td>${nextSelectHtml(steps, o?.next, curStepId)}</td>`
-          //   : '';
-          const nextCell = includeNext
-            ? `<td>${nextSelectHtml(steps, o?.next, curStepId, /*withId=*/false)}</td>`
-            : '';
+    function optionRowHtml(o, i, steps, includeNext, curStepId) {
+      const v = escapeAttr(o?.value || '');
+      const lbl = escapeAttr(o?.label || '');
+      const hint = escapeAttr(o?.hint || '');
+      // const nextCell = includeNext
+      //   ? `<td>${nextSelectHtml(steps, o?.next, curStepId)}</td>`
+      //   : '';
+      const nextCell = includeNext
+        ? `<td>${nextSelectHtml(steps, o?.next, curStepId, /*withId=*/false)}</td>`
+        : '';
 
-          return `
+      return `
     <tr data-opt-idx="${i}">
       <td><input class="opt-value" type="text" value="${v}"></td>
       <td><input class="opt-label" type="text" value="${lbl}"></td>
@@ -9832,58 +10629,58 @@ function isMiniForCurrentStarter() {
       <td class="center"><button class="iconbtn opt-del">✕</button></td>
     </tr>
   `;
-        }
+    }
 
-        function handleImageToBase64(ev, cb) {
-          const f = ev.target.files?.[0]; if (!f) return;
-          const r = new FileReader();
-          r.onload = () => { cb(String(r.result)); };
-          r.readAsDataURL(f);
-        }
+    function handleImageToBase64(ev, cb) {
+      const f = ev.target.files?.[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = () => { cb(String(r.result)); };
+      r.readAsDataURL(f);
+    }
 
-        function validateSOP() {
-          const errors = [];
-          if (!Array.isArray(sop.starters) || sop.starters.length === 0) errors.push('No starters');
-          sop.starters.forEach((st, si) => {
-            if (!Array.isArray(st.steps) || st.steps.length === 0) errors.push(`Starter[${si}] has no steps`);
-            const ids = new Set();
-            (st.steps || []).forEach((step, idx) => {
-              if (!step.id) errors.push(`Starter[${si}] step[${idx}] missing id`);
-              if (ids.has(step.id)) errors.push(`Starter[${si}] duplicate id ${step.id}`); ids.add(step.id);
+    function validateSOP() {
+      const errors = [];
+      if (!Array.isArray(sop.starters) || sop.starters.length === 0) errors.push('No starters');
+      sop.starters.forEach((st, si) => {
+        if (!Array.isArray(st.steps) || st.steps.length === 0) errors.push(`Starter[${si}] has no steps`);
+        const ids = new Set();
+        (st.steps || []).forEach((step, idx) => {
+          if (!step.id) errors.push(`Starter[${si}] step[${idx}] missing id`);
+          if (ids.has(step.id)) errors.push(`Starter[${si}] duplicate id ${step.id}`); ids.add(step.id);
 
-              if (step.type === 'input' && step.regex) {
-                try { new RegExp(step.regex); } catch { errors.push(`Invalid regex at ${step.id}`); }
-              }
-              if (step.type === 'select' && step.mode === 'multi') {
-                const c = (Array.isArray(step.options) ? step.options.length : 0);
-                if (step.min != null && step.min > c) errors.push(`min > options at ${step.id}`);
-                if (step.max != null && step.max > c) errors.push(`max > options at ${step.id}`);
-              }
-              if (step.type === 'select' && step.mode === 'single') {
-                // warn if no option.next and no step.next (unreachable continuation)
-                const hasOptNext = (step.options || []).some(o => o.next);
-                if (!hasOptNext && !step.next) errors.push(`No path from single-select ${step.id}`);
-              }
-            });
-          });
-          return { ok: errors.length === 0, errors };
-        }
+          if (step.type === 'input' && step.regex) {
+            try { new RegExp(step.regex); } catch { errors.push(`Invalid regex at ${step.id}`); }
+          }
+          if (step.type === 'select' && step.mode === 'multi') {
+            const c = (Array.isArray(step.options) ? step.options.length : 0);
+            if (step.min != null && step.min > c) errors.push(`min > options at ${step.id}`);
+            if (step.max != null && step.max > c) errors.push(`max > options at ${step.id}`);
+          }
+          if (step.type === 'select' && step.mode === 'single') {
+            // warn if no option.next and no step.next (unreachable continuation)
+            const hasOptNext = (step.options || []).some(o => o.next);
+            if (!hasOptNext && !step.next) errors.push(`No path from single-select ${step.id}`);
+          }
+        });
+      });
+      return { ok: errors.length === 0, errors };
+    }
 
-        function tidyIds() {
-          sop.starters.forEach(st => {
-            st.id = slugify(st.id || 'starter');
-            (st.steps || []).forEach(s => {
-              s.id = slugify(s.id || s.type || 'step');
-              if (s.type === 'select' && Array.isArray(s.options)) {
-                s.options.forEach(o => { o.value = slugify(o.value || o.label || 'opt'); });
-              }
-            });
-          });
-        }
+    function tidyIds() {
+      sop.starters.forEach(st => {
+        st.id = slugify(st.id || 'starter');
+        (st.steps || []).forEach(s => {
+          s.id = slugify(s.id || s.type || 'step');
+          if (s.type === 'select' && Array.isArray(s.options)) {
+            s.options.forEach(o => { o.value = slugify(o.value || o.label || 'opt'); });
+          }
+        });
+      });
+    }
 
 
 
-      </script>
+  </script>
 
 
 </body>
