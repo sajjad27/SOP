@@ -2501,7 +2501,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     let sop = makeBlankSOP();
     let savedSop = null;
 
-    const viewState = { starterIdx: 0, answers: {}, selectedStepId: 0, prev: {}, progressPctById: {} };
+    const viewState = { selectedStarterId: null, selectedStepId: 0, answers: {}, prev: {}, progressPctById: {} };
 
 
     // ---- Save button state ----
@@ -2651,7 +2651,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-        viewState.starterIdx = 0;
+        viewState.selectedStarterId = null;
 
         setSelectedStepById(getStarterStartId(sop.starters[0]));
 
@@ -2670,22 +2670,23 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
         // Warn on tab close / refresh / navigate away when there are unsaved changes
         window.addEventListener('beforeunload', (e) => {
-          if (!isDirty) return;   // only if something is unsaved
+          if (!isDirty || !isEditMode()) return;   // only if something is unsaved
           e.preventDefault();                   // required by some browsers
           e.returnValue = '';                   // shows the built-in confirmation dialog
         });
 
 
 
-        const sp = new URLSearchParams(location.search);
-        const starterId = sp.get('starter_id');
-        if (starterId) {
-          // only switch if it exists in sop
-          const ok = Array.isArray(sop?.starters) && sop.starters.some(st => String(st?.id) === String(starterId));
-          if (ok && typeof enterViewOrEditStarter === 'function') {
-            enterViewOrEditStarter(starterId);
-          }
-        }
+        // const sp = new URLSearchParams(location.search);
+        // const starterId = sp.get('starter_id');
+        // if (starterId) {
+        //   // only switch if it exists in sop
+        //   const ok = Array.isArray(sop?.starters) && sop.starters.some(st => String(st?.id) === String(starterId));
+        //   if (ok && typeof enterViewOrEditStarter === 'function') {
+        //     enterViewOrEditStarter(starterId);
+        //   }
+        // }
+        applyStarterFromUrl();
 
 
       })();
@@ -2710,18 +2711,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     syncArrowColor();
 
 
-
-
     (function themeInit() {
 
       const saved = localStorage.getItem('theme');
       const prefersDark = matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
       setTheme(saved || (prefersDark ? 'dark' : 'light'));
-
-
-
-
-
 
     })();
 
@@ -5204,8 +5198,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     function getOtherStarters() {
       // const starters = Array.isArray(sop?.starters) ? sop.starters : [];
-      // const curIdx = Number.isInteger(viewState?.starterIdx) ? viewState.starterIdx : -1;
-      const curId = sop?.starters[viewState?.starterIdx]?.id;
+      // const curIdx = Number.isInteger(viewState?.starterIdx) ? viewState.selectedStarterIdx : -1;
+      const curId = viewState?.selectedStarterId;
       return curId ? sop?.starters.filter(st => st?.id !== curId) : starters;
     }
 
@@ -6254,7 +6248,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       sop = parsed;
       ensureSop();
-      viewState.starterIdx = 0;
+      viewState.selectedStarterId = null;
       setSelectedStepById(sop.starters[0]?.steps?.[0]?.id);
       setDirty(true);
       const saved = await performSave();
@@ -6589,7 +6583,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       // formDirty = false;
 
       // reset pointers
-      viewState.starterIdx = 0;
+      viewState.selectedStarterId = null;
       setSelectedStepById(sop.starters[0]?.steps?.[0]?.id);
 
       // show edit landing for the new SOP
@@ -6705,8 +6699,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         if (!q) { filteredStarters.push(st); continue; }
 
         const { matched, place } = findSearchPlaceStepId(st, q);
-        console.log(`place`, place);
-        console.log(`matched`, matched);
         if (matched) {
           if (place) st.searchPlaceStepId = place;  // "starter" or a stepId
           filteredStarters.push(st);
@@ -6830,70 +6822,150 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     function isEditMode() { return document.documentElement.getAttribute('data-mode') === 'edit'; }
 
 
-    function enterViewOrEditStarter(starterId, { doHistory = true, replace = false, stepId = null } = {}) {
-      const idx = typeof starterIdxById === 'function' ? starterIdxById(starterId) : -1;
-      if (idx < 0 || !Array.isArray(sop?.starters) || !sop.starters[idx]) return false;
+    function enterViewOrEditStarter(starterId, { stepId = null } = {}) {
+      // const idx = typeof getStarterIdxById === 'function' ? getStarterIdxById(starterId) : -1;
+      // if (idx < 0 || !Array.isArray(sop?.starters) || !sop.starters[idx]) return false;
 
-      resetStarterValues(idx, { stepId: stepId });
+      resetStarterValues();
 
-      changeScreen('starter');
-      const st = sop.starters[idx];
+      const st = getStarterById(starterId);
+      console.log(`st`, st);
       const titleEl = document.getElementById('vwStarterTitle');
       if (titleEl) titleEl.textContent = st?.label || 'Starter';
-      renderAll?.();
+      viewState.selectedStarterId = starterId;
+      viewState.selectedStepId = stepId ? stepId : (st.startId || st?.steps?.[0]?.id);
 
+      console.log(`viewState.selectedStarterId`, viewState.selectedStarterId);
+      console.log(`viewState.selectedStepId`, viewState.selectedStepId);
       // remember last
-      try {
-        viewState.lastStarterId = String(st.id);
-        sessionStorage.setItem('last_starter_id', String(st.id));
-      } catch { }
+      // try {
+      //   // viewState.lastStarterId = String(st.id);
+      //   sessionStorage.setItem('last_starter_id', String(st.id));
+      // } catch { }
 
-      if (doHistory) {
-        const H = window.history;
-        try {
-          const url = new URL(location.href);
-          url.searchParams.set('starter_id', String(starterId));
-          const state = { starter_id: String(starterId) };
-          replace ? H.replaceState(state, '', url) : H.pushState(state, '', url);
-        } catch { }
-      }
+
+      changeScreen('starter');
+      // setSelectedStepById(viewState.selectedStepId);   // sync id + idx
+      updateUrlParameters({ starterId: starterId, stepId: viewState.selectedStepId });
+      navigateToStepId(viewState.selectedStepId);
+      // renderViewStep();
+      // renderInspector();
+      // renderGraph();
+      // renderViewAndEditLanding();
+      // renderAll();
+
+
       // precomputeProgress(); // computes once
       return true;
     }
 
-    function goHome({ doHistory = true } = {}) {
+    function goHome() {
       changeScreen('landing');
       // clear any “current” so popstate won’t no-op
-      viewState.starterIdx = -1;
+      viewState.selectedStarterId = null;
       viewState.selectedStepId = null;
 
-      if (doHistory) {
-        try {
-          const url = new URL(location.href);
-          const hadStarter = url.searchParams.has('starter_id');
-          url.searchParams.delete('starter_id');
+      // if (doHistory) {
+      //   try {
+      //     const url = new URL(location.href);
+      //     const hadStarter = url.searchParams.has('starter_id');
+      //     url.searchParams.delete('starter_id');
 
-          // Only push a Home entry if we were on a starter; otherwise don't spam history
-          if (hadStarter) {
-            window.history.pushState({}, '', url);
-          }
-          // else {
-          //   // already home — leave history alone
-          // }
-        } catch { }
+      //     // Only push a Home entry if we were on a starter; otherwise don't spam history
+      //     if (hadStarter) {
+      //       window.history.pushState({}, '', url);
+      //     }
+      //     // else {
+      //     //   // already home — leave history alone
+      //     // }
+      //   } catch { }
+      // }
+      clearStarterAndStepFromQuery();
+    }
+
+    function updateUrlParameters({ starterId, stepId } = {}) {
+      const H = window.history;
+      try {
+        // Both must be provided and not null/undefined
+        if (!starterId || !stepId) {
+          throw new Error('updateHistory: starterId and stepId must both have values');
+        }
+
+        const url = new URL(location.href);
+
+        url.searchParams.set('starter_id', String(starterId));
+        url.searchParams.set('step_id', String(stepId));
+
+        const state = {
+          starter_id: String(starterId),
+          step_id: String(stepId),
+        };
+
+        H.pushState(state, '', url.href);
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    // URL -> UI (runs for both Back and Forward)
-    function applyStarterFromUrl() {
-      const sp = new URLSearchParams(location.search);
-      const id = sp.get('starter_id');
-      if (id) {
-        enterViewOrEditStarter(id, { doHistory: false }); // do not push again
-      } else {
-        goHome({ doHistory: false }); // do not push again
+    function updateUrlStepIdParameter(stepId) {
+      try {
+        if (stepId == null) {
+          throw new Error('updateStepIdOnly: stepId must have a value');
+        }
+
+        const p = new URLSearchParams(location.search);
+        const starterId = p.get('starter_id');
+
+        if (starterId == null) {
+          throw new Error('updateStepIdOnly: starter_id is missing in URL');
+        }
+
+        // reuse the strict function: both must have values
+        updateUrlParameters({ starterId, stepId });
+      } catch (e) {
+        console.error(e);
       }
     }
+
+    function clearStarterAndStepFromQuery() {
+      const H = window.history;
+      try {
+        const url = new URL(location.href);
+
+        url.searchParams.delete('starter_id');
+        url.searchParams.delete('step_id');
+
+        const state = {
+          starter_id: null,
+          step_id: null,
+        };
+
+        H.pushState(state, '', url.href);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // readers
+    function getQueryStarterId() {
+      try {
+        const url = new URL(location.href);
+        return url.searchParams.get('starter_id');
+      } catch {
+        return null;
+      }
+    }
+
+    function getQueryStepId() {
+      try {
+        const url = new URL(location.href);
+        return url.searchParams.get('step_id');
+      } catch {
+        return null;
+      }
+    }
+
+
 
     // Bind once
     if (!window.__sopPopBound) {
@@ -6901,24 +6973,42 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       window.__sopPopBound = true;
     }
 
-    // On initial load (after your async SOP init finishes), call once:
-    /// applyStarterFromUrl();
+    function setStepInUrl(stepId, { replace = false, doHistory = true } = {}) {
+      if (!doHistory) return;
+      try {
+        const H = window.history;
+        const url = new URL(location.href);
+        if (stepId) url.searchParams.set(STEP_QUERY_KEY, String(stepId));
+        else url.searchParams.delete(STEP_QUERY_KEY);
+        const state = {
+          starter_id: getQueryStarterId() || null,
+          step_id: stepId || null
+        };
+        replace ? H.replaceState(state, '', url) : H.pushState(state, '', url);
+      } catch { }
+    }
 
+    const STARTER_QUERY_KEY = 'starter_id';
+    const STEP_QUERY_KEY = 'step_id';
 
-
-    const QUERY_KEY = 'starter_id';
     function getQueryStarterId() {
       const sp = new URLSearchParams(location.search);
-      const v = sp.get(QUERY_KEY);
-      if (v) return v.trim();
-      return null;
+      const v = sp.get(STARTER_QUERY_KEY);
+      return v ? v.trim() : null;
+    }
+
+    function getQueryStepId() {
+      const sp = new URLSearchParams(location.search);
+      const v = sp.get(STEP_QUERY_KEY);
+      return v ? v.trim() : null;
     }
 
 
     function applyStarterFromUrl() {
-      const id = getQueryStarterId();
-      if (id) {
-        enterViewOrEditStarter(id, { doHistory: false }); // no push
+      const starterId = getQueryStarterId();
+      const stepId = getQueryStepId();
+      if (starterId) {
+        enterViewOrEditStarter(starterId, { doHistory: false, stepId: stepId }); // no push
       } else {
         goHome();
       }
@@ -6927,7 +7017,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-    window.addEventListener('popstate', applyStarterFromUrl);
+    // window.addEventListener('popstate', applyStarterFromUrl);
 
 
 
@@ -7469,7 +7559,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         if (!card) return;
 
         const starterId = card.dataset.idx;
-        const idx = starterIdxById(starterId);
+        const idx = getStarterIdxById(starterId);
 
         const st = sop.starters[idx]; if (!st) return;
 
@@ -7494,7 +7584,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           const card = del.closest('.vw-card[data-idx]');
           if (!card) return;
           const starterId = card.dataset.idx;
-          const starterIdx = starterIdxById(starterId);
+          const starterIdx = getStarterIdxById(starterId);
           const currentStarter = sop.starters[starterIdx];
           const label = currentStarter?.label || `Starter ${starterId}`;
 
@@ -7559,24 +7649,30 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
     // helper: find starter index by stable id
-    function starterIdxById(id) {
+    function getStarterIdxById(id) {
       return sop?.starters ? sop.starters.findIndex(s => s.id === id) : -1;
+    }
+
+    function getStarterById(id) {
+      const idx = getStarterIdxById(id);
+      if (idx < 0) return null;
+      return sop.starters[idx];
     }
 
     // Reset viewState for a given starter index (or 0 if invalid).
     // Sets stepIdx to the starter's startId (or 0 if invalid).
-    function resetStarterValues(starterIdx, { stepId = null }) {
-      const starters = sop?.starters || [];
-      const si = (Number.isInteger(starterIdx) && starterIdx >= 0 && starterIdx < starters.length) ? starterIdx : 0;
+    function resetStarterValues() {
+      // const starters = sop?.starters || [];
+      // const si = (Number.isInteger(starterIdx) && starterIdx >= 0 && starterIdx < starters.length) ? starterIdx : 0;
 
-      viewState.starterIdx = si;
+      viewState.selectedStarterId = null;
       viewState.answers = {};
 
-      const st = starters[si];
-      const steps = st?.steps || [];
+      // const st = starters[si];
+      // const steps = st?.steps || [];
       // if no stepId suggested, default it to the start id 
-      const startId = stepId ? stepId : getStarterStartId(st);
-      setSelectedStepById(startId);
+      // const startId = stepId ? stepId : getStarterStartId(st);
+      // setSelectedStepById(startId);
 
 
       viewState.prev = [];
@@ -7620,16 +7716,16 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       starters.splice(idx, 1);
 
       // fix selection/index if needed
-      if (typeof viewState === 'object') {
-        const n = starters.length;
-        if (typeof viewState.currentStarterIdx === 'number') {
-          if (viewState.currentStarterIdx === idx) {
-            viewState.currentStarterIdx = Math.min(idx, n - 1);
-          } else if (viewState.currentStarterIdx > idx) {
-            viewState.currentStarterIdx -= 1;
-          }
-        }
-      }
+      // if (typeof viewState === 'object') {
+      //   const n = starters.length;
+      //   if (typeof viewState.currentStarterIdx === 'number') {
+      //     if (viewState.currentStarterIdx === idx) {
+      //       viewState.currentStarterIdx = Math.min(idx, n - 1);
+      //     } else if (viewState.currentStarterIdx > idx) {
+      //       viewState.currentStarterIdx -= 1;
+      //     }
+      //   }
+      // }
     }
 
 
@@ -7695,7 +7791,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         cleanup();
 
 
-        if (viewState) viewState.starterIdx = idx;
+        if (viewState) viewState.selectedStarterId = st.id;
         setDirty(true);
         enterViewOrEditStarter(st.id);
       };
@@ -7923,15 +8019,18 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
     function renderViewStep() {
-      const st = sop.starters[viewState.starterIdx];
+      const st = getStarter();
+      if (!st) return;
       const steps = st.steps || [];
-      let i = getStepIndexById(steps, viewState.selectedStepId);
-      if (i < 0) i = 0;
+      // let i = getStepIndexById(steps, viewState.selectedStepId);
+      getStepById(viewState.selectedStepId)
+      // if (i < 0) i = 0;
 
       const box = document.getElementById('vwStep');
       box.innerHTML = '';
 
-      const step = steps[i];
+      // const step = steps[i];
+      const step = getStepById(viewState.selectedStepId);
       if (!step) { setNextEnabled(false); return; }
 
       const frag = document.createDocumentFragment();
@@ -8116,42 +8215,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       prevBtn.onclick = () => goPrevious();
 
-      nextBtn.onclick = () => {
-        if (isEndStep(step)) return;
-
-        const stepsAll = getSteps();
-        const current = getStepById(viewState.selectedStepId);
-
-        // single-select "branch next"
-        if (current?.type === 'select' && current.mode === 'single') {
-          // const choice = viewState.answers[current.id];
-          // if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
-          const toId = getSingleSelectNextId();
-          if (toId) {
-            recordTransition(viewState.selectedStepId, toId);
-            setSelectedStepById(toId);
-            renderViewStep(); renderGraph(); renderInspector(); updateProgressBar();
-
-          }
-          return;
-          // }
-        }
-
-        // step-level next
-        if (current?.next && stepsAll.find(x => x.id === current.next)) {
-          const toId = current.next;
-          if (toId !== viewState.selectedStepId) {
-            recordTransition(viewState.selectedStepId, toId);
-            setSelectedStepById(toId);
-            renderViewStep(); renderGraph(); renderInspector(); updateProgressBar();
-
-          }
-          return;
-        }
-
-        renderViewStep(); renderGraph(); renderInspector(); //updateProgressBar();
-
-      };
+      nextBtn.onclick = () => goNext();
 
       // --- Keyboard: ArrowLeft / ArrowRight -> Prev / Next (ignore typing fields)
       if (!document.__vwArrowsBound) {
@@ -8173,27 +8237,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         });
         document.__vwArrowsBound = true;
       }
-
-      // --- Mouse: click left/right side of the step box -> Prev/Next
-      // if (!box.__vwSideClickBound) {
-      //   box.addEventListener('click', (e) => {
-      //     // don't hijack clicks on real controls or links or inside iframes
-      //     if (e.target.closest('a, button, input, textarea, select, label, iframe, .vw-option')) return;
-
-      //     // don't navigate if user is selecting text
-      //     const sel = window.getSelection?.();
-      //     if (sel && sel.toString().trim()) return;
-
-      //     const r = box.getBoundingClientRect();
-      //     const x = e.clientX - r.left;
-      //     const ratio = x / r.width;
-
-      //     // if (ratio >= 0.66) { document.getElementById('vwNext')?.click(); }
-      //     // else if (ratio <= 0.34) { document.getElementById('vwPrev')?.click(); }
-      //     // clicks near the middle do nothing
-      //   });
-      //   box.__vwSideClickBound = true;
-      // }
 
       hydrateStarterLinks(node);
       function hydrateStarterLinks(root = document) {
@@ -8251,18 +8294,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       return target || null;
     }
 
-    // function getSingleSelectNext(step) {
-    //   if (!step || step.type !== 'select' || step.mode !== 'single') return null;
-    //   const sel = document.querySelector(`.vw-option.selected`);
-    //   console.log(`sel`, sel);
-    //   if (!sel) return null;
-    //   const val = sel.value;
-    //   hello
-    //   const opt = (step.options || []).find(o => o?.value === val);
-    //   console.log(`opt`, opt);
-    //   return opt?.next || null;
-    // }
-
     // Central updater for the two nav buttons
     function updateNavButtons() {
 
@@ -8304,7 +8335,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     function wireSingleSelectChange(step) {
       if (!step || step.type !== 'select' || step.mode !== 'single') return;
       const options = document.querySelectorAll(`.vw-option`);
-      console.log(`options`, options);
       options.forEach(opt => opt.addEventListener('click', updateNavButtons));
     }
 
@@ -8357,484 +8387,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       }
       return dist;
     }
-
-    // call this ONCE per graph version
-    // function precomputeProgress() {
-    //   const st = getStarter();
-    //   if (!st) return;
-
-    //   const sig = _graphSig(st);
-    //   if (viewState._progressSig === sig && viewState.progressPctById) return; // already done
-
-    //   const steps = st.steps || [];
-    //   const byId = Object.fromEntries(steps.map(s => [s.id, s]));
-    //   const nexts = new Map(), preds = new Map(), ends = new Set();
-
-    //   for (const s of steps) {
-    //     const nbs = _nxIds(s, byId);
-    //     nexts.set(s.id, nbs);
-    //     nbs.forEach(nb => {
-    //       if (!preds.has(nb)) preds.set(nb, []);
-    //       preds.get(nb).push(s.id);
-    //     });
-    //     if (isEndStep(s)) ends.add(s.id);
-    //     if (!preds.has(s.id)) preds.set(s.id, []);
-    //     if (!nexts.has(s.id)) nexts.set(s.id, []);
-    //   }
-
-    //   const dStart = _bfsFromStart(st.startId, nexts); // transitions start->node
-    //   const dEnd = _revBfsToEnd(preds, ends);        // transitions node->end
-
-    //   const pctMap = Object.create(null);
-    //   nexts.forEach((_, id) => {
-    //     if (ends.has(id)) { pctMap[id] = 100; return; }
-    //     const a = dStart[id], b = dEnd[id];
-    //     pctMap[id] = (typeof a === 'number' && typeof b === 'number' && (a + b) > 0)
-    //       ? Math.round((a / (a + b)) * 100)
-    //       : 0; // conservative if unreachable
-    //   });
-
-    //   viewState.progressPctById = pctMap;
-    //   viewState._progressSig = sig;
-    // }
-
-    // ==== SIMPLE MILESTONE PROGRESS (start + merges + end) ====
-    // One-time precompute. No graph signature, no per-render work.
-
-    // function precomputeProgress() {
-    //   const st = getStarter();
-    //   if (!st) return;
-
-    //   const steps = st.steps || [];
-    //   const byId = Object.fromEntries(steps.map(s => [s.id, s]));
-
-    //   // Build adjacency + predecessors + end set
-    //   const nexts = new Map(), preds = new Map(), ends = new Set();
-    //   for (const s of steps) {
-    //     const out = [];
-    //     if (s.next && byId[s.next]) out.push(s.next);
-    //     if (s.type === 'select' && Array.isArray(s.options)) {
-    //       for (const o of s.options) if (o?.next && byId[o.next]) out.push(o.next);
-    //     }
-    //     nexts.set(s.id, out);
-    //     for (const nb of out) {
-    //       if (!preds.has(nb)) preds.set(nb, []);
-    //       preds.get(nb).push(s.id);
-    //     }
-    //     if (!preds.has(s.id)) preds.set(s.id, []);
-    //     if (!nexts.has(s.id)) nexts.set(s.id, []);
-    //     if (isEndStep(s)) ends.add(s.id);
-    //   }
-
-    //   // Milestones = start + merges (in-degree >= 2) + all ends
-    //   const startId = st.startId;
-    //   const merges = [...preds.entries()].filter(([_, arr]) => (arr?.length || 0) >= 2).map(([id]) => id);
-    //   const milestonesSet = new Set([startId, ...merges, ...ends]);
-    //   const milestones = [...milestonesSet].filter(Boolean);
-    //   console.log('[progress] milestones total =', milestones.length,
-    //         '(start, merges, ends):', { startId, merges, ends: [...ends], milestones });
-
-    //   // Helper: BFS from A to nearest milestone B (excluding A), without passing through any other milestone.
-    //   function distToNextMilestone(A) {
-    //     const block = new Set(milestonesSet); block.delete(A); // other milestones are walls; target is any of them
-    //     const q = [[A, 0]];
-    //     const seen = new Set([A]);
-    //     while (q.length) {
-    //       const [id, d] = q.shift();
-    //       for (const nb of (nexts.get(id) || [])) {
-    //         if (seen.has(nb)) continue;
-    //         if (block.has(nb)) return [nb, d + 1]; // found next milestone
-    //         seen.add(nb);
-    //         q.push([nb, d + 1]);
-    //       }
-    //     }
-    //     return [null, 0];
-    //   }
-
-    //   // Chain milestones from start → … → end using greedy “nearest next milestone”
-    //   const chain = [];
-    //   let cur = startId;
-    //   const guard = steps.length + 10;
-    //   let hops = 0;
-    //   while (cur && !ends.has(cur) && hops < guard) {
-    //     chain.push(cur);
-    //     const [nextMilestone, segLen] = distToNextMilestone(cur);
-    //     if (!nextMilestone || segLen <= 0) break;
-    //     cur = nextMilestone;
-    //     hops++;
-    //   }
-    //   if (cur && !chain.includes(cur)) chain.push(cur);
-    //   // Ensure the last is an end if reachable
-    //   if (!ends.has(chain[chain.length - 1])) {
-    //     // fallback: pick any reachable end by shortest path (optional)
-    //     for (const e of ends) { chain.push(e); break; }
-    //   }
-
-    //   // Segment lengths between consecutive milestones in the chain
-    //   const segLens = [];
-    //   for (let i = 0; i < chain.length - 1; i++) {
-    //     const [_, d] = (function dist(A, B) { // shortest transitions A->B without crossing other milestones
-    //       const block = new Set(milestonesSet); block.delete(A); block.delete(B);
-    //       const q = [[A, 0]];
-    //       const seen = new Set([A]);
-    //       while (q.length) {
-    //         const [id, dd] = q.shift();
-    //         if (id === B) return [B, dd];
-    //         for (const nb of (nexts.get(id) || [])) {
-    //           if (seen.has(nb) || block.has(nb)) continue;
-    //           seen.add(nb);
-    //           q.push([nb, dd + 1]);
-    //         }
-    //       }
-    //       return [null, 0];
-    //     })(chain[i], chain[i + 1]);
-    //     segLens.push(d);
-    //   }
-
-    //   // Percent at milestones: cumulative / total
-    //   const total = segLens.reduce((a, b) => a + b, 0);
-    //   const pctAtMilestone = new Map();
-    //   let acc = 0;
-    //   for (let i = 0; i < chain.length; i++) {
-    //     if (i === 0) { pctAtMilestone.set(chain[i], 0); continue; }
-    //     acc += segLens[i - 1] || 0;
-    //     const pct = total > 0 ? Math.round((acc / total) * 100) : (ends.has(chain[i]) ? 100 : 0);
-    //     pctAtMilestone.set(chain[i], ends.has(chain[i]) ? 100 : pct);
-    //   }
-
-    //        // --- Only milestone chain gets %; no fill for others ---
-    //   const pctById = Object.create(null);
-
-    //   // pctAtMilestone already contains the chain (start → merges → end)
-    //   for (const [id, pct] of pctAtMilestone) {
-    //     pctById[id] = pct;
-    //   }
-
-    //   // Force any end nodes to 100% (even if chain ended exactly on them)
-    //   ends.forEach(e => { pctById[e] = 100; });
-
-    //   viewState.progressPctById = pctById;
-
-    // }
-
-    // function precomputeProgress() {
-    //   const st = getStarter();
-    //   if (!st) return;
-
-    //   const steps = st.steps || [];
-    //   const byId = Object.fromEntries(steps.map(s => [s.id, s]));
-
-    //   // Build adjacency + predecessors + end set
-    //   const nexts = new Map(), preds = new Map(), ends = new Set();
-    //   for (const s of steps) {
-    //     const out = [];
-    //     if (s.next && byId[s.next]) out.push(s.next);
-    //     if (s.type === 'select' && Array.isArray(s.options)) {
-    //       for (const o of s.options) if (o?.next && byId[o.next]) out.push(o.next);
-    //     }
-    //     nexts.set(s.id, out);
-    //     for (const nb of out) {
-    //       if (!preds.has(nb)) preds.set(nb, []);
-    //       preds.get(nb).push(s.id);
-    //     }
-    //     if (!preds.has(s.id)) preds.set(s.id, []);
-    //     if (!nexts.has(s.id)) nexts.set(s.id, []);
-    //     if (isEndStep(s)) ends.add(s.id);
-    //   }
-
-    //   // Milestones = start + merges (in-degree >= 2) + all ends
-    //   const startId = st.startId;
-    //   const merges = [...preds.entries()]
-    //     .filter(([_, arr]) => (arr?.length || 0) >= 2)
-    //     .map(([id]) => id);
-    //   const milestonesSet = new Set([startId, ...merges, ...ends]);
-    //   console.log('[progress] milestones total =', milestonesSet.length,
-    //     '(start, merges, ends):', { startId, merges, ends: [...ends], milestonesSet });
-
-    //   // --- shortest path from start to the NEAREST end (by transitions) ---
-    //   const dist = Object.create(null);
-    //   const parent = Object.create(null);
-    //   let endHit = null;
-
-    //   if (startId && nexts.has(startId)) {
-    //     const q = [startId];
-    //     dist[startId] = 0;
-    //     while (q.length) {
-    //       const id = q.shift();
-    //       if (ends.has(id)) { endHit = id; break; } // nearest end
-    //       for (const nb of (nexts.get(id) || [])) {
-    //         if (!(nb in dist)) {
-    //           dist[nb] = dist[id] + 1;
-    //           parent[nb] = id;
-    //           q.push(nb);
-    //         }
-    //       }
-    //     }
-    //   }
-
-    //   // If no end reachable, nothing to compute
-    //   if (!endHit) {
-    //     viewState.progressPctById = Object.create(null);
-    //     return;
-    //   }
-
-    //   // Reconstruct shortest path start -> ... -> endHit
-    //   const path = [];
-    //   for (let x = endHit; x != null; x = parent[x]) path.push(x);
-    //   path.reverse(); // now start..end
-
-    //   const totalTransitions = dist[endHit]; // clicks from start to end
-
-    //   // --- Fill every step between consecutive milestones on the chosen chain ---
-
-    //   // helper: BFS forward from A, blocking all milestones except A,B
-    //   function _bfsFromAtoAll(A, B) {
-    //     const block = new Set(milestonesSet); block.delete(A); block.delete(B);
-    //     const distA = Object.create(null);
-    //     const q = [[A, 0]];
-    //     distA[A] = 0;
-    //     while (q.length) {
-    //       const [id, d] = q.shift();
-    //       for (const nb of (nexts.get(id) || [])) {
-    //         if (block.has(nb) || (nb in distA)) continue;
-    //         distA[nb] = d + 1;
-    //         q.push([nb, d + 1]);
-    //       }
-    //     }
-    //     return distA; // shortest transitions A->node without crossing other milestones
-    //   }
-
-    //   // helper: reverse BFS from B (over preds), blocking milestones except A,B
-    //   function _revReachToB(A, B) {
-    //     const block = new Set(milestonesSet); block.delete(A); block.delete(B);
-    //     const canReachB = new Set([B]);
-    //     const q = [B];
-    //     while (q.length) {
-    //       const id = q.shift();
-    //       for (const p of (preds.get(id) || [])) {
-    //         if (block.has(p) || canReachB.has(p)) continue;
-    //         canReachB.add(p);
-    //         q.push(p);
-    //       }
-    //     }
-    //     return canReachB; // nodes that can reach B without crossing other milestones
-    //   }
-
-    //   const pctById = Object.create(null);
-
-    //   // ensure milestone nodes keep their exact pct
-    //   for (const [id, pct] of pctAtMilestone) pctById[id] = pct;
-    //   ends.forEach(e => { pctById[e] = 100; });
-
-    //   // interpolate between each consecutive milestone pair on the chain
-    //   for (let i = 0; i < chain.length - 1; i++) {
-    //     const A = chain[i], B = chain[i + 1];
-    //     const pctA = pctAtMilestone.get(A) ?? 0;
-    //     const pctB = (ends.has(B) ? 100 : (pctAtMilestone.get(B) ?? 0));
-
-    //     // distances and reachability within this segment
-    //     const distA = _bfsFromAtoAll(A, B);
-    //     if (!(B in distA)) continue; // no path A->B without crossing milestones
-    //     const segLen = distA[B];
-    //     const canReachB = _revReachToB(A, B);
-
-    //     // assign every node in the intersection: reachable from A and can reach B
-    //     for (const id of Object.keys(distA)) {
-    //       if (id === A || id === B) continue;
-    //       if (!canReachB.has(id)) continue;
-
-    //       const t = segLen > 0 ? (distA[id] / segLen) : 0;  // 0..1
-    //       const raw = pctA + (pctB - pctA) * t;
-    //       const pct = Math.floor(raw * 100) / 100;          // floor to 2 decimals
-    //       pctById[id] = pct;
-    //     }
-    //   }
-
-    //   viewState.progressPctById = pctById;
-
-    // }
-
-    // function precomputeProgress() {
-    //   const st = getStarter();
-    //   if (!st) return;
-
-    //   const steps = st.steps || [];
-    //   const byId = Object.fromEntries(steps.map(s => [s.id, s]));
-
-    //   // ---- Build adjacency + predecessors + ends ----
-    //   const nexts = new Map(), preds = new Map(), ends = new Set();
-    //   for (const s of steps) {
-    //     const out = [];
-    //     if (s.next && byId[s.next]) out.push(s.next);
-    //     if (s.type === 'select' && Array.isArray(s.options)) {
-    //       for (const o of s.options) if (o?.next && byId[o.next]) out.push(o.next);
-    //     }
-    //     nexts.set(s.id, out);
-    //     for (const nb of out) {
-    //       if (!preds.has(nb)) preds.set(nb, []);
-    //       preds.get(nb).push(s.id);
-    //     }
-    //     if (!preds.has(s.id)) preds.set(s.id, []);
-    //     if (!nexts.has(s.id)) nexts.set(s.id, []);
-    //     if (isEndStep(s)) ends.add(s.id);
-    //   }
-
-    //   // ---- Milestones = start + merges (in-degree >=2) + ends ----
-    //   const startId = st.startId;
-    //   const merges = [...preds.entries()]
-    //     .filter(([_, arr]) => (arr?.length || 0) >= 2)
-    //     .map(([id]) => id);
-    //   const milestonesSet = new Set([startId, ...merges, ...ends]);
-
-    //   // ---- Shortest path from start to NEAREST end (by transitions) ----
-    //   const dist = Object.create(null);
-    //   const parent = Object.create(null);
-    //   let endHit = null;
-
-    //   if (startId && nexts.has(startId)) {
-    //     const q = [startId];
-    //     dist[startId] = 0;
-    //     while (q.length) {
-    //       const id = q.shift();
-    //       if (ends.has(id)) { endHit = id; break; } // first end reached = nearest
-    //       for (const nb of (nexts.get(id) || [])) {
-    //         if (!(nb in dist)) {
-    //           dist[nb] = dist[id] + 1;
-    //           parent[nb] = id;
-    //           q.push(nb);
-    //         }
-    //       }
-    //     }
-    //   }
-
-    //   if (!endHit) { // no end reachable
-    //     viewState.progressPctById = Object.create(null);
-    //     return;
-    //   }
-
-    //   // Reconstruct shortest path start -> ... -> endHit
-    //   const path = [];
-    //   for (let x = endHit; x != null; x = parent[x]) path.push(x);
-    //   path.reverse(); // start..end
-    //   const totalTransitions = dist[endHit];
-
-    //   // Keep ONLY milestones that lie on this shortest path (in order)
-    //   const chain = path.filter(id => milestonesSet.has(id));
-
-    //   // ---- Percent at milestones (based on shortest-path distance) ----
-    //   // pctAtMilestone(id) = floor( 100 * dist[id] / totalTransitions, 2 decimals ), ends forced to 100
-    //   const pctAtMilestone = new Map();
-    //   for (const id of chain) {
-    //     const pct = ends.has(id)
-    //       ? 100
-    //       : Math.floor((dist[id] * 10000) / Math.max(1, totalTransitions)) / 100;
-    //     pctAtMilestone.set(id, pct);
-    //   }
-    //   pctAtMilestone.set(endHit, 100); // ensure end = 100
-
-    //   // ---- Fill every step between consecutive milestones on the chain ----
-    //   // Helpers for segment-local reachability without crossing other milestones
-    //   function _bfsFromAtoAll(A, B) {
-    //     const block = new Set(milestonesSet); block.delete(A); block.delete(B);
-    //     const dA = Object.create(null);
-    //     const q = [[A, 0]];
-    //     dA[A] = 0;
-    //     while (q.length) {
-    //       const [id, d] = q.shift();
-    //       for (const nb of (nexts.get(id) || [])) {
-    //         if (block.has(nb) || (nb in dA)) continue;
-    //         dA[nb] = d + 1;
-    //         q.push([nb, d + 1]);
-    //       }
-    //     }
-    //     return dA; // shortest transitions A->node within this segment
-    //   }
-
-    //   function _revReachToB(A, B) {
-    //     const block = new Set(milestonesSet); block.delete(A); block.delete(B);
-    //     const can = new Set([B]);
-    //     const q = [B];
-    //     while (q.length) {
-    //       const id = q.shift();
-    //       for (const p of (preds.get(id) || [])) {
-    //         if (block.has(p) || can.has(p)) continue;
-    //         can.add(p);
-    //         q.push(p);
-    //       }
-    //     }
-    //     return can; // nodes that can reach B within this segment
-    //   }
-
-    //   // Start with exact milestone percents
-    //   // --- Interpolate within each segment A->B by equal step counts ---
-    //   // --- Interpolate within each milestone segment A->B, per path (lane-by-lane) ---
-    //   const pctById = Object.create(null);
-    //   // keep milestone percents
-    //   for (const [id, pct] of pctAtMilestone) pctById[id] = pct;
-
-    //   function _pathsAtoB(A, B, blockSet, limit = 1000) {
-    //     // enumerate simple paths A->B without touching other milestones
-    //     const paths = [];
-    //     const stack = [[A, [A]]];
-    //     const seenStack = new Set(); // optional, avoid duplicate states
-
-    //     while (stack.length && paths.length < limit) {
-    //       const [id, path] = stack.pop();
-    //       for (const nb of (nexts.get(id) || [])) {
-    //         if (nb === B) { paths.push([...path, B]); continue; }
-    //         if (blockSet.has(nb)) continue;
-    //         if (path.includes(nb)) continue; // avoid cycles
-    //         stack.push([nb, [...path, nb]]);
-    //       }
-    //     }
-    //     return paths;
-    //   }
-
-    //   for (let i = 0; i < chain.length - 1; i++) {
-    //     const A = chain[i], B = chain[i + 1];
-    //     const pctA = pctAtMilestone.get(A) ?? 0;
-    //     const pctB = ends.has(B) ? 100 : (pctAtMilestone.get(B) ?? 0);
-    //     const delta = pctB - pctA;
-
-    //     // block all milestones except A and B
-    //     const block = new Set(milestonesSet); block.delete(A); block.delete(B);
-
-    //     // enumerate simple paths from A to B within this segment
-    //     const paths = _pathsAtoB(A, B, block);
-
-    //     // if no explicit paths found (shouldn’t happen on valid graph), skip
-    //     if (!paths.length) { pctById[B] = pctB; continue; }
-
-    //     for (const path of paths) {
-    //       // path is [A, n1, n2, ..., B]
-    //       const stepsBetween = Math.max(0, path.length - 2);
-    //       const inc = stepsBetween > 0 ? (delta / (stepsBetween + 1)) : 0;
-
-    //       for (let k = 1; k <= stepsBetween; k++) {
-    //         const nodeId = path[k];
-    //         // per-path value: pctA + k*inc
-    //         const val = pctA + inc * k;
-
-    //         // if a node appears in multiple paths (reconvergence), take the MAX to keep monotonicity
-    //         const prev = pctById[nodeId];
-    //         const nextVal = Math.floor(val * 100) / 100; // floor to 2 decimals
-    //         if (typeof prev !== 'number' || nextVal > prev) {
-    //           pctById[nodeId] = nextVal;
-    //         }
-    //       }
-    //     }
-
-    //     // keep milestone B exact
-    //     pctById[B] = pctB;
-    //   }
-
-    //   // ensure all terminal ends are 100
-    //   ends.forEach(e => { pctById[e] = 100; });
-
-    //   viewState.progressPctById = pctById;
-
-
-    // }
 
     function precomputeProgress() {
       const st = getStarter();
@@ -9025,16 +8577,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-    function refreshMiniMap(fit = true) {
-      const dlg = document.getElementById('vwMapDlg');
-      const host = document.getElementById('vwMiniGraph');
-      if (!dlg || dlg.hidden || !host) return;
 
-      host.innerHTML = '';
-      renderGraphInto(host, {
-        onNodeClick(id) { if (typeof navigateToStepId === 'function') navigateToStepId(id); },
-      });
-    }
 
 
     (function ensureCfmOverlay() {
@@ -9177,7 +8720,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         }
 
         function isMiniForCurrentStarter() {
-          return !!(dlg.__miniState && dlg.__miniState.starterId === viewState.starterIdx);
+          return !!(dlg.__miniState && dlg.__miniState.starterId === viewState.selectedStarterId);
         }
 
         function panMini(dxPx, dyPx) {
@@ -9208,12 +8751,21 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         if (!dlg.__clickBound) {
           let clicking = false;
           const onMiniClick = (ev) => {
-            const hit = ev.target.closest?.('[step-id], g.node, .node'); if (!hit) return;
-            const id = hit.getAttribute?.('step-id') || hit.getAttribute?.('data-id') || hit.id; if (!id) return;
-            if (clicking) return; clicking = true;
+            const hit = ev.target.closest?.('[step-id], g.node, .node');
+            if (!hit) return;
+
+            const id =
+              hit.getAttribute?.('step-id') ||
+              hit.getAttribute?.('data-id') ||
+              hit.id;
+            if (!id) return;
+
+            if (clicking) return;
+            clicking = true;
             try {
-              if (typeof navigateToStepId === 'function') navigateToStepId(id);
-              renderMiniPreserveVB(); // refresh + keep viewBox
+              if (typeof navigateToStepId === 'function') {
+                navigateToStepId(id, { fromMini: true });
+              }
             } finally {
               setTimeout(() => { clicking = false; }, 0);
             }
@@ -9221,6 +8773,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           viewport.addEventListener('click', onMiniClick);
           dlg.__clickBound = true;
         }
+
       }
 
       // ---------- open/close ----------
@@ -9265,7 +8818,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       // function renderMiniPreserveVB() {
 
       function renderMiniPreserveVB(reset = false) {
-        const curStarterId = viewState.starterIdx;
+        const curStarterId = viewState.selectedStarterId;
 
         // If we have a state but it's for a different starter, drop it and force reset
         if (dlg.__miniState && dlg.__miniState.starterId !== curStarterId) {
@@ -9306,8 +8859,76 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         return svg;
       }
 
+      function renderMiniPreserveVB(reset = false) {
+        const curStarterId = viewState.selectedStarterId;
+
+        // If we have a state but it's for a different starter, drop it and force reset
+        if (dlg.__miniState && dlg.__miniState.starterId !== curStarterId) {
+          dlg.__miniState = null;
+          reset = true;
+        }
+
+        const saved = (!reset && dlg.__miniState) ? { ...dlg.__miniState } : null;
+
+        miniWrap.innerHTML = '';
+        renderGraphInto(miniWrap, { readonly: true, compact: true, fit: true });
+
+        const svg = miniWrap.querySelector('svg');
+        if (!svg) return null;
+
+        // nodes clickable; edges inert
+        svg.querySelectorAll('[step-id], g.node, .node').forEach(el => {
+          el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
+        });
+        svg.querySelectorAll('.edge, path.edge, .handle, .connector').forEach(el => {
+          el.style.pointerEvents = 'none';
+        });
+
+        // Base VB from SVG (or default)
+        const vb = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+        const base = (vb.length === 4 && vb.every(Number.isFinite))
+          ? { vx: vb[0], vy: vb[1], vw: vb[2], vh: vb[3] }
+          : { vx: 0, vy: 0, vw: 1000, vh: 1000 };
+
+        // Reuse saved if allowed, else start fresh — and always attach starterId
+        dlg.__miniState = saved ? { ...saved, starterId: curStarterId }
+          : { ...base, starterId: curStarterId };
+
+        // Apply & stash live svg
+        svg.setAttribute('viewBox', `${dlg.__miniState.vx} ${dlg.__miniState.vy} ${dlg.__miniState.vw} ${dlg.__miniState.vh}`);
+        dlg.__miniSvg = svg;
+
+        return svg;
+      }
+
+      window.refreshMiniMapForStep = function (stepId, reset = false) {
+        if (!stepId) return;
+        if (dlg.hidden) return;
+
+        const svg = renderMiniPreserveVB(reset);
+        if (!svg) return;
+
+        // clear previous selection inside MINI only
+        svg.querySelectorAll('.current').forEach(el => {
+          el.classList.remove('current');
+        });
+
+        const id = String(stepId);
+        console.log(`id`, id);
+        const hit =
+          svg.querySelector(`[step-id="${id}"]`);
+
+        if (hit) {
+          // (hit.closest('g') || hit).classList.add('current');
+          (hit.classList.add('current'));
+        }
+      };
+
+
 
     })();
+
+
 
     function buildEmbedSrcdoc(emb) {
       const raw = String(emb.html || '');
@@ -9397,8 +9018,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       return pred;
     }
 
+    // function getStarter() {
+    //   return sop.starters[viewState.selectedStarterIdx];
+    // }
     function getStarter() {
-      return sop.starters[viewState.starterIdx];
+      return sop.starters.find(st => st.id === viewState.selectedStarterId) || null;
     }
 
     function getSteps() {
@@ -9423,6 +9047,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       if (exists) {
         viewState.selectedStepId = stepId;
+        // setStepInUrl(stepId); 
       }
     }
 
@@ -9437,23 +9062,35 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
 
-    function navigateToStepId(nextId) {
-      console.log('navigateToStepId', nextId);
-      const curId = viewState.selectedStepId || null;
-      if (!nextId || nextId === curId) return;
 
-      setSelectedStepById(nextId);   // sync id + idx
-      renderViewStep();
+    function navigateToStepId(stepId) {
+      // render graph should be set twice because we want to clear prior highlight first
+
+      const curId = viewState.selectedStepId;
+
+      setSelectedStepById(stepId);   // sync id + idx
+      updateUrlStepIdParameter(stepId);
+      // setSelectedStepClass(stepId);
+      window.refreshMiniMapForStep?.(stepId);
+
+
       renderGraph();
       renderInspector();
+      renderViewStep();
     }
+
+
+
 
 
 
     function goPrevious() {
       const st = getStarter();
+      console.log(`st`, st);
       const cur = viewState.selectedStepId;
+      console.log(`cur`, cur);
       const prevMap = viewState.prev || Object.create(null);
+      console.log(`prevMap`, prevMap);
 
       // 1) Prefer the last traversed predecessor if still valid
       let target = prevMap[cur];
@@ -9466,11 +9103,54 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         target = getFirstPredecessorId(st, cur);
       }
 
+
+      console.log(`target`, target);
       if (target && target !== cur) {
-        setSelectedStepById(target);
+        // setSelectedStepById(target);
+        navigateToStepId(target);
         renderViewStep(); renderGraph(); renderInspector(); updateProgressBar()
       }
       // If no predecessor at all, do nothing (button can be disabled upstream)
+    }
+
+    function goNext() {
+
+      const step = getStepById(viewState.selectedStepId);
+      if (isEndStep(step)) return;
+
+      const stepsAll = getSteps();
+      const current = getStepById(viewState.selectedStepId);
+
+      // single-select "branch next"
+      if (current?.type === 'select' && current.mode === 'single') {
+        // const choice = viewState.answers[current.id];
+        // if (choice?.next && stepsAll.find(x => x.id === choice.next)) {
+        const toId = getSingleSelectNextId();
+        if (toId) {
+          recordTransition(viewState.selectedStepId, toId);
+          // setSelectedStepById(toId);
+          navigateToStepId(toId);
+          renderViewStep(); renderGraph(); renderInspector(); updateProgressBar();
+
+        }
+        return;
+        // }
+      }
+
+      // step-level next
+      if (current?.next && stepsAll.find(x => x.id === current.next)) {
+        const toId = current.next;
+        if (toId !== viewState.selectedStepId) {
+          recordTransition(viewState.selectedStepId, toId);
+          setSelectedStepById(toId);
+          navigateToStepId(toId);
+          renderViewStep(); renderGraph(); renderInspector(); updateProgressBar();
+
+        }
+        return;
+      }
+
+      renderViewStep(); renderGraph(); renderInspector(); //updateProgressBar();
     }
 
 
