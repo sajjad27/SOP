@@ -26,6 +26,8 @@
       --hl-fg: #0f172a;
       --content-w: 1240px;
       --gutter: 16px;
+      --skeleton-base: rgba(148, 163, 184, 0.16);
+      --skeleton-highlight: rgba(148, 163, 184, 0.45);
 
     }
 
@@ -48,9 +50,11 @@
       --hl-fg: #0f172a;
       --content-w: 1240px;
       --gutter: 16px;
+      --skeleton-base: rgba(15, 23, 42, 0.9);
+      --skeleton-highlight: rgba(148, 163, 184, 0.35);
     }
 
-    @media (max-width:1439px) {
+    /* @media (max-width:1439px) {
       :root {
         --content-w: 96vw;
         --gutter: 12px
@@ -68,6 +72,56 @@
       :root {
         --content-w: 1440px;
         --gutter: 28px
+      }
+    } */
+
+    @media (max-width: 1439px) {
+
+      :root,
+      html[data-theme="dark"] {
+        --content-w: 96vw;
+        /* fill more of the screen */
+        --gutter: 12px;
+      }
+    }
+
+    /* ≥ 1600px */
+    @media (min-width: 1600px) {
+
+      :root,
+      html[data-theme="dark"] {
+        --content-w: 1320px;
+        --gutter: 24px;
+      }
+    }
+
+    /* ≥ 1920px */
+    @media (min-width: 1920px) {
+
+      :root,
+      html[data-theme="dark"] {
+        --content-w: 1440px;
+        --gutter: 28px;
+      }
+    }
+
+    /* ≥ 2560px (27–30") */
+    @media (min-width: 2560px) {
+
+      :root,
+      html[data-theme="dark"] {
+        --content-w: 1560px;
+        --gutter: 36px;
+      }
+    }
+
+    /* optional 4K+ */
+    @media (min-width: 3200px) {
+
+      :root,
+      html[data-theme="dark"] {
+        --content-w: 1680px;
+        --gutter: 40px;
       }
     }
 
@@ -87,13 +141,22 @@
       font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial
     }
 
+    /* header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: saturate(1.2) blur(6px);
+      background: rgba(247, 249, 252, .85);
+      border-bottom: 1px solid var(--line);
+    } */
+
     header {
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(10, 14, 22, .85);
-      backdrop-filter: saturate(1.1) blur(6px);
-      border-bottom: 1px solid var(--line)
+      backdrop-filter: saturate(1.2) blur(6px);
+      background: rgba(247, 249, 252, .85);
+      border-bottom: 1px solid var(--line);
     }
 
     .wrap {
@@ -131,7 +194,7 @@
       font-size: 12px
     }
 
-    button,
+    /* button,
     .btn,
     select,
     input[type="text"] {
@@ -141,6 +204,101 @@
       border-radius: 10px;
       padding: 8px 10px;
       font: inherit
+    } */
+
+    .settings-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      background: transparent;
+
+    }
+
+    .settings-panel {
+      position: absolute;
+      z-index: 9999;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      width: 175px;
+
+      max-width: 92vw;
+
+      min-width: 0;
+      padding: 6px;
+    }
+
+
+    .settings-panel .settings-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+    }
+
+    .settings-panel .settings-item .var-id {
+      flex: 1 1 auto;
+      min-width: 0;
+
+      overflow-wrap: anywhere;
+
+      word-break: break-word;
+
+    }
+
+    .settings-panel .settings-item .var-type {
+      flex: 0 0 auto;
+      white-space: nowrap;
+
+      opacity: .7;
+    }
+
+    .settings-item {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .settings-item:hover {
+      background: var(--input-bg);
+    }
+
+    button,
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    html[data-theme="dark"] header {
+      background: rgba(10, 14, 22, .85);
+      border-bottom-color: var(--line);
+    }
+
+    button,
+    .btn,
+    select,
+    input[type="text"],
+    textarea,
+    input[type="number"],
+    .panel,
+    .item,
+    .graph-svg,
+    .table th,
+    .table td {
+      background: var(--card);
+      color: var(--fg);
+      border-color: var(--line);
     }
 
     button:active {
@@ -172,9 +330,11 @@
     }
 
     main {
-      width: min(100%, var(--content-w));
+      /* width: min(100%, var(--content-w));
       margin: 16px auto 60px;
-      padding: 0 var(--gutter) 24px
+      padding: 0 var(--gutter) 24px */
+      margin: 0px auto 60px;
+      padding-block-end: 24px;
     }
 
     .grid {
@@ -240,9 +400,35 @@
       flex-wrap: wrap
     }
 
-    #search {
-      min-width: 220px
+    #searchWrapper {
+      display: flex;
+      justify-content: end;
     }
+
+    #searchInput {
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--fg);
+      font: inherit;
+      width: min(100%, 50vw);
+      outline: none;
+
+    }
+
+
+    #searchInput:focus-visible {
+      box-shadow: 0 0 0 1px var(--accent-weak);
+      border-color: var(--accent);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--muted);
+      opacity: 1;
+    }
+
 
     .hidden {
       display: none !important
@@ -268,40 +454,204 @@
       background: var(--accent-weak);
       border-color: var(--accent)
     }
+
+    /* .skeleton {
+      position: relative;
+      overflow: hidden;
+      background: rgba(30, 41, 59, 0.8);
+      border-radius: 6px;
+    }
+
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg,
+          transparent,
+          rgba(148, 163, 184, 0.45),
+          transparent);
+      transform: translateX(-100%);
+      animation: skeleton-shimmer 1.2s ease-in-out infinite;
+    }
+
+    .skeleton-title {
+      height: 16px;
+      margin: 2px 0 8px;
+      width: 70%;
+    }
+
+    .skeleton-line {
+      height: 10px;
+      margin: 4px 0;
+      width: 90%;
+    }
+
+    .skeleton-line-short {
+      width: 55%;
+    } */
+
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      background: var(--skeleton-base);
+      border-radius: 6px;
+    }
+
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg,
+          transparent,
+          var(--skeleton-highlight),
+          transparent);
+      transform: translateX(-100%);
+      animation: skeleton-shimmer 1.2s ease-in-out infinite;
+    }
+
+    .skeleton-title {
+      height: 16px;
+      margin: 2px 0 8px;
+      width: 70%;
+    }
+
+    .skeleton-line {
+      height: 10px;
+      margin: 4px 0;
+      width: 90%;
+    }
+
+    .skeleton-line-short {
+      width: 55%;
+    }
+
+
+    @keyframes skeleton-shimmer {
+      0% {
+        transform: translateX(-100%);
+      }
+
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    .loading-inline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 2px solid rgba(148, 163, 184, 0.4);
+      border-top-color: #60a5fa;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .grid>.group-heading {
+      grid-column: 1 / -1;
+      /* span whole row */
+    }
+
+    /* Smooth theme toggle (light ↔ dark) */
+    html,
+    body,
+    header {
+      transition:
+        background-color 260ms ease,
+        color 260ms ease,
+        border-color 260ms ease;
+    }
+
+    button,
+    .btn,
+    select,
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    .card,
+    .rowitem,
+    .panel,
+    .item,
+    .dz,
+    .settings-panel,
+    .skeleton {
+      transition:
+        background-color 260ms ease,
+        color 260ms ease,
+        border-color 260ms ease,
+        box-shadow 260ms ease;
+    }
   </style>
 </head>
 
 <body>
-  <header>
+  <!-- <header>
     <div class="wrap row">
       <h1>SOP Hub</h1>
-      <span class="pill">CSV Driven</span>
       <div class="grow"></div>
-      <div class="seg" role="tablist" aria-label="Layout switch">
-        <button id="btnCards" class="active" aria-pressed="true">Cards</button>
-        <button id="btnRows">Rows</button>
+      <button id="settingsBtn" class="btn">⚙️</button>
+    </div>
+  </header> -->
+
+  <header>
+
+    <div class="wrap">
+      <div class="row">
+        <div class="grow" style="display: flex; align-items: center; gap: 8px;">
+          <h1 id="sop-run-mode-title" class="">SOP Hub</h1>
+        </div>
+
+        <div class="controls">
+
+
+          <button id="settingsBtn" class="btn">⚙️</button>
+        </div>
       </div>
     </div>
   </header>
 
   <main>
-    <section class="controls">
-      <label for="file" class="dz" id="drop">Drop CSV here or <strong>choose</strong></label>
-      <input id="file" type="file" accept=".csv" />
-      <input id="search" type="text" placeholder="Search title, system, owner, tags…" />
-      <select id="groupBy">
+    <!-- <section class="controls"> -->
+    <!-- <label for="file" class="dz" id="drop">Drop CSV here or <strong>choose</strong></label> -->
+    <!-- <input id="file" type="file" accept=".csv" /> -->
+    <!-- <input id="search" type="text" style="margin-bottom: 8px;" placeholder="Search title, system, owner, tags…" /> -->
+    <!-- <select id="groupBy">
         <option value="">No grouping</option>
-        <option value="system">Group by System</option>
+        <option value="group">Group by Org</option>
         <option value="owner">Group by Owner</option>
-      </select>
-      <button id="btnClear" title="Clear loaded data">Clear</button>
-      <div class="grow"></div>
-      <a class="btn btn-accent" download href="#" id="dlSample">Download sample CSV</a>
-    </section>
+      </select> -->
+    <!-- <button id="btnClear" title="Clear loaded data">Clear</button> -->
+    <div class="wrap">
+      <div class="wrap">
+        <!-- VIEW block -->
+        <div id="searchWrapper" style="margin:16px 0 14px">
+          <div>
+            <input id="searchInput" type="search" placeholder="Search ..." autocomplete="off">
+          </div>
+        </div>
+      </div>
 
-    <div id="viewCards" class="grid" aria-live="polite"></div>
-    <div id="viewRows" class="list hidden" aria-live="polite"></div>
-    <div id="empty" class="empty hidden">Load a CSV to list SOPs. You can drag & drop it above.</div>
+
+      <!-- <div class="grow"></div> -->
+      <!-- <a class="btn btn-accent" download href="#" id="dlSample">Download sample CSV</a> -->
+      <!-- </section> -->
+
+      <div id="viewCards" class="grid" aria-live="polite"></div>
+      <div id="viewRows" class="list hidden" aria-live="polite"></div>
+      <div id="empty" class="empty hidden">SOP list is not available yet.</div>
+    </div>
+
   </main>
 
   <!--
@@ -317,37 +667,187 @@
     const $ = (s, p = document) => p.querySelector(s);
     const $$ = (s, p = document) => [...p.querySelectorAll(s)];
 
-    const state = { items: [], layout: localStorage.getItem('sopHubLayout') || 'cards' };
+    // const state = { items: [], layout: localStorage.getItem('sopHubLayout') || 'cards' };
+    // const state = {
+    //   items: [],
+    //   layout: localStorage.getItem('sopHubLayout') || 'cards',
+    //   loadingCsv: false
+    // };
 
-    const fileInput = $('#file');
-    const searchInput = $('#search');
-    const groupBy = $('#groupBy');
+    // const state = {
+    //   items: [],
+    //   layout: localStorage.getItem('sopHubLayout') || 'cards',
+    //   loadingCsv: false,
+    //   csvError: null
+    // };
+
+    const state = {
+      items: [],
+      layout: localStorage.getItem('sopHubLayout') || 'cards',
+      groupBy: localStorage.getItem('sop-hub-groupBy') || '',
+      loadingCsv: false,
+      csvError: null,
+      csvWarning: null,   // NEW: non-fatal issues (e.g. missing URL rows)
+    };
+
+
+
+    const DEFAULT_CSV_PATH = './sop-hub-data.csv'; // put your real CSV file name here
+
+
+    // const fileInput = $('#file');
+    // const searchInput = $('#search');
+    // const groupBy = $('#groupBy');
     const viewCards = $('#viewCards');
     const viewRows = $('#viewRows');
     const empty = $('#empty');
-    const drop = $('#drop');
-    const btnCards = $('#btnCards');
-    const btnRows = $('#btnRows');
+    // const settingsBtn = $('#settingsBtn');
+    // const drop = $('#drop');
+    // const btnCards = $('#btnCards');
+    // const btnRows = $('#btnRows');
 
     // Sample CSV download
-    const sample = `title,system,owner,tags,url,desc\n"Medical – Claim Workflow",Medical,Shahad,"medical,claims,how-to",https://example.com/medical-claim.html,\n"Medical – Coverage Matrix",Medical,Shahad,"medical,policy",https://example.com/coverage.html,\n"Payroll – Adjustments",Payroll,Ahmed,"sap,pa30",https://example.com/payroll.html,"Monthly adjustments"`;
-    const dl = $('#dlSample');
-    dl.href = URL.createObjectURL(new Blob([sample], { type: 'text/csv' }));
+    // const sample = `title,system,owner,tags,url,desc\n"Medical – Claim Workflow",Medical,Shahad,"medical,claims,how-to",https://example.com/medical-claim.html,\n"Medical – Coverage Matrix",Medical,Shahad,"medical,policy",https://example.com/coverage.html,\n"Payroll – Adjustments",Payroll,Ahmed,"sap,pa30",https://example.com/payroll.html,"Monthly adjustments"`;
+    // const dl = $('#dlSample');
+    // dl.href = URL.createObjectURL(new Blob([sample], { type: 'text/csv' }));
 
     // Layout toggle
+    (function themeInit() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(saved || (prefersDark ? 'dark' : 'light'));
+    })();
+
     function setLayout(mode) {
       state.layout = mode;
       localStorage.setItem('sopHubLayout', mode);
-      btnCards.classList.toggle('active', mode === 'cards');
-      btnCards.setAttribute('aria-pressed', mode === 'cards');
-      btnRows.classList.toggle('active', mode === 'rows');
-      btnRows.setAttribute('aria-pressed', mode === 'rows');
+      // btnCards.classList.toggle('active', mode === 'cards');
+      // btnCards.setAttribute('aria-pressed', mode === 'cards');
+      // btnRows.classList.toggle('active', mode === 'rows');
+      // btnRows.setAttribute('aria-pressed', mode === 'rows');
       viewCards.classList.toggle('hidden', mode !== 'cards');
       viewRows.classList.toggle('hidden', mode !== 'rows');
       render();
     }
-    btnCards.onclick = () => setLayout('cards');
-    btnRows.onclick = () => setLayout('rows');
+
+    function setTheme(mode) {
+      document.documentElement.setAttribute('data-theme', mode);
+      localStorage.setItem('theme', mode);
+      // if (btn) btn.textContent = (mode === 'dark') ? '🌞 Light' : '🌙 Dark';
+    }
+
+    // btnCards.onclick = () => setLayout('cards');
+    // btnRows.onclick = () => setLayout('rows');
+    // settingsBtn.onclick = () => setLayout('rows');
+    document.getElementById('settingsBtn')?.addEventListener('click', (e) => {
+      openSettingsMenu(e.currentTarget);
+    });
+
+    function openSettingsMenu(anchorBtn) {
+      // prevent duplicates
+      if (document.getElementById('settingsOverlay')) return;
+
+      // overlay (click outside to close)
+      const overlay = document.createElement('div');
+      overlay.id = 'settingsOverlay';
+      overlay.className = 'settings-overlay';
+
+      // panel
+      const panel = document.createElement('div');
+      panel.className = 'settings-panel';
+
+      // current theme from DOM
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const currentLayout = state.layout || 'cards';
+      const groupBy = state.groupBy;
+      const options = [
+        // { label: 'New SOP', action: 'new-sop', attrs: { 'data-hide': 'guide' } },
+        // { label: 'Import', action: 'import', attrs: { 'data-hide': 'guide' } },
+        // { label: 'Export', action: 'export', attrs: { 'data-hide': 'guide' } },
+        { label: 'Open SOP Studio ↗', action: 'openSopStudio' },
+        { label: groupBy ? 'Ungroup SOPs' : 'Group by Org', action: 'group' },
+        { label: (currentLayout === 'cards') ? 'Rows View' : 'Cards View', action: 'layout' },
+        { label: (currentTheme === 'dark') ? '🌞 Light' : '🌙 Dark', action: 'theme' },
+      ];
+
+      // build items
+      panel.innerHTML = options.map(o => {
+        const base = { 'data-action': o.action, ...(o.attrs || {}) }; // ensure data-action exists
+        const attrs = Object.entries(base).map(([k, v]) => {
+          if (v === true) return ` ${k}`;                 // boolean attribute
+          if (v === false || v == null) return '';        // skip
+          return ` ${k}="${String(v).replace(/"/g, '&quot;')}"`;
+        }).join('');
+        return `<button class="settings-item"${attrs}>${o.label}</button>`;
+      }).join('');
+
+      // place panel near the anchor button
+      document.body.appendChild(overlay);
+      document.body.appendChild(panel);
+      const rect = anchorBtn.getBoundingClientRect();
+      const top = rect.bottom + 6 + window.scrollY;
+      const left = Math.min(
+        rect.left + window.scrollX,
+        window.scrollX + document.documentElement.clientWidth - panel.offsetWidth - 12
+      );
+      panel.style.top = `${top}px`;
+      panel.style.left = `${left}px`;
+
+      // handlers
+      const onItemClick = async (e) => {
+        const btn = e.target.closest('.settings-item');
+        if (!btn) return;
+
+        const action = btn.getAttribute('data-action');
+        if (action == "openSopStudio") {
+          window.open('./sop_guide_stodio.html', '_blank');
+        }
+        else if (action == "layout") {
+          const nextLayout = (state.layout === 'cards') ? 'rows' : 'cards';
+          setLayout(nextLayout);
+        }
+        // else if (action == "import") {
+        //   openImportDialog();
+        // } else if (action == "export") {
+        //   cleanup();
+        //   exportCurrentHTMLAsViewer();
+        // } 
+
+        // currentLayout
+        else if (action == "group") {
+          state.groupBy = state.groupBy ? '' : 'org';
+          // store groupBy in state
+          localStorage.setItem('sop-hub-groupBy', state.groupBy);
+          // store it in loc
+          // if (state.groupBy) {
+          //   state.groupBy = '';
+          // } else {
+          // }
+          render();
+        }
+        else if (action == "theme") {
+
+          const nextTheme = (currentTheme === 'light') ? 'dark' : 'light';
+          setTheme(nextTheme);
+        }
+
+        cleanup();
+      };
+      const onOutside = (e) => { if (e.target === overlay) cleanup(); };
+      const onEsc = (e) => { if (e.key === 'Escape') cleanup(); };
+
+      panel.addEventListener('click', onItemClick);
+      overlay.addEventListener('click', onOutside);
+      document.addEventListener('keydown', onEsc);
+
+      function cleanup() {
+        panel.removeEventListener('click', onItemClick);
+        overlay.removeEventListener('click', onOutside);
+        document.removeEventListener('keydown', onEsc);
+        panel.remove();
+        overlay.remove();
+      }
+    }
 
     // Basic CSV parser handling quoted fields and commas
     function parseCSV(text) {
@@ -376,43 +876,522 @@
 
     function rowsToObjects(rows) {
       const header = rows[0].map(normalizeHeader);
+      console.log(`header`, header);
       const idx = (k) => header.indexOf(normalizeHeader(k));
-      const need = ['title', 'url'];
-      for (const k of need) { if (idx(k) === -1) throw new Error(`Missing required column: ${k}`); }
-      return rows.slice(1).map(r => ({
-        title: r[idx('title')] || '',
-        url: r[idx('url')] || '',
-        system: r[idx('system')] || '',
-        owner: r[idx('owner')] || '',
-        tags: (r[idx('tags')] || '').split(/[,;]/).map(t => t.trim()).filter(Boolean),
-        desc: r[idx('desc')] || ''
-      })).filter(o => o.title && o.url);
+      const has = (k) => idx(k) !== -1;
+
+      // only url is required
+      if (!has('url')) {
+        throw new Error('Missing required column: url');
+      }
+
+      return rows.slice(1).map(r => {
+        const url = r[idx('url')] || '';
+        if (!url) return null;
+
+        const org = has('org') ? (r[idx('org')] || '') : '';
+        console.log(`org`, org);
+
+        return {
+          // title will be filled from embedded SOP JSON, not from the CSV
+          title: '',
+          url,
+          org
+        };
+      }).filter(Boolean);
     }
 
+
+    // function loadCSV(text) {
+    //   try {
+    //     const rows = parseCSV(text);
+    //     const items = rowsToObjects(rows);
+    //     console.log(`items`, items);
+    //     // sort stable by system then title
+    //     // items.sort((a, b) => (a.system || '').localeCompare(b.system || '') || a.title.localeCompare(b.title));
+    //     state.items = items;
+    //     render();
+    //   } catch (e) {
+    //     alert('CSV error: ' + e.message);
+    //   }
+    // }
+
+    // function loadCSV(text) {
+    //   try {
+    //     const rows = parseCSV(text);
+    //     const items = rowsToObjects(rows);
+    //     // sort stable by system then title
+    //     items.sort((a, b) => (a.system || '').localeCompare(b.system || '') || a.title.localeCompare(b.title));
+    //     state.items = items;
+    //     render();
+    //     hydrateFromSop(); // NEW: fill title + system from embedded JSON
+    //   } catch (e) {
+    //     alert('CSV error: ' + e.message);
+    //   }
+    // }
+
+    // function loadCSV(text) {
+    //   state.loadingCsv = true;
+    //   render();
+
+    //   try {
+    //     const rows = parseCSV(text);
+    //     const items = rowsToObjects(rows);
+    //     items.sort((a, b) => (a.group || a.system || '').localeCompare(b.group || b.system || '') || (a.title || '').localeCompare(b.title || ''));
+    //     state.items = items;
+    //     render();
+    //     hydrateFromSop && hydrateFromSop(); // keep whatever you already had
+    //   } catch (e) {
+    //     alert('CSV error: ' + e.message);
+    //   } finally {
+    //     state.loadingCsv = false;
+    //     render();
+    //   }
+    // }
+
+    // function loadCSV(text) {
+    //   state.loadingCsv = true;
+    //   state.csvError = null;   // NEW: clear previous error
+    //   render();
+
+    //   try {
+    //     const rows = parseCSV(text);
+    //     const items = rowsToObjects(rows);
+    //     // ...
+    //     state.items = items;
+    //     render();
+    //     hydrateFromSop && hydrateFromSop();
+    //   } catch (e) {
+    //     state.csvError = e && e.message ? e.message : 'Failed to parse CSV'; // NEW
+    //     // optional: keep alert if you want
+    //     // alert('CSV error: ' + state.csvError);
+    //   } finally {
+    //     state.loadingCsv = false;
+    //     render();
+    //   }
+    // }
+
+
     function loadCSV(text) {
+      state.loadingCsv = true;
+      state.csvError = null;
+      state.csvWarning = null;   // NEW: reset warning
+      render();
+
       try {
         const rows = parseCSV(text);
         const items = rowsToObjects(rows);
-        // sort stable by system then title
-        items.sort((a, b) => (a.system || '').localeCompare(b.system || '') || a.title.localeCompare(b.title));
+        console.log(`itemss`, items);
+
+        // NEW: detect rows with missing URL (rowsToObjects returns null for them)
+        const totalDataRows = Math.max(0, rows.length - 1); // exclude header
+        const missingUrls = Math.max(0, totalDataRows - items.length);
+        if (missingUrls > 0) {
+          state.csvWarning = `${missingUrls} row(s) in the CSV are missing a URL and were ignored.`;
+        }
+
+        // items.sort(/* your existing sort here */);
         state.items = items;
         render();
+        hydrateFromSop && hydrateFromSop();
       } catch (e) {
-        alert('CSV error: ' + e.message);
+        state.csvError = e && e.message ? e.message : 'Failed to parse CSV';
+      } finally {
+        state.loadingCsv = false;
+        render();
       }
     }
+
+
+
+
+    // async function hydrateFromSop() {
+    //   const items = state.items || [];
+    //   if (!items.length) return;
+
+    //   for (const it of items) {
+    //     if (!it.url) continue;
+    //     if (it._hydrated) continue; // avoid re-fetching on every render
+
+    //     try {
+    //       const res = await fetch(it.url);
+    //       if (!res.ok) continue;
+
+    //       let htmlText = await res.text();
+
+    //       // Same unescape logic you use in Studio
+    //       if (/&lt;html\b/i.test(htmlText) && !/<html\b/i.test(htmlText)) {
+    //         htmlText = htmlText
+    //           .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    //           .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    //           .replace(/&amp;/g, '&');
+    //       }
+
+    //       const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+    //       let jsonText = '';
+
+    //       const slotPlain = doc.querySelector('script#jsonEmbedded');
+    //       if (slotPlain && slotPlain.textContent.trim()) {
+    //         jsonText = slotPlain.textContent.trim();
+    //       }
+
+    //       if (!jsonText) {
+    //         const slotDefault = doc.querySelector('script#default-sop[type="application/json"]');
+    //         if (slotDefault && slotDefault.textContent.trim()) {
+    //           jsonText = slotDefault.textContent.trim();
+    //         }
+    //       }
+
+    //       if (!jsonText) {
+    //         const anyJson = Array.from(doc.querySelectorAll('script[type="application/json"]'))
+    //           .find(s => /\bstarters\b/.test(s.textContent || ''));
+    //         if (anyJson && anyJson.textContent.trim()) {
+    //           jsonText = anyJson.textContent.trim();
+    //         }
+    //       }
+
+    //       if (!jsonText) continue;
+
+    //       let parsed;
+    //       try {
+    //         parsed = JSON.parse(jsonText);
+    //       } catch {
+    //         continue;
+    //       }
+
+    //       // System name = root title in your JSON (e.g. "SYSTEM 1")
+    //       const systemName = (typeof parsed.title === 'string' ? parsed.title.trim() : '') || '';
+
+    //       // SOP title = first starter label, fallback to systemName
+    //       let sopTitle = '';
+    //       if (Array.isArray(parsed.starters) &&
+    //         parsed.starters[0] &&
+    //         typeof parsed.starters[0].label === 'string') {
+    //         sopTitle = parsed.starters[0].label.trim();
+    //       }
+    //       if (!sopTitle) sopTitle = systemName || '';
+
+    //       if (sopTitle) it.title = sopTitle;
+    //       if (systemName) it.system = systemName;   // << fills card with corresponding system name
+    //       it._hydrated = true;
+    //     } catch (err) {
+    //       console.warn('Failed to hydrate SOP for', it.url, err);
+    //     }
+    //   }
+
+    //   // Re-render once after hydration so cards show correct title + system
+    //   render();
+    // }
+
+
+    // async function hydrateFromSop() {
+    //   const items = state.items || [];
+    //   if (!items.length) return;
+
+    //   for (const it of items) {
+    //     if (!it.url) {
+    //       it._hydratedStatus = 'failed';
+    //       continue;
+    //     }
+
+    //     // skip if we already tried before
+    //     if (it._hydratedStatus === 'ok' || it._hydratedStatus === 'failed') {
+    //       continue;
+    //     }
+
+    //     try {
+    //       const res = await fetch(it.url);
+    //       if (!res.ok) {
+    //         it._hydratedStatus = 'failed';
+    //         continue;
+    //       }
+
+    //       let htmlText = await res.text();
+
+    //       // Same unescape logic you use in Studio
+    //       if (/&lt;html\b/i.test(htmlText) && !/<html\b/i.test(htmlText)) {
+    //         htmlText = htmlText
+    //           .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    //           .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    //           .replace(/&amp;/g, '&');
+    //       }
+
+    //       const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+    //       let jsonText = '';
+
+    //       // 1) <script id="jsonEmbedded">
+    //       const slotPlain = doc.querySelector('script#jsonEmbedded');
+    //       if (slotPlain && slotPlain.textContent.trim()) {
+    //         jsonText = slotPlain.textContent.trim();
+    //       }
+
+    //       // 2) <script id="default-sop" type="application/json">
+    //       if (!jsonText) {
+    //         const slotDefault = doc.querySelector('script#default-sop[type="application/json"]');
+    //         if (slotDefault && slotDefault.textContent.trim()) {
+    //           jsonText = slotDefault.textContent.trim();
+    //         }
+    //       }
+
+    //       // 3) Any <script type="application/json"> containing "starters"
+    //       if (!jsonText) {
+    //         const anyJson = Array.from(doc.querySelectorAll('script[type="application/json"]'))
+    //           .find(s => /\bstarters\b/.test(s.textContent || ''));
+    //         if (anyJson && anyJson.textContent.trim()) {
+    //           jsonText = anyJson.textContent.trim();
+    //         }
+    //       }
+
+    //       // No embedded JSON found at all
+    //       if (!jsonText) {
+    //         it._hydratedStatus = 'failed';
+    //         continue;
+    //       }
+
+    //       let parsed;
+    //       try {
+    //         parsed = JSON.parse(jsonText);
+    //       } catch {
+    //         it._hydratedStatus = 'failed';
+    //         continue;
+    //       }
+
+    //       // Require starters[] to exist
+    //       if (!parsed || !Array.isArray(parsed.starters) || !parsed.starters.length) {
+    //         it._hydratedStatus = 'failed';
+    //         continue;
+    //       }
+
+    //       // System name = root title in your JSON (e.g. "SYSTEM 1")
+    //       const systemName =
+    //         (typeof parsed.title === 'string' ? parsed.title.trim() : '') || '';
+
+    //       // SOP title = first starter label, fallback to systemName
+    //       let sopTitle = '';
+    //       if (parsed.starters[0] && typeof parsed.starters[0].label === 'string') {
+    //         sopTitle = parsed.starters[0].label.trim();
+    //       }
+    //       if (!sopTitle) sopTitle = systemName || '';
+
+    //       if (!sopTitle && !systemName) {
+    //         it._hydratedStatus = 'failed';
+    //         continue;
+    //       }
+
+    //       if (sopTitle) it.title = sopTitle;
+    //       if (systemName) it.system = systemName;
+
+    //       it._hydratedStatus = 'ok';
+    //     } catch (err) {
+    //       console.warn('Failed to hydrate SOP for', it.url, err);
+    //       it._hydratedStatus = 'failed';
+    //     }
+    //   }
+
+    //   // Re-render once after hydration so cards show correct title / system or failure state
+    //   render();
+    // }
+
+    async function hydrateFromSop() {
+      const items = state.items || [];
+      console.log(`items`, items);
+      if (!items.length) return;
+
+      for (const it of items) {
+        if (!it.url) {
+          it._hydratedStatus = 'failed';
+          continue;
+        }
+
+        // already processed
+        if (it._hydratedStatus === 'ok' || it._hydratedStatus === 'failed') {
+          continue;
+        }
+
+        try {
+          const res = await fetch(it.url);
+          if (!res.ok) {
+            it._hydratedStatus = 'failed';
+            continue;
+          }
+
+          let htmlText = await res.text();
+
+          // unescape entity-escaped HTML (same logic as Studio)
+          if (/&lt;html\b/i.test(htmlText) && !/<html\b/i.test(htmlText)) {
+            htmlText = htmlText
+              .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+              .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+              .replace(/&amp;/g, '&');
+          }
+
+          const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+
+          // ONLY jsonEmbedded
+          const slotPlain = doc.querySelector('script#jsonEmbedded');
+          if (!slotPlain || !slotPlain.textContent.trim()) {
+            it._hydratedStatus = 'failed';
+            continue;
+          }
+
+          const jsonText = slotPlain.textContent.trim();
+
+          let parsed;
+          try {
+            parsed = JSON.parse(jsonText);
+          } catch {
+            it._hydratedStatus = 'failed';
+            continue;
+          }
+
+          // title = "title" field from JSON
+          const jsonTitle = (typeof parsed.title === 'string' ? parsed.title.trim() : '') || 'Unnamed SOP';
+          if (!jsonTitle) {
+            it._hydratedStatus = 'failed';
+            continue;
+          }
+
+          // use JSON title as card title AND system name for now
+          it.title = jsonTitle;
+          console.log(`jsonTitle`, it.title);
+
+          it._hydratedStatus = 'ok';
+        } catch (err) {
+          console.warn('Failed to hydrate SOP for', it.url, err);
+          it._hydratedStatus = 'failed';
+        }
+      }
+
+      // re-render so cards move from skeleton → normal or failed state
+      render();
+    }
+
+
+
+
+    // function loadDefaultCSV() {
+    //   if (!DEFAULT_CSV_PATH) return;
+    //   fetch(DEFAULT_CSV_PATH)
+    //     .then(r => {
+    //       if (!r.ok) throw new Error('HTTP ' + r.status);
+    //       return r.text();
+    //     })
+    //     .then(text => loadCSV(text))
+    //     .catch(err => {
+    //       console.warn('Auto CSV load failed or file missing:', err);
+    //       // falls back to manual file select / drag & drop
+    //     });
+    // }
+
+    // function loadDefaultCSV() {
+    //   if (!DEFAULT_CSV_PATH) return;
+    //   state.loadingCsv = true;
+    //   render();
+
+    //   fetch(DEFAULT_CSV_PATH)
+    //     .then(r => {
+    //       if (!r.ok) throw new Error('HTTP ' + r.status);
+    //       return r.text();
+    //     })
+    //     .then(text => loadCSV(text))
+    //     // .catch(err => {
+    //     //   console.warn('Auto CSV load failed:', err);
+    //     //   state.loadingCsv = false;
+    //     //   render();
+    //     // });
+    //     .catch(err => {
+    //       console.warn('Auto CSV load failed:', err);
+    //       state.loadingCsv = false;
+    //       state.csvError = `Failed to load ${DEFAULT_CSV_PATH}: ${err && err.message ? err.message : 'File not found'}`;
+    //       render();
+    //     });
+
+    // }
+
+    function loadDefaultCSV() {
+      if (!DEFAULT_CSV_PATH) return;
+      state.loadingCsv = true;
+      render();
+
+      fetch(DEFAULT_CSV_PATH, { cache: 'no-store' })
+        .then(r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        })
+        .then(text => loadCSV(text))
+        .catch(err => {
+          console.warn('Auto CSV load failed:', err);
+          state.loadingCsv = false;
+          state.csvError = `Failed to load ${DEFAULT_CSV_PATH}: ${err && err.message ? err.message : 'File not found'}`;
+          render();
+        });
+    }
+
+
+
 
     function match(q, t) { return t.toLowerCase().includes(q); }
 
     function render() {
-      const q = (searchInput.value || '').trim().toLowerCase();
-      const gb = groupBy.value || '';
-      const items = state.items.filter(it => {
-        if (!q) return true;
-        const hay = [it.title, it.system, it.owner, it.desc, (it.tags || []).join(' ')].join(' \n ').toLowerCase();
-        return match(q, hay);
-      });
-      empty.classList.toggle('hidden', items.length !== 0);
+      // const q = (searchInput.value || '').trim().toLowerCase();
+      const gb = state.groupBy || '';
+      const items = state.items
+      // .filter(it => {
+      //   if (!q) return true;
+      //   // const hay = [it.owner, it.desc, (it.tags || []).join(' ')].join(' \n ').toLowerCase();
+      //   return match(q, hay);
+      // });
+      // empty.classList.toggle('hidden', items.length !== 0);
+
+      //     if (state.loadingCsv) {
+      //       empty.classList.remove('hidden');
+      //       empty.innerHTML = `
+      //   <div class="loading-inline">
+      //     <span class="spinner" aria-hidden="true"></span>
+      //     <span>Loading SOP list from CSV…</span>
+      //   </div>
+      // `;
+      //     } else {
+      //       empty.innerHTML = `
+      //   <strong>Load a CSV to list SOPs.</strong>
+      //   <div>You can drag & drop it above.</div>
+      // `;
+      //       empty.classList.toggle('hidden', items.length !== 0);
+      //     }
+
+      if (state.loadingCsv) {
+        empty.classList.remove('hidden');
+        empty.innerHTML = `
+    <div class="loading-inline">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Loading SOP list from CSV…</span>
+    </div>
+  `;
+      } else if (state.csvError) {
+        empty.classList.remove('hidden');
+        empty.innerHTML = `
+    <strong>Could not load CSV.</strong>
+    <div class="muted">${escapeHTML(state.csvError)}</div>
+  `;
+      } else {
+        let html = `
+    <strong>No SOPs to display.</strong>
+    <div class="muted">Configure or load your SOP list to see items here.</div>
+  `;
+
+        if (state.csvWarning) {
+          html += `
+      <div class="muted" style="margin-top:6px;">
+        ${escapeHTML(state.csvWarning)}
+      </div>
+    `;
+        }
+
+        empty.innerHTML = html;
+        empty.classList.toggle('hidden', items.length !== 0);
+      }
+
+
 
       // grouping
       let groups = { '': items };
@@ -428,59 +1407,173 @@
       viewCards.innerHTML = '';
       viewRows.innerHTML = '';
 
-      const makeTags = (tags = []) => {
-        const frag = document.createDocumentFragment();
-        tags.forEach(t => { const s = document.createElement('span'); s.className = 'pill'; s.textContent = t; frag.appendChild(s); });
-        return frag;
-      };
 
-      const renderCard = (it) => {
-        const el = document.createElement('article'); el.className = 'card';
-        el.innerHTML = `<h3>${escapeHTML(it.title)}</h3>
-          <div class="muted">${escapeHTML(it.system || '')}</div>
-          ${it.desc ? `<p class="muted" style="margin:6px 0 0">${escapeHTML(it.desc)}</p>` : ''}
-          <div class="tags"></div>
-          <p style="margin:10px 0 0"><a class="link" href="${it.url}" target="_blank" rel="noopener">Open SOP</a></p>`;
-        $('.tags', el).appendChild(makeTags(it.tags));
-        return el;
-      };
+      // const renderCard = (it) => {
+      //   const el = document.createElement('article');
+      //   el.className = 'card';
+
+      //   // const isLoading = !it._hydrated; // set to true in hydrateFromSop()
+
+      //   const status = it._hydratedStatus; // undefined | 'ok' | 'failed'
+      //   const isLoading = status === undefined;
+      //   const isFailed = status === 'failed';
+
+
+      //   if (isLoading) {
+      //     el.innerHTML = `
+      //       <div class="skeleton skeleton-title"></div>
+      //       <div class="skeleton skeleton-line"></div>
+      //       <div class="skeleton skeleton-line skeleton-line-short"></div>
+      //     `;
+      //   } else {
+      //     el.innerHTML = `<h3>${escapeHTML(it.title)}</h3>
+      //       <div class="muted">${escapeHTML(it.group)}</div>
+      //       <p style="margin:10px 0 0">
+      //         <a class="link" href="${it.url}" target="_blank" rel="noopener">Open SOP</a>
+      //       </p>`;
+      //   }
+
+      //   return el;
+      // };
+
+      // const renderRow = (it) => {
+      //   const el = document.createElement('article');
+      //   el.className = 'rowitem';
+
+      //   // const isLoading = !it._hydrated;
+
+      //   const status = it._hydratedStatus; // undefined | 'ok' | 'failed'
+      //   const isLoading = status === undefined;
+      //   const isFailed = status === 'failed';
+
+
+      //   if (isLoading) {
+      //     el.innerHTML = `
+      //       <div class="skeleton skeleton-title"></div>
+      //       <div class="skeleton skeleton-line"></div>
+      //     `;
+      //   } else {
+      //     el.innerHTML = `<h3>${escapeHTML(it.title || '')}</h3>
+      //       <div class="muted">${escapeHTML(it.group || '')}</div>
+      //       <p style="margin:6px 0 0">
+      //         <a class="link" href="${it.url}" target="_blank" rel="noopener">Open SOP</a>
+      //       </p>`;
+      //   }
+
+      //   return el;
+      // };
 
       const renderRow = (it) => {
-        const el = document.createElement('article'); el.className = 'rowitem';
-        el.innerHTML = `<h3>${escapeHTML(it.title)}</h3>
-          <div class="muted">${escapeHTML([it.system, it.owner].filter(Boolean).join(' · '))}</div>
-          <p style="margin:6px 0 0"><a class="link" href="${it.url}" target="_blank" rel="noopener">Open SOP</a></p>`;
-        if (it.tags?.length) { const t = document.createElement('div'); t.className = 'tags'; t.appendChild(makeTags(it.tags)); el.appendChild(t); }
+        const el = document.createElement('article');
+        el.className = 'rowitem';
+
+        const status = it._hydratedStatus; // undefined | 'ok' | 'failed'
+        const isLoading = status === undefined;
+        const isFailed = status === 'failed';
+
+        if (isLoading) {
+          el.innerHTML = `
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-line"></div>
+    `;
+        } else if (isFailed) {
+          el.innerHTML = `<h3>${escapeHTML(it.title || it.url || '')}</h3>
+      <div class="muted">Could not load SOP metadata.</div>
+      <p style="margin:6px 0 0">
+        <a class="link" href="${normalizeHref(it.url)}" target="_blank" rel="noopener">
+          Open SOP anyway
+        </a>
+      </p>`;
+        } else {
+          el.innerHTML = `<h3>${escapeHTML(it.title || '')}</h3>
+      <div class="muted">${escapeHTML(it.org || '')}</div>
+      <p style="margin:6px 0 0">
+        <a class="link" href="${normalizeHref(it.url)}" rel="noopener">Open SOP</a>
+      </p>`;
+        }
+
         return el;
       };
+
+
+      const renderCard = (it) => {
+        const el = document.createElement('article');
+        el.className = 'card';
+
+        const status = it._hydratedStatus; // undefined | 'ok' | 'failed'
+        const isLoading = status === undefined;
+        const isFailed = status === 'failed';
+
+        if (isLoading) {
+          el.innerHTML = `
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line skeleton-line-short"></div>
+    `;
+        } else if (isFailed) {
+          el.innerHTML = `<h3>${escapeHTML(it.title || it.url || '')}</h3>
+      <div class="muted">Could not load SOP metadata.</div>
+      <p style="margin:10px 0 0">
+        <a class="link" href="${normalizeHref(it.url)}" target="_blank" rel="noopener">
+          Open SOP anyway
+        </a>
+      </p>`;
+        } else {
+          el.innerHTML = `<h3>${escapeHTML(it.title || '')}</h3>
+      <div class="muted">${escapeHTML(it.org || '')}</div>
+      <p style="margin:10px 0 0">
+        <a class="link" href="${normalizeHref(it.url)}" target="_blank" rel="noopener">Open SOP</a>
+      </p>`;
+        }
+
+        return el;
+      };
+
+
 
       const addHeader = (name, parent) => {
         const h = document.createElement('h2');
         h.textContent = name || 'Unspecified';
+        h.className = 'group-heading';
         h.style.cssText = 'margin:14px 2px 6px; font-size:14px; color:var(--muted)';
         parent.appendChild(h);
       };
+
 
       const inCards = state.layout === 'cards';
       const target = inCards ? viewCards : viewRows;
       for (const [gname, arr] of Object.entries(groups)) {
         if (gb) { addHeader(gname, target); }
-        (inCards ? arr : arr).forEach(it => target.appendChild(inCards ? renderCard(it) : renderRow(it)));
+        for (const it of arr) {
+          target.appendChild(inCards ? renderCard(it) : renderRow(it));
+        }
+
       }
       if (state.items.length === 0) { empty.classList.remove('hidden'); }
     }
 
+    function normalizeHref(url) {
+      if (!url) return '#';
+      // already absolute (http/https)
+      if (/^https?:\/\//i.test(url)) return url;
+      // looks like bare domain, assume https
+      if (/^www\./i.test(url)) return 'https://' + url;
+      // otherwise treat as relative SOP path
+      return url;
+    }
+
+
     function escapeHTML(s) { return (s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[m])); }
 
     // File select
-    fileInput.addEventListener('change', (e) => {
-      const f = e.target.files?.[0]; if (!f) return; readFile(f);
-    });
+    // fileInput.addEventListener('change', (e) => {
+    //   const f = e.target.files?.[0]; if (!f) return; readFile(f);
+    // });
 
     // Drag & drop
-    ;['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('drag'); }));
-    ;['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('drag'); }));
-    drop.addEventListener('drop', (e) => { const f = e.dataTransfer.files?.[0]; if (f) readFile(f); });
+    // ;['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('drag'); }));
+    // ;['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('drag'); }));
+    // drop.addEventListener('drop', (e) => { const f = e.dataTransfer.files?.[0]; if (f) readFile(f); });
 
     function readFile(file) {
       const r = new FileReader();
@@ -489,15 +1582,17 @@
     }
 
     // Clear data
-    $('#btnClear').onclick = () => { state.items = []; render(); };
+    // $('#btnClear').onclick = () => { state.items = []; render(); };
 
     // Search & group handlers
-    searchInput.addEventListener('input', render);
-    groupBy.addEventListener('change', render);
+    // searchInput.addEventListener('input', render);
+    // groupBy.addEventListener('change', render);
 
     // init
     setLayout(state.layout);
+    loadDefaultCSV(); // tries to auto-load ./sop-hub-data.csv
     render();
+
   </script>
 </body>
 

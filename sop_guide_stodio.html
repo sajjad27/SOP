@@ -81,17 +81,12 @@
     .wrap {
       width: min(100%, var(--content-w));
       margin-inline: auto;
-      padding-inline: var(--gutter);
+      padding: 10px var(--gutter)
     }
 
     main {
-      margin: 16px auto 60px;
+      margin: 0px auto 60px;
       padding-block-end: 24px;
-    }
-
-    .wrap {
-      margin: 0 auto;
-      padding-block: 12px;
     }
 
     @media (max-width: 1439px) {
@@ -359,8 +354,8 @@
       height: 100%;
     }
 
-    .vw-shell,
-    .vw-main {
+    .shell,
+    .main {
       max-width: none;
       padding-inline: 8px;
     }
@@ -514,13 +509,13 @@
       color: var(--muted);
     }
 
-    .vw-hr {
+    .hr {
       border: 0;
       border-top: 1px solid var(--line);
       margin: 6px 0 12px;
     }
 
-    .vw-title {
+    .title {
       margin: 0;
     }
 
@@ -756,11 +751,11 @@
 
 
 
-    [screen="landing"] .vw-card--add {
+    [screen="landing"] .card--add {
       display: none;
     }
 
-    [screen="landing"][data-mode="edit"] .vw-card--add {
+    [screen="landing"][data-mode="edit"] .card--add {
       display: flex;
       justify-content: center;
       align-items: center;
@@ -816,6 +811,17 @@
       display: none;
     }
 
+    [screen="starter"][data-mode="edit"] #studio-chip-badge,
+    [data-mode="view"] #studio-chip-badge {
+      display: inline-flex;
+      cursor: pointer;
+    }
+
+    [screen="landing"][data-mode="edit"] #studio-chip-badge,
+    [run-mode="guide"] #studio-chip-badge {
+      display: none;
+    }
+
     [screen="starter"][data-mode="edit"] #sop-run-mode-title-input,
     [data-mode="view"] #sop-run-mode-title-input {
       display: none;
@@ -824,6 +830,107 @@
     [screen="landing"][data-mode="edit"] #sop-run-mode-title-input {
       display: block;
     }
+
+
+    /* layout around the title */
+    .sop-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .sop-title {
+      margin: 0;
+      font-size: clamp(1.1rem, 1vw + 1rem, 1.6rem);
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* "Studio" icon-word */
+    .sop-mode-chip {
+      position: relative;
+      z-index: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 12px 3px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      border: 1px solid color-mix(in srgb, var(--accent) 60%, var(--line));
+      background:
+        radial-gradient(circle at 0 0, color-mix(in srgb, var(--accent) 35%, transparent), transparent 55%),
+        var(--card);
+      color: var(--accent);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
+      overflow: hidden;
+    }
+
+    /* glowing border / halo */
+    .sop-mode-chip--studio::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      background:
+        conic-gradient(from 140deg,
+          color-mix(in srgb, var(--accent) 80%, transparent),
+          var(--hl-bg),
+          color-mix(in srgb, var(--accent) 80%, transparent));
+      opacity: 0.8;
+      filter: blur(7px);
+      z-index: -1;
+    }
+
+    /* faint grid inside the chip */
+    .sop-mode-chip--studio::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background-image:
+        radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
+      background-size: 6px 6px;
+      opacity: 0.35;
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+    }
+
+    /* text */
+    .sop-mode-text {
+      position: relative;
+      z-index: 1;
+      padding-inline-end: 2px;
+      background: linear-gradient(120deg,
+          var(--accent),
+          var(--hl-bg),
+          var(--accent));
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    /* optional: non-studio mode variation (off / plain) */
+    .sop-mode-chip--runtime {
+      border-color: var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      box-shadow: none;
+    }
+
+    .sop-mode-chip--runtime::before,
+    .sop-mode-chip--runtime::after {
+      box-shadow: none;
+      background: var(--muted);
+      opacity: 0.4;
+    }
+
 
 
 
@@ -836,14 +943,14 @@
 
 
 
-    .vw-grid {
+    .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 14px;
       margin-top: 12px;
     }
 
-    .vw-card {
+    /* .card {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -856,31 +963,110 @@
       padding: 16px;
       min-height: 120px;
       box-shadow: var(--shadow);
-    }
-
-    .vw-card h3 {
-      margin: 0 0 6px;
-      font-size: 18px;
-    }
-
-    .vw-card p {
-      margin: 0;
-      color: var(--muted);
-    }
-
-
-    .vw-card:hover,
-    .vw-card:focus-visible {
+    } 
+      
+    .card:hover,
+    .card:focus-visible {
       background: rgba(0, 0, 0, .04);
 
       outline: 3px solid var(--line);
 
       transition: background-color .2s ease, border-color .2s ease;
     }
+      */
+    /* .card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      text-align: left;
+      background: var(--card);
+      outline: 2px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 120px;
+      box-shadow: var(--shadow);
+      transition:
+        background 200ms ease,
+        box-shadow 200ms ease,
+        outline-color 200ms ease,
+        transform 160ms ease;
+    } */
 
 
-    .vw-card--add:hover,
-    .vw-card--add:focus-visible {
+    .card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      text-align: left;
+      background: var(--card);
+
+      outline: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 120px;
+      box-shadow: var(--shadow);
+
+      /* spotlight state */
+      --spot-x: 50%;
+      --spot-y: 50%;
+      --spot-opacity: 0;
+
+      transition:
+        transform 220ms ease,
+        box-shadow 260ms ease,
+        border-color 260ms ease,
+        outline-color 260ms ease,
+        outline-width 260ms ease;
+    }
+
+    /* spotlight overlay (always exists, only opacity changes) */
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at var(--spot-x) var(--spot-y),
+          color-mix(in srgb, var(--accent) 18%, transparent),
+          transparent 70%);
+      opacity: var(--spot-opacity);
+      transition: opacity 320ms ease;
+    }
+
+    .card:hover,
+    .card:focus-visible {
+      /* softer yellow outline: mix with white */
+      /* outline: 3px solid color-mix(in srgb, var(--accent) 50%, var(--line)); */
+      outline: 1px solid var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.20);
+    }
+
+
+
+
+
+
+    .card h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+
+
+
+
+    .card--add:hover,
+    .card--add:focus-visible {
 
 
 
@@ -894,7 +1080,7 @@
     }
 
 
-    .vw-pill {
+    .pill {
       display: inline-flex;
       gap: 6px;
       align-items: center;
@@ -907,7 +1093,7 @@
       margin-top: 10px;
     }
 
-    .vw-pill strong {
+    .pill strong {
       color: var(--fg);
     }
 
@@ -917,7 +1103,7 @@
       color: var(--muted);
     }
 
-    .vw-crumbs {
+    .crumbs {
       display: flex;
       align-items: center;
       gap: 10px;
@@ -925,7 +1111,7 @@
     }
 
 
-    .vw-crumbs a,
+    .crumbs a,
     .drop-zone a {
       color: var(--accent);
       text-decoration: none;
@@ -933,20 +1119,20 @@
     }
 
 
-    .vw-crumbs a:link,
-    .vw-crumbs a:visited,
+    .crumbs a:link,
+    .crumbs a:visited,
     .drop-zone a:link,
     .drop-zone a:visited {
       color: var(--accent);
     }
 
 
-    .vw-crumbs a:hover,
+    .crumbs a:hover,
     .drop-zone a:hover {
       text-decoration: underline;
     }
 
-    .vw-crumbs a {
+    .crumbs a {
       flex: 1;
       text-align: end;
     }
@@ -1079,21 +1265,21 @@
       margin: 0px 0 0;
     }
 
-    .vw-nav {
+    .nav {
       display: flex;
       justify-content: space-between;
       margin-bottom: 12px;
       gap: 10px;
     }
 
-    .vw-sep {
+    .sep {
       display: flex;
       align-items: center;
       gap: 10px;
       margin: 12px 0;
     }
 
-    .vw-bar {
+    .bar {
       flex: 1;
       height: 8px;
       background: var(--muted, #e6e6e6);
@@ -1101,7 +1287,7 @@
       overflow: hidden
     }
 
-    .vw-fill {
+    .fill {
       height: 100%;
       width: 0%;
       background: var(--accent, #3b82f6);
@@ -1109,20 +1295,20 @@
       border-radius: 999px
     }
 
-    .vw-label {
+    .label {
       min-width: 48px;
       text-align: right;
       font-variant-numeric: tabular-nums
     }
 
 
-    .vw-grid-sel {
+    .grid-sel {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 12px;
     }
 
-    .vw-option {
+    .option {
       display: block;
       width: 100%;
       text-align: left;
@@ -1132,7 +1318,7 @@
       padding: 12px;
     }
 
-    .vw-option.selected {
+    .option.selected {
       outline: 2px solid var(--accent);
       color: var(--accent);
     }
@@ -1189,7 +1375,7 @@
       justify-content: flex-end
     }
 
-    .vw-card--add {
+    .card--add {
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -1201,7 +1387,7 @@
 
 
 
-    .vw-card--add-icon {
+    .card--add-icon {
       font-size: 2.2rem;
       line-height: 1;
     }
@@ -1224,7 +1410,7 @@
 
     }
 
-    #dlgNewStarter .vw-dialog__panel {
+    #dlgNewStarter .dialog__panel {
       width: min(560px, 92vw);
       background: var(--card);
       color: var(--fg);
@@ -1237,7 +1423,7 @@
 
 
 
-    #dlgNewStarter .vw-field {
+    #dlgNewStarter .field {
       display: grid;
       gap: 6px;
       margin: 12px 0;
@@ -1421,11 +1607,11 @@
       border-color: var(--warn);
     }
 
-    #dlgNewStarter input.is-invalid+.vw-error {
+    #dlgNewStarter input.is-invalid+.error {
       display: block;
     }
 
-    .vw-error {
+    .error {
       display: none;
       color: var(--warn);
       font-size: .875rem;
@@ -1440,7 +1626,7 @@
       box-shadow: 0 0 0 3px var(--accent-weak);
     }
 
-    #dlgNewStarter .vw-actions {
+    #dlgNewStarter .actions {
       display: flex;
       gap: 8px;
       justify-content: flex-end;
@@ -1462,7 +1648,7 @@
       background: rgba(0, 0, 0, .45);
     }
 
-    #dlgImport .vw-dialog__panel {
+    #dlgImport .dialog__panel {
       width: min(var(--content-w)*0.85);
       background: var(--card);
       color: var(--fg);
@@ -1473,7 +1659,7 @@
     }
 
 
-    #dlgImport .vw-field {
+    #dlgImport .field {
       display: grid;
       gap: 6px;
       margin: 12px 0;
@@ -1501,7 +1687,7 @@
       box-shadow: 0 0 0 3px var(--accent-weak);
     }
 
-    #dlgImport .vw-actions {
+    #dlgImport .actions {
       display: flex;
       gap: 8px;
       justify-content: flex-end;
@@ -1512,7 +1698,7 @@
       border-color: var(--warn);
     }
 
-    #dlgImport input.is-invalid+.vw-error {
+    #dlgImport input.is-invalid+.error {
       display: block;
     }
 
@@ -1549,7 +1735,7 @@
     }
 
 
-    .vw-sep {
+    .sep {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -1558,15 +1744,15 @@
       user-select: none;
     }
 
-    .vw-sep::before,
-    .vw-sep::after {
+    .sep::before,
+    .sep::after {
       content: "";
       flex: 1 1 auto;
       height: 1px;
       background: var(--line);
     }
 
-    .vw-sep>span {
+    .sep>span {
       line-height: 1;
       padding: 0 6px;
     }
@@ -1690,22 +1876,22 @@
     }
 
 
-    html[data-mode="view"] .vw-card--edit {
+    html[data-mode="view"] .card--edit {
       display: none;
     }
 
 
-    html[data-mode="edit"] .vw-card {
+    html[data-mode="edit"] .card {
       display: none;
     }
 
-    html[data-mode="edit"] .vw-card--edit {
+    html[data-mode="edit"] .card--edit {
       display: block;
     }
 
 
 
-    .vw-card--edit input {
+    .card--edit input {
       width: 100%;
       padding: 10px 12px;
       border: 1px solid var(--line);
@@ -1714,15 +1900,15 @@
       color: var(--fg);
     }
 
-    .vw-card--edit input+input {
+    .card--edit input+input {
       margin-top: 8px;
     }
 
-    .vw-card__meta {
+    .card__meta {
       margin-top: 10px;
     }
 
-    .vw-card__actions {
+    .card__actions {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
@@ -2126,13 +2312,13 @@
     }
 
 
-    .vw-search {
+    /* .search {
       display: flex;
       justify-content: flex-end;
       align-items: baseline;
       gap: .5rem;
       margin: 8px 0 12px;
-    }
+    } */
 
 
     #vwSearchInput {
@@ -2154,15 +2340,181 @@
       border-color: var(--accent);
     }
 
-
-
-
-
-
     p.search-place {
       color: var(--hl-bg);
       text-align: right;
       font-style: italic;
+    }
+
+
+    .sop-mode-chip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+
+      color: var(--hl-fg);
+      background: color-mix(in srgb, var(--card) 60%, var(--bg) 40%);
+      border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--hl-bg) 45%);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, .06),
+        0 8px 18px rgba(0, 0, 0, .18);
+
+      overflow: hidden;
+      cursor: default;
+    }
+
+    /* Studio-specific: animated gradient “energy” */
+    .sop-mode-chip--studio::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      background: linear-gradient(120deg,
+          color-mix(in srgb, var(--hl-bg) 85%, transparent),
+          color-mix(in srgb, var(--accent) 85%, transparent),
+          color-mix(in srgb, var(--hl-bg) 85%, transparent));
+      background-size: 220% 220%;
+      opacity: .85;
+      z-index: -1;
+      filter: blur(4px);
+      animation: sopModeSweep 6s linear infinite;
+    }
+
+    /* Inner mask so content stays readable in light + dark */
+    .sop-mode-chip--studio::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background: linear-gradient(to right,
+          color-mix(in srgb, var(--card) 80%, var(--bg) 20%),
+          color-mix(in srgb, var(--card) 60%, var(--bg) 40%));
+      opacity: .96;
+      z-index: -1;
+    }
+
+    .sop-mode-chip--studio {
+      color: var(--hl-fg);
+    }
+
+    /* text */
+    .sop-mode-text {
+      position: relative;
+      z-index: 1;
+      white-space: nowrap;
+    }
+
+    /* subtle hover */
+    @media (prefers-reduced-motion: no-preference) {
+      .sop-mode-chip--studio {
+        transition: transform 140ms ease, box-shadow 160ms ease;
+      }
+
+      .sop-mode-chip--studio:hover {
+        transform: translateY(-1px);
+        box-shadow:
+          0 0 0 1px rgba(0, 0, 0, .12),
+          0 12px 26px rgba(0, 0, 0, .30);
+      }
+
+      @keyframes sopModeSweep {
+        0% {
+          background-position: 0% 50%;
+        }
+
+        100% {
+          background-position: 200% 50%;
+        }
+      }
+    }
+
+    /* html,
+    body,
+    header {
+      transition:
+        background-color 300ms ease,
+        color 300ms ease,
+        border-color 300ms ease;
+    }
+
+    button,
+    .btn,
+    input,
+    select,
+    textarea {
+      transition:
+        background-color 300ms ease,
+        color 300ms ease,
+        border-color 300ms ease,
+        box-shadow 300ms ease;
+    }
+
+    .panel,
+    .item,
+    .card,
+    .card--add,
+    .graph-svg,
+    .table th,
+    .table td,
+    .modal-card,
+    .dlg,
+    .cfm-panel,
+    .settings-panel,
+    .rt-wrap,
+    .rt-editor {
+      transition:
+        background-color 300ms ease,
+        color 300ms ease,
+        border-color 300ms ease,
+        box-shadow 300ms ease;
+    } */
+
+    html,
+    body,
+    header {
+      transition:
+        background-color 300ms ease,
+        color 300ms ease,
+        border-color 300ms ease;
+    }
+
+    button,
+    .btn,
+    input,
+    select,
+    textarea {
+      transition:
+        background-color 300ms ease,
+        color 300ms ease,
+        border-color 300ms ease,
+        box-shadow 300ms ease;
+    }
+
+    .panel,
+    .item,
+    /* .card,          <-- removed */
+    /* .card--add,     <-- removed */
+    .graph-svg,
+    .table th,
+    .table td,
+    .modal-card,
+    .dlg,
+    .cfm-panel,
+    .settings-panel,
+    .rt-wrap,
+    .rt-editor {
+      transition:
+        background-color 300ms ease,
+        color 300ms ease,
+        border-color 300ms ease,
+        box-shadow 300ms ease;
     }
   </style>
 
@@ -2189,15 +2541,19 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     <div class="wrap">
       <div class="row">
-        <div class="grow">
-          <h1 id="sop-run-mode-title" onclick="goHome()" class="grow"></h1>
-          <input id="sop-run-mode-title-input" class="grow" style="width: 33.33%; padding: 8px 12px;" type="text"
-            value="New SOP" placeholder="SOP Title" />
+        <div class="grow" style="display: flex; align-items: center; gap: 8px;">
+          <h1 id="sop-run-mode-title" onclick="goHome()" class=""></h1>
+          <div id="studio-chip-badge" onclick="goHome()" class="sop-mode-chip sop-mode-chip--studio"
+            aria-label="Studio mode">
+            <span class="sop-mode-text">Studio</span>
+          </div>
+          <input id="sop-run-mode-title-input" style="width: 50%; padding: 8px 12px;" type="text" value="New SOP"
+            placeholder="SOP Title" />
         </div>
 
         <div class="controls">
-          <button id="btnHome" data-hide="guide" class="vw-home" title="Home" onclick="goHome()">
-            🏠 Home
+          <button id="btnHome" data-hide="guide" class="home" title="Home" onclick="goHome()">
+            🏠 Home.
           </button>
 
 
@@ -2225,7 +2581,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
   <main>
     <section id="starter" class="wrap">
       <div id="vwWizard">
-        <div class="vw-crumbs">
+        <div class="crumbs">
           <span class="title" id="vwStarterTitle"></span>
           <a id="vwOpenMap" href="#" class="link">Show Map</a>
         </div>
@@ -2248,15 +2604,15 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-        <div class="vw-sep" id="vwProgress">
-          <div class="vw-bar">
-            <div class="vw-fill" id="vwProgressFill" style="width:0%"></div>
+        <div class="sep" id="vwProgress">
+          <div class="bar">
+            <div class="fill" id="vwProgressFill" style="width:0%"></div>
           </div>
-          <span class="vw-label" id="vwProgressLabel">0%</span>
+          <span class="label" id="vwProgressLabel">0%</span>
         </div>
 
 
-        <div class="vw-nav">
+        <div class="nav">
           <button id="vwPrev" class="btn">Previous</button>
           <button id="vwNext" class="btn-accent">Next</button>
         </div>
@@ -2326,23 +2682,23 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     </section>
 
 
-    <div id="dlgNewStarter" class="vw-dialog hidden">
-      <div class="vw-dialog__panel" role="dialog">
+    <div id="dlgNewStarter" class="dialog hidden">
+      <div class="dialog__panel" role="dialog">
         <h3 id="nsHeading">Create starter</h3>
 
-        <div class="vw-field">
+        <div class="field">
           <label for="nsLabel">Label</label>
           <input maxlength="50" id="nsLabel" type="text" placeholder="Starter X" required>
-          <p id="nsLabelErr" class="vw-error"></p>
+          <p id="nsLabelErr" class="error"></p>
 
         </div>
 
-        <div class="vw-field">
+        <div class="field">
           <label for="nsSummary">Summary</label>
           <textarea maxlength="200" id="nsSummary" rows="3" placeholder="Optional"></textarea>
         </div>
 
-        <div class="vw-actions">
+        <div class="actions">
           <button type="button" class="btn" id="nsCancel">Cancel</button>
           <button type="button" class="btn-accent" id="nsCreate">Create</button>
         </div>
@@ -2351,11 +2707,11 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     </div>
 
 
-    <div id="dlgImport" class="vw-dialog hidden">
-      <div class="vw-dialog__panel" role="dialog" aria-labelledby="imHeading">
+    <div id="dlgImport" class="dialog hidden">
+      <div class="dialog__panel" role="dialog" aria-labelledby="imHeading">
         <h3 id="imHeading">Import SOP</h3>
 
-        <div class="vw-field">
+        <div class="field">
           <div id="imDrop" class="drop-zone" tabindex="0" aria-label="Drop .html here">
             <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="32.000000pt" height="32.000000pt"
               viewBox="0 0 512.000000 512.000000" preserveAspectRatio="xMidYMid meet">
@@ -2386,18 +2742,18 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
             </div>
           </div>
           <input id="imFile" type="file" accept=".html,text/html" hidden>
-          <p id="imErrFile" class="vw-error"></p>
+          <p id="imErrFile" class="error"></p>
         </div>
 
-        <div class="vw-sep"><span>or</span></div>
+        <div class="sep"><span>or</span></div>
 
 
-        <div class="vw-field">
+        <div class="field">
           <div class="row" style="gap:8px; align-items:center;">
             <input id="imUrl" type="url" placeholder="https://example.com/sop.html" style="flex:1;">
             <button id="imFetch" type="button" class="btn-accent">Import</button>
           </div>
-          <p id="imErrUrl" class="vw-error"></p>
+          <p id="imErrUrl" class="error"></p>
         </div>
       </div>
     </div>
@@ -2675,17 +3031,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           e.returnValue = '';                   // shows the built-in confirmation dialog
         });
 
-
-
-        // const sp = new URLSearchParams(location.search);
-        // const starterId = sp.get('starter_id');
-        // if (starterId) {
-        //   // only switch if it exists in sop
-        //   const ok = Array.isArray(sop?.starters) && sop.starters.some(st => String(st?.id) === String(starterId));
-        //   if (ok && typeof enterViewOrEditStarter === 'function') {
-        //     enterViewOrEditStarter(starterId);
-        //   }
-        // }
         applyStarterFromUrl();
 
 
@@ -2938,10 +3283,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     function wireGlobal() {
 
-
-
-
-
       document.getElementById('delStepBtn').addEventListener('click', delStep);
 
       document.getElementById('addFreeBtn').addEventListener('click', () => {
@@ -2959,19 +3300,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       document.getElementById('zoomResetBtn').addEventListener('click', () => { resetGraphZoom(); renderGraph(); });
 
       document.getElementById('formatBtn').addEventListener('click', formatGraph);
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     }
 
@@ -6109,16 +6437,41 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
 
+    // function renderSopTitle() {
+    //   const modeTitle = document.getElementById('sop-run-mode-title');
+    //   const modeTabTitle = document.getElementById('sop-run-mode-tab-title');
+    //   const elInput = document.getElementById('sop-run-mode-title-input');
+    //   const sopTypeTitle = `${sop.title} ${sop.title?.trim() === '' ? '' : ' ·'} SOP ${getCurrentRunMode() === 'guide' ? 'Guide' : 'Studio Builder'}`;
+
+    //   if (modeTitle) modeTitle.textContent = sopTypeTitle;
+    //   if (modeTabTitle) modeTabTitle.textContent = sopTypeTitle;
+    //   if (elInput) elInput.value = sop.title;
+    // }
+
     function renderSopTitle() {
       const modeTitle = document.getElementById('sop-run-mode-title');
       const modeTabTitle = document.getElementById('sop-run-mode-tab-title');
       const elInput = document.getElementById('sop-run-mode-title-input');
-      const sopTypeTitle = `${sop.title} ${sop.title?.trim() === '' ? '' : ' ·'} SOP ${getCurrentRunMode() === 'guide' ? 'Guide' : 'Studio Builder'}`;
+
+      const title = sop.title ?? '';
+      const hasTitle = title.trim() !== '';
+
+      const baseLabel = 'Standard Operating Procedure';
+      const acronym = 'SOP';
+
+      const sopTypeTitle = hasTitle
+        ? `${title} · ${baseLabel} (${acronym})`
+        : baseLabel;
+
+      const sopTabTitle = hasTitle
+        ? `${title} · ${acronym}`
+        : acronym;
 
       if (modeTitle) modeTitle.textContent = sopTypeTitle;
-      if (modeTabTitle) modeTabTitle.textContent = sopTypeTitle;
-      if (elInput) elInput.value = sop.title;
+      if (modeTabTitle) modeTabTitle.textContent = sopTabTitle;
+      if (elInput) elInput.value = title;
     }
+
 
 
     function downloadCurrentHTML(filename) {
@@ -6709,8 +7062,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       <div class="wrap">
       <!-- VIEW block -->
         <div id="vwHeader" style="margin:16px 0 14px">
-          <div id="vwSearchBar" class="vw-search">
-            <label for="vwSearchInput" class="vh">Search starters</label>
+          <div id="vwSearchBar" >
             <input id="vwSearchInput" type="search" placeholder="Search ..." autocomplete="off">
           </div>
       </div>
@@ -6718,18 +7070,18 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
      
     </div>
 
-   <div class="vw-grid">
+   <div class="grid">
       ${filteredStarters.map((st, idx) => `
         <div class="starter-dual" >
           <!-- read-only card (shown in view mode) -->
-          <button class="vw-card" data-idx="${st.id}" 
+          <button class="card" data-idx="${st.id}" 
           ${st.searchPlaceStepId ? `data-search-step-id="${st.searchPlaceStepId}"` : ``}
           data-action="starter-view">
             <h3>${escapeHtml(st.label)}</h3>
             ${st.summary ? `<p>${escapeHtml(st.summary)}</p>` : ``}
             
-            <div class="vw-card__actions">
-              <div class="vw-pill">
+            <div class="card__actions">
+              <div class="pill">
                 <span>Steps</span>
                 <strong>${(typeof countFlowSteps === 'function' ? countFlowSteps(st) : (st.steps || []).length)}</strong>
               </div>
@@ -6739,7 +7091,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           </button>
 
           <!-- editable card (shown in edit mode) -->
-          <div class="vw-card vw-card--edit" data-action="starter-edit" data-idx="${st.id}"
+          <div class="card card--edit" data-action="starter-edit" data-idx="${st.id}"
                     ${st.searchPlaceStepId ? `data-search-step-id="${st.searchPlaceStepId}"` : ``}>
             <input class="st-label" type="text"
                   placeholder="Label"
@@ -6748,8 +7100,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
                   placeholder="Summary"
                   value="${escapeAttr(st.summary || '')}" />
            
-            <div class="vw-card__actions" >
-              <div class="vw-pill">
+            <div class="card__actions" >
+              <div class="pill">
                 <span>Steps</span>
                 <strong>${(typeof countFlowSteps === 'function' ? countFlowSteps(st) : (st.steps || []).length)}</strong>
               </div>
@@ -6762,8 +7114,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
       <!-- “+ New” card -->
-      <button type="button" class="vw-card vw-card--add" data-action="create-starter" >
-        <span class="vw-card--add-icon" >+</span>
+      <button type="button" class="card card--add" data-action="create-starter" >
+        <span class="card--add-icon" >+</span>
         <h4>Create new starter</h4>
       </button>
     </div>
@@ -6813,51 +7165,227 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         }
       };
 
-
+      renderCardSpotlight();
     }
 
+
+    // Card spotlight effect
+    function renderCardSpotlight() {
+
+
+      // const cards = document.querySelectorAll('.card');
+      // if (!cards.length) return;
+
+      // cards.forEach((card) => {
+      //   let spotX = 50;
+      //   let spotY = 50;
+      //   let targetX = 50;
+      //   let targetY = 50;
+      //   let rafId = null;
+      //   let leaveTimeout = null;
+      //   const ease = 0.18; // follow speed
+
+      //   function animate() {
+      //     const dx = targetX - spotX;
+      //     const dy = targetY - spotY;
+
+      //     if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
+      //       spotX = targetX;
+      //       spotY = targetY;
+      //       card.style.setProperty('--spot-x', spotX + '%');
+      //       card.style.setProperty('--spot-y', spotY + '%');
+      //       rafId = null;
+      //       return;
+      //     }
+
+      //     spotX += dx * ease;
+      //     spotY += dy * ease;
+
+      //     card.style.setProperty('--spot-x', spotX + '%');
+      //     card.style.setProperty('--spot-y', spotY + '%');
+
+      //     rafId = requestAnimationFrame(animate);
+      //   }
+
+      //   card.addEventListener('mousemove', (e) => {
+      //     const rect = card.getBoundingClientRect();
+      //     targetX = ((e.clientX - rect.left) / rect.width) * 100;
+      //     targetY = ((e.clientY - rect.top) / rect.height) * 100;
+
+      //     // cancel pending fade-back if user comes back in
+      //     if (leaveTimeout !== null) {
+      //       clearTimeout(leaveTimeout);
+      //       leaveTimeout = null;
+      //     }
+
+      //     if (rafId === null) {
+      //       rafId = requestAnimationFrame(animate);
+      //     }
+      //   });
+
+      //   card.addEventListener('mouseleave', () => {
+      //     // stay a bit, then ease back to center
+      //     leaveTimeout = setTimeout(() => {
+      //       targetX = 50;
+      //       targetY = 50;
+      //       if (rafId === null) {
+      //         rafId = requestAnimationFrame(animate);
+      //       }
+      //     }, 150); // linger time in ms
+      //   });
+      // });
+
+      const cards = document.querySelectorAll('.card');
+      if (!cards.length) return;
+
+      cards.forEach((card) => {
+        let spotX = 50;
+        let spotY = 50;
+        let targetX = 50;
+        let targetY = 50;
+        let rafId = null;
+        let leaveTimeout = null;
+
+        const ease = 0.18;   // follow speed
+        const lingerMs = 180; // how long to stay after leaving
+
+        function applySpot() {
+          card.style.setProperty('--spot-x', spotX + '%');
+          card.style.setProperty('--spot-y', spotY + '%');
+        }
+
+        function animate() {
+          const dx = targetX - spotX;
+          const dy = targetY - spotY;
+
+          if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
+            spotX = targetX;
+            spotY = targetY;
+            applySpot();
+            rafId = null;
+            return;
+          }
+
+          spotX += dx * ease;
+          spotY += dy * ease;
+          applySpot();
+          rafId = requestAnimationFrame(animate);
+        }
+
+        function startFollow(e, isEnter) {
+          const rect = card.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+          targetX = x;
+          targetY = y;
+
+          // on first enter: jump spotlight directly under cursor
+          if (isEnter) {
+            spotX = x;
+            spotY = y;
+            applySpot();
+          }
+
+          // show the halo
+          card.style.setProperty('--spot-opacity', '1');
+
+          if (leaveTimeout !== null) {
+            clearTimeout(leaveTimeout);
+            leaveTimeout = null;
+          }
+
+          if (rafId === null) {
+            rafId = requestAnimationFrame(animate);
+          }
+        }
+
+        card.addEventListener('mouseenter', (e) => {
+          startFollow(e, true);
+        });
+
+        card.addEventListener('mousemove', (e) => {
+          startFollow(e, false);
+        });
+
+        card.addEventListener('mouseleave', () => {
+          if (leaveTimeout !== null) {
+            clearTimeout(leaveTimeout);
+          }
+
+          // stay a bit, then fade + drift back to center
+          leaveTimeout = setTimeout(() => {
+            card.style.setProperty('--spot-opacity', '0'); // fades via CSS
+            targetX = 50;
+            targetY = 50;
+            if (rafId === null) {
+              rafId = requestAnimationFrame(animate);
+            }
+          }, lingerMs);
+        });
+      });
+    }
 
 
 
     function isEditMode() { return document.documentElement.getAttribute('data-mode') === 'edit'; }
 
 
-    function enterViewOrEditStarter(starterId, { stepId = null } = {}) {
-      // const idx = typeof getStarterIdxById === 'function' ? getStarterIdxById(starterId) : -1;
-      // if (idx < 0 || !Array.isArray(sop?.starters) || !sop.starters[idx]) return false;
+    // function enterViewOrEditStarter(starterId, { stepId = null } = {}) {
+    //   // const idx = typeof getStarterIdxById === 'function' ? getStarterIdxById(starterId) : -1;
+    //   // if (idx < 0 || !Array.isArray(sop?.starters) || !sop.starters[idx]) return false;
 
-      resetStarterValues();
+    //   resetStarterValues();
 
-      const st = getStarterById(starterId);
-      console.log(`st`, st);
-      const titleEl = document.getElementById('vwStarterTitle');
-      if (titleEl) titleEl.textContent = st?.label || 'Starter';
-      viewState.selectedStarterId = starterId;
-      viewState.selectedStepId = stepId ? stepId : (st.startId || st?.steps?.[0]?.id);
-
-      console.log(`viewState.selectedStarterId`, viewState.selectedStarterId);
-      console.log(`viewState.selectedStepId`, viewState.selectedStepId);
-      // remember last
-      // try {
-      //   // viewState.lastStarterId = String(st.id);
-      //   sessionStorage.setItem('last_starter_id', String(st.id));
-      // } catch { }
+    //   const st = getStarterById(starterId);
+    //   const titleEl = document.getElementById('vwStarterTitle');
+    //   if (titleEl) titleEl.textContent = st?.label || 'Starter';
+    //   viewState.selectedStarterId = starterId;
+    //   viewState.selectedStepId = stepId ? stepId : (st.startId || st?.steps?.[0]?.id);
 
 
-      changeScreen('starter');
-      // setSelectedStepById(viewState.selectedStepId);   // sync id + idx
-      updateUrlParameters({ starterId: starterId, stepId: viewState.selectedStepId });
-      navigateToStepId(viewState.selectedStepId);
-      // renderViewStep();
-      // renderInspector();
-      // renderGraph();
-      // renderViewAndEditLanding();
-      // renderAll();
+
+    //   changeScreen('starter');
+    //   // setSelectedStepById(viewState.selectedStepId);   // sync id + idx
+    //   // updateUrlParameters({ starterId: starterId, stepId: viewState.selectedStepId });
+    //   navigateToStepId(viewState.selectedStepId);
+    //   // renderViewStep();
+    //   // renderInspector();
+    //   // renderGraph();
+    //   // renderViewAndEditLanding();
+    //   // renderAll();
 
 
-      // precomputeProgress(); // computes once
-      return true;
-    }
+    //   // precomputeProgress(); // computes once
+    //   return true;
+    // }
+
+    function enterViewOrEditStarter(starterId, { stepId = null, doHistory = true } = {}) {
+  // const idx = typeof getStarterIdxById === 'function' ? getStarterIdxById(starterId) : -1;
+  // if (idx < 0 || !Array.isArray(sop?.starters) || !sop.starters[idx]) return false;
+
+  resetStarterValues();
+
+  const st = getStarterById(starterId);
+  const titleEl = document.getElementById('vwStarterTitle');
+  if (titleEl) titleEl.textContent = st?.label || 'Starter';
+  viewState.selectedStarterId = starterId;
+  viewState.selectedStepId = stepId ? stepId : (st.startId || st?.steps?.[0]?.id);
+
+  changeScreen('starter');
+  // setSelectedStepById(viewState.selectedStepId);   // sync id + idx
+  // updateUrlParameters({ starterId: starterId, stepId: viewState.selectedStepId });
+  navigateToStepId(viewState.selectedStepId, { doHistory });
+  // renderViewStep();
+  // renderInspector();
+  // renderGraph();
+  // renderViewAndEditLanding();
+  // renderAll();
+
+  // precomputeProgress(); // computes once
+  return true;
+}
+
 
     function goHome() {
       changeScreen('landing');
@@ -6882,8 +7410,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       // }
       clearStarterAndStepFromQuery();
     }
-
-    function updateUrlParameters({ starterId, stepId } = {}) {
+    // hello
+    function updateUrlParameters({ starterId, stepId, doHistory = true } = {}) {
       const H = window.history;
       try {
         // Both must be provided and not null/undefined
@@ -6901,27 +7429,34 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           step_id: String(stepId),
         };
 
-        H.pushState(state, '', url.href);
+        if (doHistory) {
+          H.pushState(state, '', url.href);
+        } else {
+          H.replaceState(state, '', url.href);
+        }
       } catch (e) {
         console.error(e);
       }
     }
 
-    function updateUrlStepIdParameter(stepId) {
+    function updateUrlStepIdParameter(stepId, { doHistory = true } = {}) {
       try {
         if (stepId == null) {
           throw new Error('updateStepIdOnly: stepId must have a value');
         }
 
         const p = new URLSearchParams(location.search);
-        const starterId = p.get('starter_id');
+        const starterIdFromUrl = p.get('starter_id');
+        const starterId = starterIdFromUrl ?? viewState.selectedStarterId;
 
-        if (starterId == null) {
-          throw new Error('updateStepIdOnly: starter_id is missing in URL');
-        }
+        // const starterId = p.get('starter_id');
+
+        // if (starterId == null) {
+        //   starterId = viewState.selectedStarterId;
+        // }
 
         // reuse the strict function: both must have values
-        updateUrlParameters({ starterId, stepId });
+        updateUrlParameters({ starterId, stepId, doHistory });
       } catch (e) {
         console.error(e);
       }
@@ -7004,20 +7539,66 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     }
 
 
+
+    // function applyStarterFromUrl() {
+    //   const starterId = getQueryStarterId();
+    //   const stepId = getQueryStepId();
+    //   console.log(`starter`, starterId);
+    //   console.log(`step`, stepId);
+    //   if (starterId) {
+    //           viewState.selectedStarterId = starterId;
+    //     // setSelectedStarterById(starterId);
+    //     // enterViewOrEditStarter(starterId, { doHistory: false, stepId: stepId }); // no push
+    //     navigateToStepId(stepId, { doHistory: false });
+    //   } else {
+    //     goHome();
+    //   }
+    // }
+
     function applyStarterFromUrl() {
-      const starterId = getQueryStarterId();
-      const stepId = getQueryStepId();
-      if (starterId) {
-        enterViewOrEditStarter(starterId, { doHistory: false, stepId: stepId }); // no push
-      } else {
-        goHome();
-      }
-    }
+  const starterId = getQueryStarterId();
+  let stepId = getQueryStepId();
+  console.log(`starter`, starterId);
+  console.log(`step`, stepId);
+
+  if (!starterId) {
+    // No starter in URL → stay on landing
+    goHome();
+    return;
+  }
+
+  const st = getStarterById(starterId);
+  if (!st) {
+    // Invalid starter id in URL
+    goHome();
+    return;
+  }
+
+  const steps = st.steps || [];
+  const hasStep =
+    stepId && steps.some(s => s && s.id === stepId);
+
+  // If stepId is missing or invalid, pick a default
+  if (!hasStep) {
+    stepId = st.startId || (steps[0] && steps[0].id) || null;
+  }
+
+  if (!stepId) {
+    // Starter has no valid steps; fallback to home
+    goHome();
+    return;
+  }
+
+  // Full starter entry, but do NOT push a new history entry on initial
+  // load / popstate. updateUrlStepIdParameter will use replaceState
+  // because we later call navigateToStepId with doHistory: false.
+  enterViewOrEditStarter(starterId, { stepId, doHistory: false });
+}
 
 
 
 
-    // window.addEventListener('popstate', applyStarterFromUrl);
+
 
 
 
@@ -7555,7 +8136,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
         const inp = e.target;
         if (!inp.classList?.contains('st-label') && !inp.classList?.contains('st-summary')) return;
-        const card = inp.closest('.vw-card--edit');
+        const card = inp.closest('.card--edit');
         if (!card) return;
 
         const starterId = card.dataset.idx;
@@ -7581,7 +8162,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         const del = e.target.closest('[data-action="starter-delete"]');
 
         if (del) {
-          const card = del.closest('.vw-card[data-idx]');
+          const card = del.closest('.card[data-idx]');
           if (!card) return;
           const starterId = card.dataset.idx;
           const starterIdx = getStarterIdxById(starterId);
@@ -7615,7 +8196,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
           return;
         }
         // else if (view || (edit && !e.target.closest('input, textarea, select, [contenteditable="true"]'))) {
-        //   const card = (view || edit)?.closest('.vw-card[data-idx]');
+        //   const card = (view || edit)?.closest('.card[data-idx]');
         //   if (!card) return;
         //   const starterId = card.dataset.idx;
         //   enterViewOrEditStarter(starterId);
@@ -7623,7 +8204,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         // }
 
         else if (view || (edit && !e.target.closest('input, textarea, select, [contenteditable="true"]'))) {
-          const card = (view || edit)?.closest('.vw-card[data-idx]');
+          const card = (view || edit)?.closest('.card[data-idx]');
           if (!card) return;
 
           const starterId = card.dataset.idx;
@@ -7733,7 +8314,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     document.addEventListener('click', onCreateStarterClick);
 
     function onCreateStarterClick(e) {
-      const add = e.target.closest('[data-action="create-starter"], .vw-card--add');
+      const add = e.target.closest('[data-action="create-starter"], .card--add');
       if (!add) return;
       openNewStarterDialog();
     }
@@ -8037,7 +8618,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
       // Header (kept your style; added id for a11y)
       const headHtml = step.title
-        ? `<h3 class="vw-title" id="vw-title-${step.id}">${viewEscape(step.title)}</h3><hr class="vw-hr">`
+        ? `<h3 class="title" id="title-${step.id}">${viewEscape(step.title)}</h3><hr class="hr">`
         : '';
       const imgHtml = step.img_b64 ? `<img class="thumb" src="${step.img_b64}" alt="">` : '';
 
@@ -8131,7 +8712,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         node.innerHTML = headHtml || `<h3>${viewEscape(step.title || '')}</h3>`;
 
         const wrap = document.createElement('div');
-        wrap.className = 'vw-grid-sel';
+        wrap.className = 'grid-sel';
         node.appendChild(wrap);
 
         const mode = step.mode === 'multi' ? 'multi' : 'single';
@@ -8139,7 +8720,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
         (step.options || []).forEach(opt => {
           const btn = document.createElement('button');
-          btn.className = 'vw-option';
+          btn.className = 'option';
           btn.type = 'button';
           btn.innerHTML = `<strong>${viewEscape(opt.label)}</strong>${opt.hint ? `<div class="small">${viewEscape(opt.hint)}</div>` : ''}`;
 
@@ -8159,7 +8740,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
               refreshSelect();
             } else {
               viewState.answers[step.id] = { value: opt.value, label: opt.label, next: opt.next };
-              wrap.querySelectorAll('.vw-option').forEach(el => el.classList.remove('selected'));
+              wrap.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
               btn.classList.add('selected');
               refreshSelect();
             }
@@ -8334,7 +8915,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
     // When a single-select step is rendered, wire change listeners to keep Next label in sync
     function wireSingleSelectChange(step) {
       if (!step || step.type !== 'select' || step.mode !== 'single') return;
-      const options = document.querySelectorAll(`.vw-option`);
+      const options = document.querySelectorAll(`.option`);
       options.forEach(opt => opt.addEventListener('click', updateNavButtons));
     }
 
@@ -8764,7 +9345,7 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
             clicking = true;
             try {
               if (typeof navigateToStepId === 'function') {
-                navigateToStepId(id, { fromMini: true });
+                navigateToStepId(id);
               }
             } finally {
               setTimeout(() => { clicking = false; }, 0);
@@ -8914,7 +9495,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         });
 
         const id = String(stepId);
-        console.log(`id`, id);
         const hit =
           svg.querySelector(`[step-id="${id}"]`);
 
@@ -9063,14 +9643,14 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
 
 
-    function navigateToStepId(stepId) {
+    function navigateToStepId(stepId, { doHistory = true } = {}) {
+      console.log(`doHistory`, doHistory);
       // render graph should be set twice because we want to clear prior highlight first
 
-      const curId = viewState.selectedStepId;
+      // const curId = viewState.selectedStepId;
 
       setSelectedStepById(stepId);   // sync id + idx
-      updateUrlStepIdParameter(stepId);
-      // setSelectedStepClass(stepId);
+      updateUrlStepIdParameter(stepId, { doHistory });
       window.refreshMiniMapForStep?.(stepId);
 
 
@@ -9086,11 +9666,8 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
 
     function goPrevious() {
       const st = getStarter();
-      console.log(`st`, st);
       const cur = viewState.selectedStepId;
-      console.log(`cur`, cur);
       const prevMap = viewState.prev || Object.create(null);
-      console.log(`prevMap`, prevMap);
 
       // 1) Prefer the last traversed predecessor if still valid
       let target = prevMap[cur];
@@ -9104,7 +9681,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
       }
 
 
-      console.log(`target`, target);
       if (target && target !== cur) {
         // setSelectedStepById(target);
         navigateToStepId(target);
@@ -9128,7 +9704,6 @@ version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512"><path 
         const toId = getSingleSelectNextId();
         if (toId) {
           recordTransition(viewState.selectedStepId, toId);
-          // setSelectedStepById(toId);
           navigateToStepId(toId);
           renderViewStep(); renderGraph(); renderInspector(); updateProgressBar();
 
